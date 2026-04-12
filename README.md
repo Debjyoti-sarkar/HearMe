@@ -72,7 +72,6 @@ HearMe/
 │   ├── infrastructure/  # Database adapters, external integrations
 │   └── presentation/    # API controllers and UI components
 ├── tests/               # Unit and integration tests
-├── docs/                # Additional documentation
 ├── LICENSE
 └── README.md
 ```
@@ -83,7 +82,8 @@ HearMe/
 
 ### Prerequisites
 
-- Ensure you have the required runtime and package manager installed (see language-specific setup instructions in `docs/`).
+- Git
+- The language runtime and package manager appropriate for your environment (details will be added as the project evolves).
 
 ### Installation
 
@@ -91,17 +91,9 @@ HearMe/
 # Clone the repository
 git clone https://github.com/Debjyoti-sarkar/HearMe.git
 cd HearMe
-
-# Install dependencies
-# (follow the setup instructions in docs/ for your environment)
 ```
 
-### Running the Application
-
-```bash
-# Start the application
-# (see docs/ for environment-specific commands)
-```
+> **Note:** Full setup and run instructions will be provided as each layer of the project is implemented.
 
 ---
 
