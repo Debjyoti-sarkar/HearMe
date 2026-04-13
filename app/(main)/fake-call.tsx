@@ -5,18 +5,16 @@ import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors } from '../../constants/theme';
 
 const COUNTDOWN_SEC = 8;
 
-/**
- * Decoy “incoming call” — common deterrence pattern in women-safety apps (e.g. Trio-style UX).
- * Does not place a real carrier call; use for situational cover only.
- */
 export default function FakeCallScreen() {
   const insets = useSafeAreaInsets();
   const [phase, setPhase] = useState<'count' | 'ringing' | 'done'>('count');
   const [sec, setSec] = useState(COUNTDOWN_SEC);
   const pulse = useRef(new Animated.Value(1)).current;
+  const ringPulse = useRef(new Animated.Value(0.5)).current;
 
   useEffect(() => {
     if (phase !== 'count') return;
@@ -31,15 +29,25 @@ export default function FakeCallScreen() {
 
   useEffect(() => {
     if (phase !== 'ringing') return;
-    const loop = Animated.loop(
+    const pulseLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(pulse, { toValue: 1.08, duration: 700, useNativeDriver: true }),
         Animated.timing(pulse, { toValue: 1, duration: 700, useNativeDriver: true }),
       ]),
     );
-    loop.start();
-    return () => loop.stop();
-  }, [phase, pulse]);
+    const ringLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(ringPulse, { toValue: 1, duration: 700, useNativeDriver: true }),
+        Animated.timing(ringPulse, { toValue: 0.5, duration: 700, useNativeDriver: true }),
+      ]),
+    );
+    pulseLoop.start();
+    ringLoop.start();
+    return () => {
+      pulseLoop.stop();
+      ringLoop.stop();
+    };
+  }, [phase, pulse, ringPulse]);
 
   const close = () => router.back();
 
@@ -49,10 +57,14 @@ export default function FakeCallScreen() {
         <Pressable onPress={close} style={styles.closeGhost}>
           <Text style={styles.closeTxt}>Cancel</Text>
         </Pressable>
-        <Text style={styles.pretitle}>Decoy call</Text>
-        <Text style={styles.big}>{sec}</Text>
+        <View style={styles.countdownCircle}>
+          <Text style={styles.countLabel}>Incoming call in</Text>
+          <Text style={styles.big}>{sec}</Text>
+          <Text style={styles.countUnit}>seconds</Text>
+        </View>
         <Text style={styles.caption}>
-          Screen will simulate an incoming call. Hold the phone naturally — you can dismiss anytime.
+          Hold your phone naturally. The screen will simulate a realistic incoming call that you can
+          use as a cover to leave uncomfortable situations.
         </Text>
       </View>
     );
@@ -60,22 +72,26 @@ export default function FakeCallScreen() {
 
   if (phase === 'ringing') {
     return (
-      <LinearGradient colors={['#0f172a', '#1e1b4b', '#312e81']} style={styles.full}>
-        <View style={[styles.ringTop, { paddingTop: insets.top + 12 }]}>
+      <LinearGradient colors={['#0a0118', '#1a1145', '#2d1b69']} style={styles.full}>
+        <View style={[styles.ringTop, { paddingTop: insets.top + 16 }]}>
           <Text style={styles.incoming}>Incoming call</Text>
-          <Text style={styles.caller}>Safety · HearMe</Text>
+          <Text style={styles.caller}>Mom</Text>
+          <Text style={styles.callerSub}>Mobile</Text>
         </View>
         <View style={styles.ringMid}>
           <Animated.View style={{ transform: [{ scale: pulse }] }}>
-            <LinearGradient colors={['#34d399', '#059669']} style={styles.avatarBig}>
-              <MaterialCommunityIcons name="account-voice" size={56} color="#fff" />
-            </LinearGradient>
+            <View style={styles.avatarOuter}>
+              <Animated.View style={[styles.avatarRing, { opacity: ringPulse }]} />
+              <LinearGradient colors={['#34d399', '#059669']} style={styles.avatarBig}>
+                <MaterialCommunityIcons name="account" size={56} color="#fff" />
+              </LinearGradient>
+            </View>
           </Animated.View>
         </View>
-        <View style={[styles.ringActions, { paddingBottom: insets.bottom + 20 }]}>
+        <View style={[styles.ringActions, { paddingBottom: insets.bottom + 28 }]}>
           <Pressable style={styles.decline} onPress={close}>
             <MaterialCommunityIcons name="phone-hangup" size={32} color="#fff" />
-            <Text style={styles.declineTxt}>Decline</Text>
+            <Text style={styles.actionLabel}>Decline</Text>
           </Pressable>
           <Pressable
             style={styles.answer}
@@ -85,7 +101,7 @@ export default function FakeCallScreen() {
             }}
           >
             <MaterialCommunityIcons name="phone" size={32} color="#fff" />
-            <Text style={styles.answerTxt}>Answer</Text>
+            <Text style={styles.actionLabel}>Answer</Text>
           </Pressable>
         </View>
       </LinearGradient>
@@ -94,10 +110,14 @@ export default function FakeCallScreen() {
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 24 }]}>
-      <MaterialCommunityIcons name="check-decagram" size={56} color="#34d399" />
-      <Text style={styles.doneTitle}>You’re covered</Text>
+      <View style={styles.doneIcon}>
+        <LinearGradient colors={['#34d399', '#059669']} style={styles.doneCircle}>
+          <MaterialCommunityIcons name="check" size={40} color="#fff" />
+        </LinearGradient>
+      </View>
+      <Text style={styles.doneTitle}>You're covered</Text>
       <Text style={styles.doneBody}>
-        This was a simulated call only — no carrier connection. Step away safely when you can.
+        This was a simulated call — no actual connection was made. Step away safely when you can.
       </Text>
       <Pressable onPress={close} style={styles.doneBtn}>
         <Text style={styles.doneBtnTxt}>Close</Text>
@@ -115,68 +135,123 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   closeGhost: { position: 'absolute', top: 56, right: 24 },
-  closeTxt: { color: 'rgba(248,250,252,0.65)', fontWeight: '700' },
-  pretitle: { color: 'rgba(248,250,252,0.7)', fontSize: 16, marginBottom: 12 },
-  big: { fontSize: 96, fontWeight: '900', color: '#f8fafc' },
+  closeTxt: { color: 'rgba(248,250,252,0.55)', fontWeight: '700', fontSize: 16 },
+  countdownCircle: {
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    borderWidth: 3,
+    borderColor: 'rgba(167,139,250,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 28,
+  },
+  countLabel: { color: 'rgba(248,250,252,0.5)', fontSize: 13, fontWeight: '600' },
+  big: { fontSize: 72, fontWeight: '900', color: '#f8fafc', marginVertical: -4 },
+  countUnit: { color: 'rgba(248,250,252,0.5)', fontSize: 13, fontWeight: '600' },
   caption: {
-    marginTop: 20,
     textAlign: 'center',
-    color: 'rgba(248,250,252,0.65)',
+    color: 'rgba(248,250,252,0.5)',
     fontSize: 15,
     lineHeight: 22,
+    maxWidth: 300,
   },
   full: { flex: 1 },
   ringTop: { alignItems: 'center' },
-  incoming: { color: 'rgba(248,250,252,0.75)', fontSize: 15, fontWeight: '600' },
-  caller: { marginTop: 6, color: '#f8fafc', fontSize: 26, fontWeight: '800' },
+  incoming: { color: 'rgba(248,250,252,0.6)', fontSize: 14, fontWeight: '600' },
+  caller: { marginTop: 8, color: '#f8fafc', fontSize: 32, fontWeight: '900' },
+  callerSub: { marginTop: 4, color: 'rgba(248,250,252,0.5)', fontSize: 14 },
   ringMid: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  avatarOuter: { alignItems: 'center', justifyContent: 'center' },
+  avatarRing: {
+    position: 'absolute',
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    borderWidth: 2,
+    borderColor: 'rgba(52,211,153,0.4)',
+  },
   avatarBig: {
-    width: 132,
-    height: 132,
-    borderRadius: 66,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#34d399',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 24,
+    elevation: 16,
   },
   ringActions: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: 40,
   },
   decline: {
     alignItems: 'center',
-    backgroundColor: 'rgba(239,68,68,0.95)',
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+    backgroundColor: '#ef4444',
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     justifyContent: 'center',
-    gap: 4,
+    shadowColor: '#ef4444',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  declineTxt: { color: '#fff', fontWeight: '800', fontSize: 12, marginTop: 4 },
   answer: {
     alignItems: 'center',
-    backgroundColor: 'rgba(34,197,94,0.95)',
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+    backgroundColor: '#22c55e',
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     justifyContent: 'center',
-    gap: 4,
+    shadowColor: '#22c55e',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  answerTxt: { color: '#fff', fontWeight: '800', fontSize: 12, marginTop: 4 },
-  doneTitle: { marginTop: 20, fontSize: 24, fontWeight: '900', color: '#f8fafc' },
+  actionLabel: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 11,
+    marginTop: 8,
+    position: 'absolute',
+    bottom: -22,
+  },
+  doneIcon: { marginBottom: 24 },
+  doneCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#34d399',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  doneTitle: { fontSize: 26, fontWeight: '900', color: '#f8fafc', marginBottom: 12 },
   doneBody: {
-    marginTop: 12,
     textAlign: 'center',
-    color: 'rgba(248,250,252,0.7)',
+    color: 'rgba(248,250,252,0.6)',
     fontSize: 15,
     lineHeight: 22,
+    maxWidth: 300,
   },
   doneBtn: {
-    marginTop: 28,
+    marginTop: 32,
     paddingVertical: 14,
-    paddingHorizontal: 36,
+    paddingHorizontal: 40,
     borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
   },
   doneBtnTxt: { color: '#f8fafc', fontWeight: '800', fontSize: 16 },
 });

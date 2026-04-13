@@ -13,10 +13,11 @@ import { colors, radii } from '../constants/theme';
 type Props = Omit<PressableProps, 'children'> & {
   title: string;
   icon?: ReactNode;
+  compact?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
-export function OutlineButton({ title, icon, disabled, style, ...rest }: Props) {
+export function OutlineButton({ title, icon, disabled, compact, style, ...rest }: Props) {
   return (
     <Pressable
       accessibilityRole="button"
@@ -25,17 +26,17 @@ export function OutlineButton({ title, icon, disabled, style, ...rest }: Props) 
         [
           styles.wrap,
           disabled && styles.dim,
-          pressed && !disabled && { opacity: 0.92 },
+          pressed && !disabled && styles.pressed,
           StyleSheet.flatten(style),
         ] as StyleProp<ViewStyle>
       }
       {...rest}
     >
       <LinearGradient
-        colors={['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.04)']}
+        colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.03)']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.inner}
+        style={[styles.inner, compact && styles.compact]}
       >
         {icon}
         <Text style={styles.text}>{title}</Text>
@@ -57,13 +58,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     paddingVertical: 14,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     minHeight: 50,
+  },
+  compact: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    minHeight: 40,
   },
   text: {
     color: colors.text,
     fontWeight: '700',
     fontSize: 15,
   },
-  dim: { opacity: 0.5 },
+  dim: { opacity: 0.4 },
+  pressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
 });

@@ -22,6 +22,10 @@ export type HearMeSettings = {
   skipSosConfirm: boolean;
   autoCallAfterSms: boolean;
   emergencyNumber: string;
+  sirenEnabled: boolean;
+  crashDetection: boolean;
+  crashSpeedThreshold: number;
+  onboardingComplete: boolean;
 };
 
 export const DEFAULT_SETTINGS: HearMeSettings = {
@@ -30,4 +34,8 @@ export const DEFAULT_SETTINGS: HearMeSettings = {
   skipSosConfirm: false,
   autoCallAfterSms: false,
   emergencyNumber: '112',
+  sirenEnabled: true,
+  crashDetection: false,
+  crashSpeedThreshold: 50,
+  onboardingComplete: false,
 };

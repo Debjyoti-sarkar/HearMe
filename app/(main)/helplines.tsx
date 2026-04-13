@@ -17,6 +17,15 @@ import { GlassCard } from '../../components/GlassCard';
 import { colors } from '../../constants/theme';
 import { INDIA_HELPLINES, type Helpline } from '../../constants/helplines';
 
+const GRADIENTS: Record<string, [string, string]> = {
+  '112': ['#ef4444', '#dc2626'],
+  '1091': ['#ec4899', '#db2777'],
+  '181': ['#8b5cf6', '#7c3aed'],
+  '139': ['#f59e0b', '#d97706'],
+  '1075': ['#06b6d4', '#0891b2'],
+  '1930': ['#6366f1', '#4f46e5'],
+};
+
 export default function HelplinesScreen() {
   const insets = useSafeAreaInsets();
 
@@ -25,21 +34,26 @@ export default function HelplinesScreen() {
   };
 
   const renderItem: ListRenderItem<Helpline> = ({ item }) => (
-    <Pressable onPress={() => dial(item.number)}>
+    <Pressable
+      onPress={() => dial(item.number)}
+      style={({ pressed }) => [pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] }]}
+    >
       <GlassCard style={styles.card}>
         <View style={styles.row}>
           <LinearGradient
-            colors={['rgba(52,211,153,0.45)', 'rgba(56,189,248,0.35)']}
+            colors={GRADIENTS[item.id] || ['#10b981', '#059669']}
             style={styles.iconRing}
           >
-            <MaterialCommunityIcons name="phone-in-talk" size={22} color={colors.text} />
+            <MaterialCommunityIcons name="phone-in-talk" size={24} color="#fff" />
           </LinearGradient>
           <View style={styles.meta}>
             <Text style={styles.title}>{item.title}</Text>
             <Text style={styles.sub}>{item.subtitle}</Text>
             <Text style={styles.num}>{item.number}</Text>
           </View>
-          <MaterialCommunityIcons name="chevron-right" size={26} color={colors.textMuted} />
+          <View style={styles.callBtn}>
+            <MaterialCommunityIcons name="phone" size={20} color={colors.success} />
+          </View>
         </View>
       </GlassCard>
     </Pressable>
@@ -51,12 +65,11 @@ export default function HelplinesScreen() {
         <Pressable onPress={() => router.back()} style={styles.back} hitSlop={12}>
           <MaterialCommunityIcons name="close" size={28} color={colors.text} />
         </Pressable>
-        <Text style={styles.headTitle}>Helplines</Text>
+        <Text style={styles.headTitle}>Emergency Helplines</Text>
         <View style={{ width: 36 }} />
       </View>
       <Text style={styles.intro}>
-        One-tap dial shortcuts inspired by public-safety patterns across the Trio reference apps
-        (SheGuard, SafeGuardHer, LadyBuddy, WSafe, SheSecure).
+        One-tap dial to India's emergency services. Verified helpline numbers — always available 24/7.
       </Text>
       <FlatList
         data={INDIA_HELPLINES}
@@ -77,30 +90,43 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     marginBottom: 8,
   },
   back: { padding: 4 },
   headTitle: { fontSize: 20, fontWeight: '800', color: colors.text },
   intro: {
     color: colors.textMuted,
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 14,
+    lineHeight: 20,
     paddingHorizontal: 20,
-    marginBottom: 14,
+    marginBottom: 16,
   },
   list: { paddingHorizontal: 20 },
-  card: { padding: 16 },
+  card: { padding: 18 },
   row: { flexDirection: 'row', alignItems: 'center' },
   iconRing: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  meta: { flex: 1, marginLeft: 16 },
+  title: { fontSize: 16, fontWeight: '800', color: colors.text },
+  sub: { marginTop: 3, color: colors.textMuted, fontSize: 12, lineHeight: 17 },
+  num: { marginTop: 6, fontSize: 20, fontWeight: '900', color: colors.accentViolet },
+  callBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(52,211,153,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  meta: { flex: 1, marginLeft: 14 },
-  title: { fontSize: 16, fontWeight: '800', color: colors.text },
-  sub: { marginTop: 2, color: colors.textMuted, fontSize: 12, lineHeight: 17 },
-  num: { marginTop: 6, fontSize: 18, fontWeight: '900', color: colors.accentViolet },
 });

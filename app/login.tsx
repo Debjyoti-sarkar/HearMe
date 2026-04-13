@@ -20,6 +20,7 @@ import { GlassCard } from '../components/GlassCard';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { colors, radii } from '../constants/theme';
 import { isDemoAuthenticated } from '../lib/demo-auth';
+import { saveSettings, loadSettings } from '../lib/app-data';
 import { DEMO_OTP } from '../lib/otp';
 import { normalizeIndiaPhone } from '../lib/phone';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
@@ -36,6 +37,16 @@ export default function LoginScreen() {
   const [useDemoOtp, setUseDemoOtp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Mark onboarding as complete when user reaches login
+    void (async () => {
+      const settings = await loadSettings();
+      if (!settings.onboardingComplete) {
+        await saveSettings({ ...settings, onboardingComplete: true });
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -116,83 +127,110 @@ export default function LoginScreen() {
 
   return (
     <GradientBackground>
-      <KeyboardAvoidingView
-        style={styles.flex}
-      >
+      <KeyboardAvoidingView style={styles.flex}>
         <ScrollView
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={[
             styles.scroll,
-            { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 24 },
+            { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 24 },
           ]}
         >
           <View style={styles.hero}>
             <LinearGradient
-              colors={['rgba(236,72,153,0.35)', 'rgba(167,139,250,0.2)']}
-              style={styles.iconRing}
+              colors={['#7c3aed', '#a78bfa']}
+              style={styles.logoCircle}
             >
-              <MaterialCommunityIcons
-                name="shield-lock-outline"
-                size={44}
-                color={colors.text}
-              />
+              <MaterialCommunityIcons name="shield-check" size={48} color="#fff" />
             </LinearGradient>
-            <Text style={styles.title}>HearMe</Text>
+            <Text style={styles.brandName}>HearMe</Text>
             <Text style={styles.tagline}>
-              Secure your safety profile with Supabase authentication.
+              Your personal safety guardian — always watching, always ready.
             </Text>
           </View>
 
-          <GlassCard style={styles.card}>
-            <Text style={styles.cardTitle}>Sign in</Text>
+          <GlassCard variant="elevated" style={styles.card}>
+            <Text style={styles.cardTitle}>Welcome Back</Text>
             <Text style={styles.cardHint}>
-              Login with phone OTP or continue with Google.
+              Sign in with your phone number to continue
             </Text>
+
             <View style={styles.toggleRow}>
-              <Text style={styles.toggleText}>Use demo OTP for testing</Text>
+              <View style={styles.toggleLabel}>
+                <MaterialCommunityIcons name="test-tube" size={16} color={colors.accentViolet} />
+                <Text style={styles.toggleText}>Demo mode (testing)</Text>
+              </View>
               <Switch
                 value={useDemoOtp}
                 onValueChange={setUseDemoOtp}
-                trackColor={{ false: 'rgba(255,255,255,0.15)', true: 'rgba(167,139,250,0.55)' }}
-                thumbColor={useDemoOtp ? colors.accentPink : '#94a3b8'}
+                trackColor={{ false: 'rgba(255,255,255,0.12)', true: 'rgba(167,139,250,0.5)' }}
+                thumbColor={useDemoOtp ? colors.accentPink : '#64748b'}
               />
             </View>
-            {!isSupabaseConfigured && !useDemoOtp ? (
-              <Text style={styles.error}>
-                Supabase env vars are missing. Add `EXPO_PUBLIC_SUPABASE_URL` and
-                `EXPO_PUBLIC_SUPABASE_KEY` in your Expo env, then restart.
-              </Text>
-            ) : null}
 
-            <Text style={styles.label}>Phone number</Text>
-            <View style={styles.phoneInputWrap}>
-              <Text style={styles.phonePrefix}>+91</Text>
+            {!isSupabaseConfigured && !useDemoOtp && (
+              <View style={styles.warningBox}>
+                <MaterialCommunityIcons name="alert-outline" size={16} color={colors.warning} />
+                <Text style={styles.warningText}>
+                  Supabase not configured. Enable demo mode or add environment variables.
+                </Text>
+              </View>
+            )}
+
+            <Text style={styles.label}>PHONE NUMBER</Text>
+            <View style={styles.phoneWrap}>
+              <View style={styles.prefixBox}>
+                <Text style={styles.prefixText}>+91</Text>
+              </View>
               <TextInput
                 value={phone}
                 onChangeText={(t) => setPhone(t.replace(/\D/g, '').slice(0, 10))}
-                placeholder="9876543210"
-                placeholderTextColor={colors.textMuted}
+                placeholder="98765 43210"
+                placeholderTextColor={colors.textSecondary}
                 keyboardType="phone-pad"
                 style={styles.phoneInput}
               />
             </View>
-            {error ? <Text style={styles.error}>{error}</Text> : null}
-            {info ? <Text style={styles.info}>{info}</Text> : null}
+
+            {error && (
+              <View style={styles.errorBox}>
+                <MaterialCommunityIcons name="alert-circle" size={16} color={colors.danger} />
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
+            {info && (
+              <View style={styles.infoBox}>
+                <MaterialCommunityIcons name="check-circle" size={16} color={colors.success} />
+                <Text style={styles.infoText}>{info}</Text>
+              </View>
+            )}
 
             <PrimaryButton
               title="Send OTP"
               loading={otpLoading}
               onPress={onSendOtp}
+              icon={<MaterialCommunityIcons name="message-text-lock" size={20} color="#fff" />}
               style={styles.btn}
             />
-            <Pressable onPress={onGoogleLogin} style={styles.googleBtn} disabled={googleLoading}>
+
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <Pressable
+              onPress={onGoogleLogin}
+              disabled={googleLoading}
+              style={({ pressed }) => [styles.googleBtn, pressed && { opacity: 0.8 }]}
+            >
+              <MaterialCommunityIcons name="google" size={20} color={colors.text} />
               <Text style={styles.googleBtnText}>
-                {googleLoading ? 'Opening Google...' : 'Continue with Google'}
+                {googleLoading ? 'Opening...' : 'Continue with Google'}
               </Text>
             </Pressable>
 
             <Text style={styles.legal}>
-              Supabase session is persisted securely on this device for auto-login.
+              By continuing, you agree to our terms of service. Your session is stored securely on this device.
             </Text>
           </GlassCard>
         </ScrollView>
@@ -204,37 +242,40 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   scroll: { paddingHorizontal: 22, flexGrow: 1 },
-  hero: { alignItems: 'center', marginBottom: 28 },
-  iconRing: {
-    width: 92,
-    height: 92,
-    borderRadius: 46,
+  hero: { alignItems: 'center', marginBottom: 32 },
+  logoCircle: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
+    shadowColor: '#7c3aed',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+    elevation: 12,
   },
-  title: {
-    fontSize: 36,
-    fontWeight: '800',
+  brandName: {
+    fontSize: 38,
+    fontWeight: '900',
     color: colors.text,
-    letterSpacing: -0.5,
+    letterSpacing: -1,
   },
   tagline: {
     marginTop: 10,
     textAlign: 'center',
     color: colors.textMuted,
-    fontSize: 16,
+    fontSize: 15,
     lineHeight: 22,
-    maxWidth: 320,
+    maxWidth: 300,
   },
   card: { padding: 24 },
   cardTitle: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: 24,
+    fontWeight: '900',
     color: colors.text,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   cardHint: {
     color: colors.textMuted,
@@ -246,55 +287,111 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    backgroundColor: 'rgba(167,139,250,0.06)',
+    borderRadius: radii.sm,
+    padding: 12,
+    marginBottom: 16,
   },
-  toggleText: { color: colors.textMuted, fontSize: 13, fontWeight: '600' },
-  label: {
-    color: colors.textMuted,
-    fontSize: 13,
-    marginBottom: 8,
-    fontWeight: '600',
-  },
-  phoneInputWrap: {
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: colors.inputBg,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 8,
+  toggleLabel: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
-  phonePrefix: {
-    color: colors.textMuted,
-    marginRight: 8,
+  toggleText: { color: colors.textMuted, fontSize: 13, fontWeight: '600' },
+  warningBox: {
+    flexDirection: 'row',
+    gap: 8,
+    backgroundColor: 'rgba(251,191,36,0.08)',
+    padding: 12,
+    borderRadius: radii.sm,
+    marginBottom: 16,
+    alignItems: 'flex-start',
+  },
+  warningText: { flex: 1, color: colors.warning, fontSize: 13, lineHeight: 18 },
+  label: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  phoneWrap: {
+    flexDirection: 'row',
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.inputBorder,
+    backgroundColor: colors.inputBg,
+    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  prefixBox: {
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    borderRightWidth: 1,
+    borderRightColor: colors.inputBorder,
+  },
+  prefixText: {
+    color: colors.accentViolet,
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   phoneInput: {
     flex: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
     color: colors.text,
-    fontSize: 16,
+    fontSize: 17,
+    fontWeight: '600',
+    letterSpacing: 1,
   },
-  error: { color: colors.accentRose, marginBottom: 8, fontSize: 14 },
-  info: { color: colors.accentViolet, marginBottom: 8, fontSize: 14 },
-  btn: { marginTop: 12 },
+  errorBox: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+    alignItems: 'flex-start',
+  },
+  errorText: { flex: 1, color: colors.danger, fontSize: 13, lineHeight: 18 },
+  infoBox: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+    alignItems: 'flex-start',
+  },
+  infoText: { flex: 1, color: colors.success, fontSize: 13, lineHeight: 18 },
+  btn: { marginTop: 8 },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 18,
+    gap: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  dividerText: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '600',
+  },
   googleBtn: {
-    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     paddingVertical: 14,
     borderRadius: radii.md,
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
   },
-  googleBtnText: { color: colors.text, fontWeight: '700' },
+  googleBtnText: { color: colors.text, fontWeight: '700', fontSize: 15 },
   legal: {
-    marginTop: 18,
+    marginTop: 20,
     fontSize: 11,
     lineHeight: 16,
-    color: colors.textMuted,
-    opacity: 0.9,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
 });

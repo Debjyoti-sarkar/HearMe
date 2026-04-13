@@ -7,6 +7,40 @@ import { isDemoAuthenticated } from '../../lib/demo-auth';
 import { useAuth } from '../../providers/AuthProvider';
 import { HearMeProvider } from '../../providers/HearMeProvider';
 
+const MODAL_OPTIONS = {
+  presentation: 'modal' as const,
+  animation: 'slide_from_bottom' as const,
+  contentStyle: { backgroundColor: colors.bgTop },
+};
+
+const FULLSCREEN_OPTIONS = {
+  presentation: 'fullScreenModal' as const,
+  animation: 'fade' as const,
+  contentStyle: { backgroundColor: '#020617' },
+};
+
+function MainStack() {
+  return (
+    <HearMeProvider>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: colors.bgTop },
+          animation: 'fade',
+        }}
+      >
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="helplines" options={MODAL_OPTIONS} />
+        <Stack.Screen name="fake-call" options={FULLSCREEN_OPTIONS} />
+        <Stack.Screen name="camera-detector" options={MODAL_OPTIONS} />
+        <Stack.Screen name="nearby-services" options={MODAL_OPTIONS} />
+        <Stack.Screen name="audio-recorder" options={MODAL_OPTIONS} />
+        <Stack.Screen name="alert-history" options={MODAL_OPTIONS} />
+      </Stack>
+    </HearMeProvider>
+  );
+}
+
 export default function MainLayout() {
   const { loading, session, profileComplete } = useAuth();
   const [demoAuth, setDemoAuth] = useState(false);
@@ -33,70 +67,11 @@ export default function MainLayout() {
     );
   }
 
-  if (demoAuth) {
-    return (
-      <HearMeProvider>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.bgTop },
-            animation: 'fade',
-          }}
-        >
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen
-            name="helplines"
-            options={{
-              presentation: 'modal',
-              animation: 'slide_from_bottom',
-              contentStyle: { backgroundColor: colors.bgTop },
-            }}
-          />
-          <Stack.Screen
-            name="fake-call"
-            options={{
-              presentation: 'fullScreenModal',
-              animation: 'fade',
-              contentStyle: { backgroundColor: '#020617' },
-            }}
-          />
-        </Stack>
-      </HearMeProvider>
-    );
-  }
-
+  if (demoAuth) return <MainStack />;
   if (!session) return <Redirect href="/login" />;
   if (!profileComplete) return <Redirect href="/profile" />;
 
-  return (
-    <HearMeProvider>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.bgTop },
-          animation: 'fade',
-        }}
-      >
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen
-          name="helplines"
-          options={{
-            presentation: 'modal',
-            animation: 'slide_from_bottom',
-            contentStyle: { backgroundColor: colors.bgTop },
-          }}
-        />
-        <Stack.Screen
-          name="fake-call"
-          options={{
-            presentation: 'fullScreenModal',
-            animation: 'fade',
-            contentStyle: { backgroundColor: '#020617' },
-          }}
-        />
-      </Stack>
-    </HearMeProvider>
-  );
+  return <MainStack />;
 }
 
 const styles = StyleSheet.create({

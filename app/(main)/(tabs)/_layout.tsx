@@ -1,11 +1,12 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Tabs } from 'expo-router';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '../../../constants/theme';
 
-const TAB_CONTENT = 54;
+const TAB_CONTENT = 58;
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
@@ -16,27 +17,27 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: 'rgba(8,6,22,0.98)',
+          backgroundColor: colors.tabBar,
           borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: 'rgba(255,255,255,0.12)',
+          borderTopColor: colors.tabBarBorder,
           height: TAB_CONTENT + bottom,
           paddingBottom: bottom,
           paddingTop: 6,
           elevation: 24,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.35,
-          shadowRadius: 12,
+          shadowOffset: { width: 0, height: -6 },
+          shadowOpacity: 0.4,
+          shadowRadius: 16,
         },
         tabBarActiveTintColor: colors.accentViolet,
-        tabBarInactiveTintColor: 'rgba(248,250,252,0.45)',
+        tabBarInactiveTintColor: 'rgba(241,245,249,0.35)',
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '700',
-          letterSpacing: 0.3,
+          fontSize: 10,
+          fontWeight: '800',
+          letterSpacing: 0.5,
           marginBottom: 0,
         },
-        tabBarItemStyle: { paddingTop: 2 },
+        tabBarItemStyle: { paddingTop: 4 },
         tabBarHideOnKeyboard: true,
       }}
     >
@@ -44,8 +45,16 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="shield-home" color={color} size={24} />
+          tabBarIcon: ({ color, focused }) => (
+            <View>
+              {focused && (
+                <LinearGradient
+                  colors={['rgba(167,139,250,0.3)', 'rgba(167,139,250,0)']}
+                  style={styles.activeGlow}
+                />
+              )}
+              <MaterialCommunityIcons name="shield-home" color={color} size={26} />
+            </View>
           ),
         }}
       />
@@ -54,7 +63,7 @@ export default function TabsLayout() {
         options={{
           title: 'Contacts',
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="account-heart" color={color} size={24} />
+            <MaterialCommunityIcons name="account-heart" color={color} size={26} />
           ),
         }}
       />
@@ -63,7 +72,7 @@ export default function TabsLayout() {
         options={{
           title: 'Speed',
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="speedometer" color={color} size={24} />
+            <MaterialCommunityIcons name="speedometer" color={color} size={26} />
           ),
         }}
       />
@@ -72,7 +81,7 @@ export default function TabsLayout() {
         options={{
           title: 'Safety',
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="book-open-page-variant" color={color} size={24} />
+            <MaterialCommunityIcons name="shield-star" color={color} size={26} />
           ),
         }}
       />
@@ -81,10 +90,21 @@ export default function TabsLayout() {
         options={{
           title: 'Settings',
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="cog-outline" color={color} size={24} />
+            <MaterialCommunityIcons name="cog" color={color} size={26} />
           ),
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  activeGlow: {
+    position: 'absolute',
+    top: -12,
+    left: -10,
+    right: -10,
+    height: 48,
+    borderRadius: 24,
+  },
+});

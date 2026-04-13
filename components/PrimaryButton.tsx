@@ -1,25 +1,37 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
   Text,
+  View,
   type PressableProps,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { colors, radii } from '../constants/theme';
 
 type Props = Omit<PressableProps, 'children'> & {
   title: string;
+  icon?: ReactNode;
   loading?: boolean;
+  variant?: 'primary' | 'danger' | 'success';
   style?: StyleProp<ViewStyle>;
 };
-import { colors, radii } from '../constants/theme';
+
+const GRADIENTS = {
+  primary: [colors.accentPink, colors.accentRose] as const,
+  danger: ['#dc2626', '#b91c1c'] as const,
+  success: ['#059669', '#047857'] as const,
+};
 
 export function PrimaryButton({
   title,
+  icon,
   loading,
   disabled,
+  variant = 'primary',
   onPress,
   style,
   ...rest
@@ -41,7 +53,7 @@ export function PrimaryButton({
       {...rest}
     >
       <LinearGradient
-        colors={[colors.accentPink, colors.accentRose]}
+        colors={[...GRADIENTS[variant]]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
@@ -49,7 +61,10 @@ export function PrimaryButton({
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.text}>{title}</Text>
+          <View style={styles.content}>
+            {icon}
+            <Text style={styles.text}>{title}</Text>
+          </View>
         )}
       </LinearGradient>
     </Pressable>
@@ -60,9 +75,9 @@ const styles = StyleSheet.create({
   wrap: {
     borderRadius: radii.lg,
     overflow: 'hidden',
-    elevation: 6,
+    elevation: 8,
     shadowColor: colors.accentRose,
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 16,
   },
@@ -72,12 +87,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 54,
   },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   text: {
     color: '#fff',
-    fontSize: 17,
-    fontWeight: '700',
-    letterSpacing: 0.4,
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
-  dim: { opacity: 0.55 },
-  pressed: { transform: [{ scale: 0.98 }] },
+  dim: { opacity: 0.5 },
+  pressed: { transform: [{ scale: 0.97 }], opacity: 0.9 },
 });

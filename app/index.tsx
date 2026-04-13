@@ -4,18 +4,24 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { colors } from '../constants/theme';
 import { isDemoAuthenticated } from '../lib/demo-auth';
 import { useAuth } from '../providers/AuthProvider';
+import { loadSettings } from '../lib/app-data';
 
 export default function Index() {
   const { loading, session, profileComplete } = useAuth();
   const [demoAuth, setDemoAuth] = useState(false);
   const [demoReady, setDemoReady] = useState(false);
+  const [onboardingDone, setOnboardingDone] = useState(true);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const value = await isDemoAuthenticated();
+      const [value, settings] = await Promise.all([
+        isDemoAuthenticated(),
+        loadSettings(),
+      ]);
       if (!mounted) return;
       setDemoAuth(value);
+      setOnboardingDone(settings.onboardingComplete);
       setDemoReady(true);
     })();
     return () => {
@@ -31,6 +37,7 @@ export default function Index() {
     );
   }
 
+  if (!onboardingDone) return <Redirect href="/onboarding" />;
   if (demoAuth) return <Redirect href="/(main)" />;
   if (!session) return <Redirect href="/login" />;
   if (!profileComplete) return <Redirect href="/profile" />;
