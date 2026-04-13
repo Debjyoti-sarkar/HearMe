@@ -37,7 +37,19 @@ const HearMeContext = createContext<HearMeContextValue | null>(null);
 
 export function useHearMe() {
   const v = useContext(HearMeContext);
-  if (!v) throw new Error('useHearMe must be used inside HearMeProvider');
+  if (!v) {
+    return {
+      ready: false,
+      contacts: [],
+      settings: { ...DEFAULT_SETTINGS },
+      upsertContact: async () => {},
+      removeContact: async () => {},
+      patchSettings: async () => {},
+      executeSos: async () => ({ ok: false, message: 'HearMe is not ready yet.' }),
+      shareLocation: async () => ({ ok: false, message: 'HearMe is not ready yet.' }),
+      callEmergencyLine: async () => {},
+    };
+  }
   return v;
 }
 

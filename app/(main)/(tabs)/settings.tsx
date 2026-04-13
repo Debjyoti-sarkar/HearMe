@@ -19,20 +19,22 @@ import { GradientBackground } from '../../../components/GradientBackground';
 import { GlassCard } from '../../../components/GlassCard';
 import { PrimaryButton } from '../../../components/PrimaryButton';
 import { colors, radii } from '../../../constants/theme';
-import * as Session from '../../../lib/session';
+import { clearDemoAuth } from '../../../lib/demo-auth';
+import { useAuth } from '../../../providers/AuthProvider';
 import { useHearMe } from '../../../providers/HearMeProvider';
 
 export default function SettingsTab() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const { ready, settings, patchSettings } = useHearMe();
+  const { signOut: doSignOut } = useAuth();
   const [numDraft, setNumDraft] = useState(settings.emergencyNumber);
 
   useEffect(() => {
     if (ready) setNumDraft(settings.emergencyNumber);
   }, [ready, settings.emergencyNumber]);
 
-  const signOut = () => {
+  const onSignOut = () => {
     Alert.alert('Sign out?', 'You will need OTP + Aadhaar step again on this device.', [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -40,7 +42,8 @@ export default function SettingsTab() {
         style: 'destructive',
         onPress: () =>
           void (async () => {
-            await Session.clearSession();
+            await clearDemoAuth();
+            await doSignOut();
             router.replace('/login');
           })(),
       },
@@ -129,7 +132,7 @@ export default function SettingsTab() {
           />
         </GlassCard>
 
-        <PrimaryButton title="Sign out" onPress={signOut} style={styles.signOut} />
+        <PrimaryButton title="Sign out" onPress={onSignOut} style={styles.signOut} />
 
         <View style={styles.footer}>
           <MaterialCommunityIcons name="information-outline" size={18} color={colors.textMuted} />

@@ -4,6 +4,18 @@ export type EmergencyContact = {
   phone: string;
 };
 
+export type UserProfile = {
+  id: string;
+  name: string | null;
+  age: number | null;
+  dob: string | null;
+  phone: string | null;
+  email: string | null;
+  location: string | null;
+  avatar_url: string | null;
+  created_at: string | null;
+};
+
 export type HearMeSettings = {
   shakeEnabled: boolean;
   instantShake: boolean;

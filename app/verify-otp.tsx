@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useMemo, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -16,40 +16,61 @@ import { GradientBackground } from '../components/GradientBackground';
 import { GlassCard } from '../components/GlassCard';
 import { OtpInputRow } from '../components/OtpInputRow';
 import { PrimaryButton } from '../components/PrimaryButton';
-import { colors, radii } from '../constants/theme';
+import { colors } from '../constants/theme';
+import { enableDemoAuth } from '../lib/demo-auth';
 import { DEMO_OTP, verifyDemoOtp } from '../lib/otp';
 import { maskPhone } from '../lib/phone';
-import * as Session from '../lib/session';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
+import { useAuth } from '../providers/AuthProvider';
 
 export default function VerifyOtpScreen() {
   const insets = useSafeAreaInsets();
-  const [masked, setMasked] = useState('');
+  const { session } = useAuth();
+  const params = useLocalSearchParams<{ phone?: string; mode?: string }>();
+  const phone = useMemo(() => `${params.phone ?? ''}`.trim(), [params.phone]);
+  const mode = useMemo(() => `${params.mode ?? 'real'}`.toLowerCase(), [params.mode]);
+  const isDemoMode = mode === 'demo';
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    (async () => {
-      const p = await Session.getPhone();
-      if (!p) {
-        router.replace('/login');
-        return;
-      }
-      setMasked(maskPhone(p));
-    })();
-  }, []);
-
   const onVerify = async () => {
-    setError(null);
-    if (!verifyDemoOtp(otp)) {
-      setError(`Invalid OTP. Testing code is ${DEMO_OTP}.`);
+    if (!isDemoMode && !isSupabaseConfigured) {
+      setError('Missing Supabase env vars. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_KEY.');
       return;
     }
+    if (!phone) {
+      setError('Phone number is missing. Go back and request OTP again.');
+      return;
+    }
+    setError(null);
+    if (otp.trim().length < 6) {
+      setError('Enter the 6-digit OTP code.');
+      return;
+    }
+
+    if (isDemoMode) {
+      if (!verifyDemoOtp(otp)) {
+        setError(`Invalid demo OTP. Use ${DEMO_OTP}.`);
+        return;
+      }
+      await enableDemoAuth();
+      router.replace('/(main)');
+      return;
+    }
+
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 600));
-    await Session.markOtpVerified();
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      phone,
+      token: otp.trim(),
+      type: 'sms',
+    });
     setLoading(false);
-    router.replace('/aadhaar');
+    if (verifyError) {
+      setError(verifyError.message);
+      return;
+    }
+    router.replace(session ? '/(main)' : '/profile');
   };
 
   return (
@@ -66,10 +87,7 @@ export default function VerifyOtpScreen() {
           ]}
         >
           <Pressable
-            onPress={async () => {
-              await Session.clearSession();
-              router.replace('/login');
-            }}
+            onPress={() => router.replace('/login')}
             style={[styles.backRow, { marginLeft: 4 }]}
             hitSlop={12}
           >
@@ -78,7 +96,7 @@ export default function VerifyOtpScreen() {
               size={28}
               color={colors.text}
             />
-            <Text style={styles.backText}>Edit number</Text>
+            <Text style={styles.backText}>Back to login</Text>
           </Pressable>
 
           <View style={styles.hero}>
@@ -94,7 +112,7 @@ export default function VerifyOtpScreen() {
             </LinearGradient>
             <Text style={styles.title}>Enter OTP</Text>
             <Text style={styles.sub}>
-              Code sent to <Text style={styles.bold}>{masked || 'your number'}</Text>
+              Code sent to <Text style={styles.bold}>{phone ? maskPhone(phone) : 'your phone'}</Text>
             </Text>
           </View>
 
@@ -110,8 +128,9 @@ export default function VerifyOtpScreen() {
               style={styles.btn}
             />
             <Text style={styles.hint}>
-              Resend and true SMS integration can be wired to Twilio / MSG91 /
-              Firebase Auth — this screen is ready for that swap.
+              {isDemoMode
+                ? `Demo mode is ON. Use OTP ${DEMO_OTP}.`
+                : 'Use the SMS code from your phone. You can also use Google sign-in from the login screen.'}
             </Text>
           </GlassCard>
         </ScrollView>

@@ -2,23 +2,28 @@ import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { colors } from '../constants/theme';
-import * as Session from '../lib/session';
+import { isDemoAuthenticated } from '../lib/demo-auth';
+import { useAuth } from '../providers/AuthProvider';
 
 export default function Index() {
-  const [href, setHref] = useState<Session.InitialRoute | null>(null);
+  const { loading, session, profileComplete } = useAuth();
+  const [demoAuth, setDemoAuth] = useState(false);
+  const [demoReady, setDemoReady] = useState(false);
 
   useEffect(() => {
-    let alive = true;
+    let mounted = true;
     (async () => {
-      const route = await Session.resolveInitialRoute();
-      if (alive) setHref(route);
+      const value = await isDemoAuthenticated();
+      if (!mounted) return;
+      setDemoAuth(value);
+      setDemoReady(true);
     })();
     return () => {
-      alive = false;
+      mounted = false;
     };
   }, []);
 
-  if (href === null) {
+  if (loading || !demoReady) {
     return (
       <View style={styles.boot}>
         <ActivityIndicator size="large" color={colors.accentViolet} />
@@ -26,7 +31,10 @@ export default function Index() {
     );
   }
 
-  return <Redirect href={href} />;
+  if (demoAuth) return <Redirect href="/(main)" />;
+  if (!session) return <Redirect href="/login" />;
+  if (!profileComplete) return <Redirect href="/profile" />;
+  return <Redirect href="/(main)" />;
 }
 
 const styles = StyleSheet.create({

@@ -3,24 +3,29 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { colors } from '../../constants/theme';
-import { resolveInitialRoute, type InitialRoute } from '../../lib/session';
+import { isDemoAuthenticated } from '../../lib/demo-auth';
+import { useAuth } from '../../providers/AuthProvider';
 import { HearMeProvider } from '../../providers/HearMeProvider';
 
 export default function MainLayout() {
-  const [target, setTarget] = useState<InitialRoute | null>(null);
+  const { loading, session, profileComplete } = useAuth();
+  const [demoAuth, setDemoAuth] = useState(false);
+  const [demoReady, setDemoReady] = useState(false);
 
   useEffect(() => {
-    let m = true;
+    let mounted = true;
     (async () => {
-      const r = await resolveInitialRoute();
-      if (m) setTarget(r);
+      const value = await isDemoAuthenticated();
+      if (!mounted) return;
+      setDemoAuth(value);
+      setDemoReady(true);
     })();
     return () => {
-      m = false;
+      mounted = false;
     };
   }, []);
 
-  if (target === null) {
+  if (loading || !demoReady) {
     return (
       <View style={styles.boot}>
         <ActivityIndicator color={colors.accentViolet} size="large" />
@@ -28,9 +33,40 @@ export default function MainLayout() {
     );
   }
 
-  if (target !== '/(main)') {
-    return <Redirect href={target} />;
+  if (demoAuth) {
+    return (
+      <HearMeProvider>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.bgTop },
+            animation: 'fade',
+          }}
+        >
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen
+            name="helplines"
+            options={{
+              presentation: 'modal',
+              animation: 'slide_from_bottom',
+              contentStyle: { backgroundColor: colors.bgTop },
+            }}
+          />
+          <Stack.Screen
+            name="fake-call"
+            options={{
+              presentation: 'fullScreenModal',
+              animation: 'fade',
+              contentStyle: { backgroundColor: '#020617' },
+            }}
+          />
+        </Stack>
+      </HearMeProvider>
+    );
   }
+
+  if (!session) return <Redirect href="/login" />;
+  if (!profileComplete) return <Redirect href="/profile" />;
 
   return (
     <HearMeProvider>
