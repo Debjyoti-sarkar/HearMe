@@ -81,12 +81,12 @@ export default function OnboardingScreen() {
     if (currentIndex < SLIDES.length - 1) {
       flatListRef.current?.scrollToIndex({ index: currentIndex + 1 });
     } else {
-      router.replace('/login');
+      router.replace('/language');
     }
   };
 
   const skip = () => {
-    router.replace('/login');
+    router.replace('/language');
   };
 
   const renderSlide = ({ item, index }: { item: Slide; index: number }) => {

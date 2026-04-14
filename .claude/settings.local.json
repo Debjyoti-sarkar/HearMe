@@ -5,7 +5,17 @@
       "Bash(npx expo:*)",
       "Bash(npm install:*)",
       "Bash(npx tsc:*)",
-      "Bash(echo \"EXIT: $?\")"
+      "Bash(echo \"EXIT: $?\")",
+      "WebSearch",
+      "WebFetch(domain:www.biz4group.com)",
+      "WebFetch(domain:theninehertz.com)",
+      "WebFetch(domain:www.a3logics.com)",
+      "Bash(find . -name \"trust_score_engine.dart\" -exec wc -l {} \\\\;)",
+      "Bash(find without_model/phishsafe_sdk/lib/storage -type f -exec wc -l {} \\\\;)",
+      "Bash(du -sh . */)",
+      "Bash(du -sh */)",
+      "Bash(git:*)",
+      "Bash(kill %1)"
     ]
   }
 }

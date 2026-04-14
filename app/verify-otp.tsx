@@ -18,21 +18,38 @@ import { OtpInputRow } from '../components/OtpInputRow';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { colors } from '../constants/theme';
 import { enableDemoAuth } from '../lib/demo-auth';
+import { useLanguage } from '../lib/i18n';
 import { DEMO_OTP, verifyDemoOtp } from '../lib/otp';
 import { maskPhone } from '../lib/phone';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
+import * as Session from '../lib/session';
 import { useAuth } from '../providers/AuthProvider';
 
 export default function VerifyOtpScreen() {
   const insets = useSafeAreaInsets();
   const { session } = useAuth();
-  const params = useLocalSearchParams<{ phone?: string; mode?: string }>();
+  const { T } = useLanguage();
+  const params = useLocalSearchParams<{ phone?: string; mode?: string; userType?: string }>();
   const phone = useMemo(() => `${params.phone ?? ''}`.trim(), [params.phone]);
   const mode = useMemo(() => `${params.mode ?? 'real'}`.toLowerCase(), [params.mode]);
+  const userType = useMemo(() => (params.userType === 'new' ? 'new' : 'existing'), [params.userType]);
   const isDemoMode = mode === 'demo';
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const navigateAfterVerify = async () => {
+    // Save user type
+    await Session.setUserType(userType);
+
+    if (userType === 'new') {
+      // New users go to Aadhaar verification
+      router.replace('/aadhaar');
+    } else {
+      // Existing users go to PIN/biometric setup
+      router.replace('/setup-pin');
+    }
+  };
 
   const onVerify = async () => {
     if (!isDemoMode && !isSupabaseConfigured) {
@@ -55,7 +72,7 @@ export default function VerifyOtpScreen() {
         return;
       }
       await enableDemoAuth();
-      router.replace('/(main)');
+      await navigateAfterVerify();
       return;
     }
 
@@ -70,7 +87,7 @@ export default function VerifyOtpScreen() {
       setError(verifyError.message);
       return;
     }
-    router.replace(session ? '/(main)' : '/profile');
+    await navigateAfterVerify();
   };
 
   return (
@@ -96,7 +113,7 @@ export default function VerifyOtpScreen() {
               size={28}
               color={colors.text}
             />
-            <Text style={styles.backText}>Back to login</Text>
+            <Text style={styles.backText}>{T('backToLogin')}</Text>
           </Pressable>
 
           <View style={styles.hero}>
@@ -110,18 +127,18 @@ export default function VerifyOtpScreen() {
                 color={colors.text}
               />
             </LinearGradient>
-            <Text style={styles.title}>Enter OTP</Text>
+            <Text style={styles.title}>{T('enterOtp')}</Text>
             <Text style={styles.sub}>
-              Code sent to <Text style={styles.bold}>{phone ? maskPhone(phone) : 'your phone'}</Text>
+              {T('codeSentTo')} <Text style={styles.bold}>{phone ? maskPhone(phone) : 'your phone'}</Text>
             </Text>
           </View>
 
           <GlassCard style={styles.card}>
-            <Text style={styles.label}>6-digit code</Text>
+            <Text style={styles.label}>{T('sixDigitCode')}</Text>
             <OtpInputRow value={otp} onChange={setOtp} />
             {error ? <Text style={styles.error}>{error}</Text> : null}
             <PrimaryButton
-              title="Verify & continue"
+              title={T('verifyContinue')}
               loading={loading}
               disabled={otp.length < 6}
               onPress={onVerify}

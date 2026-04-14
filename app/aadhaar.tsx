@@ -19,10 +19,12 @@ import { GlassCard } from '../components/GlassCard';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { colors, radii } from '../constants/theme';
 import { digitsOnly, formatAadhaarDigits, isPlausibleAadhaar12 } from '../lib/aadhaar';
+import { useLanguage } from '../lib/i18n';
 import * as Session from '../lib/session';
 
 export default function AadhaarScreen() {
   const insets = useSafeAreaInsets();
+  const { T } = useLanguage();
   const [raw, setRaw] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +40,7 @@ export default function AadhaarScreen() {
     const d12 = digitsOnly(raw);
     if (!isPlausibleAadhaar12(d12)) {
       setError(
-        'Enter a plausible 12-digit Aadhaar (first digit 2–9). This demo does not call UIDAI.',
+        'Enter a plausible 12-digit Aadhaar (first digit 2-9). This demo does not call UIDAI.',
       );
       return;
     }
@@ -52,7 +54,8 @@ export default function AadhaarScreen() {
       /* Expo Go may ignore */
     }
     setLoading(false);
-    router.replace('/(main)');
+    // After Aadhaar verification, go to PIN/biometric setup
+    router.replace('/setup-pin');
   };
 
   return (
@@ -79,19 +82,16 @@ export default function AadhaarScreen() {
                 color={colors.text}
               />
             </LinearGradient>
-            <Text style={styles.title}>Verify Aadhaar</Text>
-            <Text style={styles.sub}>
-              Enter your 12-digit number. UI-only validation for now — connect
-              UIDAI-approved eKYC before production.
-            </Text>
+            <Text style={styles.title}>{T('verifyAadhaar')}</Text>
+            <Text style={styles.sub}>{T('aadhaarDesc')}</Text>
           </View>
 
           <GlassCard style={styles.card}>
-            <Text style={styles.label}>Aadhaar number</Text>
+            <Text style={styles.label}>{T('aadhaarNumber')}</Text>
             <TextInput
               value={display}
               onChangeText={onChange}
-              placeholder="XXXX XXXX XXXX"
+              placeholder={T('aadhaarPlaceholder')}
               placeholderTextColor={colors.textMuted}
               keyboardType="number-pad"
               style={styles.input}
@@ -100,12 +100,12 @@ export default function AadhaarScreen() {
             {error ? <Text style={styles.error}>{error}</Text> : null}
 
             <View style={styles.bullets}>
-              <Row icon="lock-check-outline" text="Data stays on-device in this demo." />
-              <Row icon="shield-alert-outline" text="Never share OTPs or full Aadhaar publicly." />
+              <Row icon="lock-check-outline" text={T('dataOnDevice')} />
+              <Row icon="shield-alert-outline" text={T('neverShareOtp')} />
             </View>
 
             <PrimaryButton
-              title="Verify & finish"
+              title={T('verifyFinish')}
               loading={loading}
               disabled={digitsOnly(raw).length !== 12}
               onPress={onVerify}

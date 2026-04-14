@@ -249,6 +249,22 @@ export default function HomeTab() {
               <Text style={styles.featureSub}>View past alerts</Text>
             </GlassCard>
           </Pressable>
+
+          <Pressable
+            onPress={() => router.push('/(main)/behavior-monitor')}
+            style={styles.featureHalf}
+          >
+            <GlassCard variant="accent" style={styles.featureCard}>
+              <LinearGradient
+                colors={['#14b8a6', '#0d9488']}
+                style={styles.featureIcon}
+              >
+                <MaterialCommunityIcons name="brain" size={24} color="#fff" />
+              </LinearGradient>
+              <Text style={styles.featureTitle}>Behavior{'\n'}Monitor</Text>
+              <Text style={styles.featureSub}>PhishSafe distress detection</Text>
+            </GlassCard>
+          </Pressable>
         </View>
 
         {/* Safety Tip of the Day */}

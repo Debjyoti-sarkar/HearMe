@@ -2,6 +2,7 @@ import { Redirect, Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import { GestureTracker } from '../../components/GestureTracker';
 import { colors } from '../../constants/theme';
 import { isDemoAuthenticated } from '../../lib/demo-auth';
 import { useAuth } from '../../providers/AuthProvider';
@@ -22,6 +23,7 @@ const FULLSCREEN_OPTIONS = {
 function MainStack() {
   return (
     <HearMeProvider>
+      <GestureTracker>
       <Stack
         screenOptions={{
           headerShown: false,
@@ -36,7 +38,9 @@ function MainStack() {
         <Stack.Screen name="nearby-services" options={MODAL_OPTIONS} />
         <Stack.Screen name="audio-recorder" options={MODAL_OPTIONS} />
         <Stack.Screen name="alert-history" options={MODAL_OPTIONS} />
+        <Stack.Screen name="behavior-monitor" options={MODAL_OPTIONS} />
       </Stack>
+      </GestureTracker>
     </HearMeProvider>
   );
 }

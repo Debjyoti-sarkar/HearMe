@@ -6,12 +6,13 @@ import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
-  Switch,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,6 +21,7 @@ import { GlassCard } from '../components/GlassCard';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { colors, radii } from '../constants/theme';
 import { isDemoAuthenticated } from '../lib/demo-auth';
+import { useLanguage } from '../lib/i18n';
 import { saveSettings, loadSettings } from '../lib/app-data';
 import { DEMO_OTP } from '../lib/otp';
 import { normalizeIndiaPhone } from '../lib/phone';
@@ -28,9 +30,13 @@ import { useAuth } from '../providers/AuthProvider';
 
 WebBrowser.maybeCompleteAuthSession();
 
+type UserType = 'new' | 'existing' | null;
+
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const { session, profileComplete } = useAuth();
+  const { T } = useLanguage();
+  const [userType, setUserType] = useState<UserType>(null);
   const [phone, setPhone] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -39,7 +45,6 @@ export default function LoginScreen() {
   const [info, setInfo] = useState<string | null>(null);
 
   useEffect(() => {
-    // Mark onboarding as complete when user reaches login
     void (async () => {
       const settings = await loadSettings();
       if (!settings.onboardingComplete) {
@@ -96,7 +101,11 @@ export default function LoginScreen() {
     );
     router.push({
       pathname: '/verify-otp',
-      params: { phone: normalizedPhone, mode: useDemoOtp ? 'demo' : 'real' },
+      params: {
+        phone: normalizedPhone,
+        mode: useDemoOtp ? 'demo' : 'real',
+        userType: userType ?? 'existing',
+      },
     });
   };
 
@@ -125,11 +134,11 @@ export default function LoginScreen() {
     }
   };
 
-  return (
-    <GradientBackground>
-      <KeyboardAvoidingView style={styles.flex}>
+  // If user type is not selected, show the selection screen
+  if (!userType) {
+    return (
+      <GradientBackground>
         <ScrollView
-          keyboardShouldPersistTaps="handled"
           contentContainerStyle={[
             styles.scroll,
             { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 24 },
@@ -142,22 +151,116 @@ export default function LoginScreen() {
             >
               <MaterialCommunityIcons name="shield-check" size={48} color="#fff" />
             </LinearGradient>
-            <Text style={styles.brandName}>HearMe</Text>
-            <Text style={styles.tagline}>
-              Your personal safety guardian — always watching, always ready.
+            <Text style={styles.brandName}>{T('appName')}</Text>
+            <Text style={styles.tagline}>{T('yourSafetyGuardian')}</Text>
+          </View>
+
+          <GlassCard variant="elevated" style={styles.card}>
+            <Text style={styles.cardTitle}>{T('welcomeBack')}</Text>
+            <Text style={styles.cardHint}>{T('signInContinue')}</Text>
+
+            {/* New User Option */}
+            <Pressable
+              onPress={() => setUserType('new')}
+              style={({ pressed }) => [styles.userTypeCard, pressed && { opacity: 0.8 }]}
+            >
+              <LinearGradient
+                colors={['rgba(167,139,250,0.2)', 'rgba(236,72,153,0.15)']}
+                style={styles.userTypeGradient}
+              >
+                <View style={styles.userTypeIcon}>
+                  <MaterialCommunityIcons name="account-plus" size={32} color={colors.accentViolet} />
+                </View>
+                <View style={styles.userTypeInfo}>
+                  <Text style={styles.userTypeTitle}>{T('newUser')}</Text>
+                  <Text style={styles.userTypeDesc}>{T('newUserDesc')}</Text>
+                </View>
+                <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+              </LinearGradient>
+            </Pressable>
+
+            {/* Existing User Option */}
+            <Pressable
+              onPress={() => setUserType('existing')}
+              style={({ pressed }) => [styles.userTypeCard, pressed && { opacity: 0.8 }]}
+            >
+              <LinearGradient
+                colors={['rgba(52,211,153,0.2)', 'rgba(56,189,248,0.15)']}
+                style={styles.userTypeGradient}
+              >
+                <View style={styles.userTypeIcon}>
+                  <MaterialCommunityIcons name="account-check" size={32} color={colors.accentEmerald} />
+                </View>
+                <View style={styles.userTypeInfo}>
+                  <Text style={styles.userTypeTitle}>{T('existingUser')}</Text>
+                  <Text style={styles.userTypeDesc}>{T('existingUserDesc')}</Text>
+                </View>
+                <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+              </LinearGradient>
+            </Pressable>
+          </GlassCard>
+
+          {/* Change Language */}
+          <Pressable
+            onPress={() => router.push('/language')}
+            style={styles.changeLangBtn}
+          >
+            <MaterialCommunityIcons name="translate" size={18} color={colors.accentViolet} />
+            <Text style={styles.changeLangText}>{T('chooseLanguage')}</Text>
+          </Pressable>
+        </ScrollView>
+      </GradientBackground>
+    );
+  }
+
+  // Login form (phone OTP + Google)
+  return (
+    <GradientBackground>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[
+            styles.scroll,
+            { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 24 },
+          ]}
+        >
+          {/* Back button */}
+          <Pressable
+            onPress={() => setUserType(null)}
+            style={styles.backRow}
+            hitSlop={12}
+          >
+            <MaterialCommunityIcons name="chevron-left" size={28} color={colors.text} />
+            <Text style={styles.backText}>{T('back')}</Text>
+          </Pressable>
+
+          <View style={styles.hero}>
+            <LinearGradient
+              colors={userType === 'new' ? ['#7c3aed', '#a78bfa'] : ['#059669', '#34d399']}
+              style={styles.logoCircleSmall}
+            >
+              <MaterialCommunityIcons
+                name={userType === 'new' ? 'account-plus' : 'account-check'}
+                size={36}
+                color="#fff"
+              />
+            </LinearGradient>
+            <Text style={styles.brandNameSmall}>
+              {userType === 'new' ? T('newUser') : T('existingUser')}
             </Text>
           </View>
 
           <GlassCard variant="elevated" style={styles.card}>
-            <Text style={styles.cardTitle}>Welcome Back</Text>
-            <Text style={styles.cardHint}>
-              Sign in with your phone number to continue
-            </Text>
+            <Text style={styles.cardTitle}>{T('signInContinue')}</Text>
 
+            {/* Demo mode toggle */}
             <View style={styles.toggleRow}>
               <View style={styles.toggleLabel}>
                 <MaterialCommunityIcons name="test-tube" size={16} color={colors.accentViolet} />
-                <Text style={styles.toggleText}>Demo mode (testing)</Text>
+                <Text style={styles.toggleText}>{T('demoMode')}</Text>
               </View>
               <Switch
                 value={useDemoOtp}
@@ -176,7 +279,7 @@ export default function LoginScreen() {
               </View>
             )}
 
-            <Text style={styles.label}>PHONE NUMBER</Text>
+            <Text style={styles.label}>{T('phoneNumber')}</Text>
             <View style={styles.phoneWrap}>
               <View style={styles.prefixBox}>
                 <Text style={styles.prefixText}>+91</Text>
@@ -205,7 +308,7 @@ export default function LoginScreen() {
             )}
 
             <PrimaryButton
-              title="Send OTP"
+              title={T('sendOtp')}
               loading={otpLoading}
               onPress={onSendOtp}
               icon={<MaterialCommunityIcons name="message-text-lock" size={20} color="#fff" />}
@@ -214,7 +317,7 @@ export default function LoginScreen() {
 
             <View style={styles.divider}>
               <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or</Text>
+              <Text style={styles.dividerText}>{T('or')}</Text>
               <View style={styles.dividerLine} />
             </View>
 
@@ -225,13 +328,11 @@ export default function LoginScreen() {
             >
               <MaterialCommunityIcons name="google" size={20} color={colors.text} />
               <Text style={styles.googleBtnText}>
-                {googleLoading ? 'Opening...' : 'Continue with Google'}
+                {googleLoading ? 'Opening...' : T('continueWithGoogle')}
               </Text>
             </Pressable>
 
-            <Text style={styles.legal}>
-              By continuing, you agree to our terms of service. Your session is stored securely on this device.
-            </Text>
+            <Text style={styles.legal}>{T('legalText')}</Text>
           </GlassCard>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -242,7 +343,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   scroll: { paddingHorizontal: 22, flexGrow: 1 },
-  hero: { alignItems: 'center', marginBottom: 32 },
+  hero: { alignItems: 'center', marginBottom: 24 },
   logoCircle: {
     width: 88,
     height: 88,
@@ -256,11 +357,29 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 12,
   },
+  logoCircleSmall: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+    shadowColor: '#7c3aed',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
+  },
   brandName: {
     fontSize: 38,
     fontWeight: '900',
     color: colors.text,
     letterSpacing: -1,
+  },
+  brandNameSmall: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: colors.text,
   },
   tagline: {
     marginTop: 10,
@@ -272,7 +391,7 @@ const styles = StyleSheet.create({
   },
   card: { padding: 24 },
   cardTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '900',
     color: colors.text,
     marginBottom: 6,
@@ -281,8 +400,64 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 14,
     lineHeight: 20,
-    marginBottom: 20,
+    marginBottom: 24,
   },
+  // User type selection cards
+  userTypeCard: {
+    marginBottom: 14,
+    borderRadius: radii.md,
+    overflow: 'hidden',
+  },
+  userTypeGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 18,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  userTypeIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  userTypeInfo: { flex: 1 },
+  userTypeTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: 3,
+  },
+  userTypeDesc: {
+    fontSize: 13,
+    color: colors.textMuted,
+    fontWeight: '500',
+  },
+  changeLangBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 20,
+    paddingVertical: 12,
+  },
+  changeLangText: {
+    color: colors.accentViolet,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  // Login form styles
+  backRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+  backText: { color: colors.text, fontSize: 16, fontWeight: '600' },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
