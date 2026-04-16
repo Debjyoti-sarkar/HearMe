@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   LanguageContext,
   type LangCode,
+  i18n,
   loadLanguage,
   saveLanguage,
   t,
@@ -14,13 +15,17 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       const saved = await loadLanguage();
-      if (saved) setLangState(saved);
+      if (saved) {
+        setLangState(saved);
+        await i18n.changeLanguage(saved);
+      }
       setReady(true);
     })();
   }, []);
 
   const setLang = useCallback(async (code: LangCode) => {
     setLangState(code);
+    await i18n.changeLanguage(code);
     await saveLanguage(code);
   }, []);
 

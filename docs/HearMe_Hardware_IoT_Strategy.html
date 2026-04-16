@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HearMe — Hardware &amp; IoT Integration Strategy</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  :root {
+    --ink: #1a1a2e;
+    --muted: #4a4a5e;
+    --accent: #5b21b6;
+    --accent-2: #c2185b;
+    --accent-soft: #ede9fe;
+    --rule: #e3e3ea;
+    --chip-bg: #f3f4f8;
+    --ok: #1b7a47;
+    --warn: #b85900;
+    --code-bg: #0f172a;
+    --code-ink: #e2e8f0;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    font-size: 10.5pt;
+    line-height: 1.45;
+  }
+  .cover {
+    page-break-after: always;
+    padding: 40mm 0 0 0;
+    text-align: center;
+  }
+  .cover .badge {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    font-size: 9pt;
+    text-transform: uppercase;
+  }
+  .cover h1 {
+    font-size: 34pt;
+    margin: 18px 0 6px 0;
+    letter-spacing: -0.02em;
+  }
+  .cover .sub {
+    font-size: 14pt;
+    color: var(--muted);
+    margin-bottom: 40px;
+  }
+  .cover .vol {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 12px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 4px;
+    font-size: 9.5pt;
+    letter-spacing: 0.1em;
+  }
+  .cover .meta {
+    margin-top: 60mm;
+    color: var(--muted);
+    font-size: 10pt;
+  }
+  .cover .meta strong { color: var(--ink); }
+  h1, h2, h3, h4 { color: var(--ink); letter-spacing: -0.01em; }
+  h2 {
+    font-size: 16pt;
+    margin: 22px 0 8px 0;
+    padding-bottom: 4px;
+    border-bottom: 2px solid var(--accent);
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 12pt;
+    margin: 16px 0 6px 0;
+    page-break-after: avoid;
+    color: var(--accent);
+  }
+  h4 {
+    font-size: 10.5pt;
+    margin: 10px 0 4px 0;
+    page-break-after: avoid;
+  }
+  p { margin: 6px 0; }
+  ul, ol { margin: 6px 0 10px 22px; padding: 0; }
+  li { margin: 3px 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 12px 0;
+    font-size: 9.8pt;
+    page-break-inside: avoid;
+  }
+  thead th {
+    background: var(--accent);
+    color: #fff;
+    text-align: left;
+    padding: 7px 9px;
+    font-weight: 600;
+  }
+  tbody td {
+    border-bottom: 1px solid var(--rule);
+    padding: 7px 9px;
+    vertical-align: top;
+  }
+  tbody tr:nth-child(even) td { background: #fafbfd; }
+  .chip {
+    display: inline-block;
+    background: var(--chip-bg);
+    color: var(--muted);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 8.5pt;
+    margin-right: 4px;
+  }
+  .chip.tier1 { background: #dbeafe; color: #1e40af; }
+  .chip.tier2 { background: var(--accent-soft); color: var(--accent); }
+  .chip.tier3 { background: #fde2e7; color: var(--accent-2); }
+  .chip.b2b { background: #e4f3ea; color: var(--ok); }
+  .chip.partner { background: #fdecd8; color: var(--warn); }
+  .callout {
+    background: var(--accent-soft);
+    border-left: 4px solid var(--accent);
+    padding: 10px 14px;
+    border-radius: 4px;
+    margin: 10px 0;
+    page-break-inside: avoid;
+  }
+  .callout.pink {
+    background: #fce7f3;
+    border-left-color: var(--accent-2);
+  }
+  .device {
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--accent);
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin: 8px 0;
+    page-break-inside: avoid;
+  }
+  .device .title { font-weight: 700; color: var(--accent); font-size: 10.8pt; }
+  .device .price {
+    float: right;
+    background: var(--accent);
+    color: #fff;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 8.8pt;
+    font-weight: 600;
+  }
+  .device .meta-line {
+    color: var(--muted);
+    font-size: 9pt;
+    margin: 3px 0 6px 0;
+  }
+  .grid-2 {
+    display: table;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 8px 0;
+  }
+  .grid-2 > div {
+    display: table-cell;
+    width: 50%;
+    vertical-align: top;
+  }
+  .arch {
+    background: var(--code-bg);
+    color: var(--code-ink);
+    padding: 14px 16px;
+    border-radius: 6px;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 9pt;
+    line-height: 1.5;
+    white-space: pre;
+    overflow: hidden;
+    page-break-inside: avoid;
+  }
+  .tier-card {
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    page-break-inside: avoid;
+  }
+  .tier-card .label {
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 9pt;
+  }
+  .tier-card .price-band {
+    float: right;
+    color: var(--muted);
+    font-size: 9pt;
+  }
+  .ship-pick {
+    background: linear-gradient(135deg, #fce7f3 0%, var(--accent-soft) 100%);
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 12px 0;
+    page-break-inside: avoid;
+  }
+  .ship-pick h3 {
+    margin-top: 0;
+    color: var(--accent-2);
+  }
+  footer {
+    position: fixed;
+    bottom: 8mm;
+    left: 16mm;
+    right: 16mm;
+    font-size: 8.5pt;
+    color: var(--muted);
+    border-top: 1px solid var(--rule);
+    padding-top: 4px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .page-break { page-break-before: always; }
+  .toc {
+    margin-top: 14px;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 12px 18px;
+    background: #fafbfd;
+  }
+  .toc ol { margin-left: 18px; }
+  .toc li { margin: 4px 0; }
+</style>
+</head>
+<body>
+
+<!-- ================== COVER ================== -->
+<section class="cover">
+  <span class="badge">Hardware Strategy · Confidential</span>
+  <h1>HearMe</h1>
+  <div class="sub">Hardware &amp; IoT Integration Strategy</div>
+  <div><span class="vol">VOLUME III</span></div>
+  <div class="meta">
+    <div><strong>Prepared for:</strong> Debjyoti Sarkar</div>
+    <div><strong>Product:</strong> HearMe — Women's Personal Safety App</div>
+    <div><strong>Scope:</strong> Wearables · Vehicle · Home · Network · B2B Kits</div>
+    <div><strong>Date:</strong> 16 April 2026</div>
+    <div><strong>Version:</strong> 1.0</div>
+  </div>
+</section>
+
+<!-- ================== TOC ================== -->
+<h2>Contents</h2>
+<div class="toc">
+  <ol>
+    <li>Strategic Framing &mdash; The Three-Tier Hardware Stack</li>
+    <li>Tier 1 &mdash; Budget Trigger Devices (&lt; ₹700)</li>
+    <li>Tier 2 &mdash; Fashion Wearables (₹800 &ndash; ₹3,000)</li>
+    <li>Tier 3 &mdash; Specialist Hardware (₹3,000+)</li>
+    <li>Home &amp; Environmental IoT</li>
+    <li>Vehicle &amp; Mobility IoT</li>
+    <li>Detection &amp; Active-Deterrent Hardware</li>
+    <li>Biometric Wearable Layer</li>
+    <li>Network Infrastructure IoT (LoRa · NB-IoT · BLE Mesh)</li>
+    <li>B2B Institutional Deployment Kits</li>
+    <li>Reference Technical Architecture</li>
+    <li>Partnership Map</li>
+    <li>Recommended First Hardware Ship</li>
+  </ol>
+</div>
+
+<!-- ================== STRATEGIC FRAMING ================== -->
+<h2>1. Strategic Framing</h2>
+<p>
+Women's safety hardware in India fails on three common axes: <strong>too ugly to
+wear</strong>, <strong>too obvious to an attacker</strong>, or <strong>too
+expensive for the mass market</strong>. The HearMe hardware stack is built around
+three price tiers, each solving a different job. The HearMe app becomes the
+universal backend they all talk to.
+</p>
+
+<table>
+  <thead>
+    <tr><th>Tier</th><th>Price Band</th><th>Audience</th><th>Job To Be Done</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><span class="chip tier1">T1 Budget</span></td><td>₹300 &ndash; ₹700</td><td>Mass market, NGOs, rural</td><td>"A panic button I can carry in my pocket."</td></tr>
+    <tr><td><span class="chip tier2">T2 Fashion</span></td><td>₹800 &ndash; ₹3,000</td><td>Urban working women, students</td><td>"Safety I'll actually wear daily."</td></tr>
+    <tr><td><span class="chip tier3">T3 Specialist</span></td><td>₹3,000 &ndash; ₹15,000</td><td>Travel, journalists, field workers</td><td>"Protection in genuinely high-risk zones."</td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <strong>Architectural principle:</strong> Build only the BLE protocol and the
+  Tier-1 reference device in-house. Every other SKU is an OEM/co-brand
+  partnership. The phone is the source of truth; hardware is the trigger.
+</div>
+
+<!-- ================== TIER 1 ================== -->
+<h2>2. Tier 1 &mdash; Budget Trigger Devices</h2>
+
+<div class="device">
+  <span class="price">₹499</span>
+  <div class="title">2.1 BLE Panic Keychain (Nordic nRF52810)</div>
+  <div class="meta-line">CR2032 · 12-month battery · BLE 5.0 · Custom GATT service</div>
+  <ul>
+    <li>Triple-press = SOS · single-press = silent check-in · long-press = fake call.</li>
+    <li>Haptic motor confirms message-sent feedback.</li>
+    <li>Pairs once with HearMe app via PSK + ECDH key exchange.</li>
+    <li>BOM ~ ₹110; ample margin for D2C.</li>
+  </ul>
+</div>
+
+<div class="device">
+  <span class="price">₹30 each</span>
+  <div class="title">2.2 NFC Safe-Zone Tags</div>
+  <div class="meta-line">NTAG215 · Passive · No battery · Stick-on adhesive</div>
+  Tap phone to mark "safely arrived" at home, hostel, office. Zero-UI check-in. Survives any hardware failure of the BLE button.
+</div>
+
+<div class="device">
+  <span class="price">₹599</span>
+  <div class="title">2.3 Stealth Pen Trigger</div>
+  <div class="meta-line">Concealed BLE module inside a ballpoint pen body</div>
+  Cap-click triggers SOS. High discretion &mdash; passes any pocket-empty checkpoint and looks like a stationery item.
+</div>
+
+<!-- ================== TIER 2 ================== -->
+<h2>3. Tier 2 &mdash; Fashion Wearables</h2>
+
+<div class="device">
+  <span class="price">₹1,200&ndash;₹2,500</span>
+  <div class="title">3.1 Smart Jewellery (D2C Co-Brand)</div>
+  <div class="meta-line">Pendant · Bracelet · Kada · Ring · Brooch</div>
+  <ul>
+    <li>Same nRF52 internals as Tier-1; premium gold/rose-gold finish.</li>
+    <li>Double-tap = SOS; haptic ack on contact acknowledgement.</li>
+    <li>Partner SKUs: <strong>Melorra · GIVA · CaratLane</strong> &mdash; "HearMe Edition."</li>
+  </ul>
+</div>
+
+<div class="device">
+  <span class="price">₹899</span>
+  <div class="title">3.2 Dupatta / Sari Pin (India-First Form Factor)</div>
+  <div class="meta-line">Micro BLE module disguised as a safety pin / brooch</div>
+  Coercion-resistant: cannot be confiscated at checkpoints, looks like a traditional accessory. <em>No global safety app currently ships this form factor.</em>
+</div>
+
+<div class="device">
+  <span class="price">₹1,499</span>
+  <div class="title">3.3 Smart Hair Clip / Scrunchie</div>
+  <div class="meta-line">For students and college-age users</div>
+  Haptic pattern signals back when a trusted contact has acknowledged the SOS &mdash; reassurance loop is felt, not seen.
+</div>
+
+<div class="device">
+  <span class="price">₹2,200</span>
+  <div class="title">3.4 Smart Insole / Shoe Module</div>
+  <div class="meta-line">Piezo-triggered foot-stomp pattern (three heavy stomps = SOS)</div>
+  Hands-free trigger for situations where hands are restrained or holding things. Only worn-clothing trigger that survives a phone+jewellery confiscation.
+</div>
+
+<!-- ================== TIER 3 ================== -->
+<h2>4. Tier 3 &mdash; Specialist Hardware</h2>
+
+<div class="device">
+  <span class="price">₹6,500</span>
+  <div class="title">4.1 HearMe Watch (ESP32-S3 + LTE-M)</div>
+  <ul>
+    <li>Own-brand smartwatch with eSIM &mdash; works even if phone is stolen.</li>
+    <li>HR + SpO2 + skin-temp + GSR sensors fuel a physiological duress signature.</li>
+    <li>Physical SOS slider on the crown (slide gestures are harder for an attacker to spot than taps).</li>
+    <li>Cellular fallback when phone Bluetooth is lost.</li>
+  </ul>
+</div>
+
+<div class="device">
+  <span class="price">₹4,500</span>
+  <div class="title">4.2 Smart Helmet (2-Wheeler Riders)</div>
+  Crash-detection + voice-keyword SOS + auto-ANPR record of the road behind. Co-brand with <strong>Steelbird</strong> or <strong>Vega</strong>.
+</div>
+
+<div class="device">
+  <span class="price">₹7,900</span>
+  <div class="title">4.3 AI Dashcam with Panic Pipe</div>
+  OBD-II powered; on SOS, streams to HearMe cloud and runs ANPR on every passing vehicle. High value for cab drivers AND female passengers.
+</div>
+
+<div class="device">
+  <span class="price">₹14,500</span>
+  <div class="title">4.4 Satellite SOS Pendant</div>
+  Iridium / Globalstar modem for genuinely dead zones &mdash; hikers, field NGO workers, rural school visitors. White-label via <strong>Garmin inReach</strong> or <strong>Zoleo</strong>.
+</div>
+
+<!-- ================== HOME IOT ================== -->
+<h2>5. Home &amp; Environmental IoT</h2>
+
+<div class="grid-2">
+  <div>
+    <div class="device">
+      <div class="title">Smart Doorbell Integration</div>
+      Ring / Realme / Mi doorbell webhook records 10 minutes pre &amp; post SOS. Face-match flags strangers vs. trusted visitors.
+    </div>
+    <div class="device">
+      <div class="title">Smart Speaker De-Escalation</div>
+      On home-zone SOS, Alexa / Google Home loudly plays a male voice: <em>"Who's at the door? I'm coming down."</em> Creates illusion of presence.
+    </div>
+    <div class="device">
+      <div class="title">Smart Bulb Red-Strobe Alert</div>
+      Philips Hue / Wipro bulbs flash red on SOS &mdash; visible signal to neighbours from outside the building.
+    </div>
+  </div>
+  <div>
+    <div class="device">
+      <div class="title">Hidden-Camera Detector Dongle</div>
+      USB-C / Lightning accessory with RF + IR-reflection scanner. One-tap scan of hotel rooms, Airbnbs, changing rooms. Massive organic word-of-mouth potential.
+    </div>
+    <div class="device">
+      <div class="title">Drug-Test Coaster / Nail Polish</div>
+      Co-brand with SipChip / Undercover Colors: detects GHB &amp; Rohypnol. BLE variant logs result + location to evidence locker.
+    </div>
+    <div class="device">
+      <div class="title">Indoor Panic Pendant (Elder-Care Cross-Over)</div>
+      Tata / Jio-style pendant with a Zigbee hub. Same app serves the elderly parent AND the adult daughter.
+    </div>
+  </div>
+</div>
+
+<!-- ================== VEHICLE IOT ================== -->
+<h2>6. Vehicle &amp; Mobility IoT</h2>
+
+<div class="device">
+  <span class="price">₹1,500</span>
+  <div class="title">6.1 OBD-II HearMe Dongle</div>
+  Plugs into any car &gt; 2008. Detects airbag deploy, hard braking, route deviation. Works regardless of driver's phone state.
+</div>
+
+<div class="device">
+  <div class="title">6.2 Uber / Ola / Rapido BLE Beacon</div>
+  Partner program: registered cabs carry a BLE beacon tied to the verified driver's MAC. HearMe app auto-logs which driver you were with &mdash; chain of custody for any later complaint.
+</div>
+
+<div class="device">
+  <div class="title">6.3 Smart Seatbelt Clip</div>
+  Detects unbuckling during an active trip (likely forced exit) &mdash; silent SOS.
+</div>
+
+<div class="device">
+  <div class="title">6.4 E-Scooter / E-Bike Fall Detection</div>
+  Pair with Yulu / Bounce / Ola Electric: accelerometer + tilt = crash detection; auto-call emergency.
+</div>
+
+<!-- ================== DETERRENT ================== -->
+<h2>7. Detection &amp; Active-Deterrent Hardware</h2>
+
+<table>
+  <thead>
+    <tr><th style="width:30%">Device</th><th>Function</th><th style="width:14%">Indicative Price</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>130 dB Personal Alarm Keychain</td><td>Pull-pin siren + strobe + BLE-paired silent SOS. Loudness is itself the deterrent.</td><td>₹699</td></tr>
+    <tr><td>IoT Pepper-Spray Cap</td><td>Removing safety pin triggers SOS + audio + GPS upload. Self-defence is logged at the moment of use.</td><td>₹1,200</td></tr>
+    <tr><td>Ultrasonic Attacker Deterrent</td><td>110+ dB ultrasound bursts &mdash; inaudible to humans, disorients certain attackers and dogs. Experimental.</td><td>₹1,800</td></tr>
+    <tr><td>Thermal-Imaging Phone Clip</td><td>FLIR One module: detects a hidden person behind curtains, bushes, inside a car boot. Hotel and parking-lot safety routine.</td><td>₹8,500</td></tr>
+  </tbody>
+</table>
+
+<!-- ================== BIOMETRICS ================== -->
+<h2>8. Biometric Wearable Layer</h2>
+
+<table>
+  <thead>
+    <tr><th>Signal</th><th>Sensor</th><th>Safety Use</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Heart-rate spike with no motion</td><td>PPG</td><td>Fear response while sitting still &mdash; a strong silent-distress signal.</td></tr>
+    <tr><td>GSR (skin conductance)</td><td>GSR electrodes</td><td>Stress biomarker; reliable during panic events.</td></tr>
+    <tr><td>Skin temperature drop</td><td>IR thermopile</td><td>Shock / freezing response.</td></tr>
+    <tr><td>Blood oxygen</td><td>SpO2</td><td>Crash or unconsciousness fallback trigger.</td></tr>
+    <tr><td>Wrist tension (sEMG)</td><td>Whoop-style sEMG</td><td>Fight-or-flight arousal.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <strong>Fusion rule:</strong> any two of the five physiological signals firing
+  together is a "physiological duress signature." Combined with the existing
+  behavioural biometrics in HearMe, this becomes a world-class trust engine that
+  no current safety app can match.
+</div>
+
+<!-- ================== NETWORK ================== -->
+<h2>9. Network Infrastructure IoT</h2>
+
+<div class="device">
+  <div class="title">9.1 LoRaWAN Panic Beacons (Campus / Factory)</div>
+  10 km range, 5-year battery, ₹800 per unit. Deploy free to colleges with one HearMe gateway on the admin block. No SIM needed. Classic B2B play &mdash; target 500 universities.
+</div>
+
+<div class="device">
+  <div class="title">9.2 NB-IoT Mini-Tracker</div>
+  Cheaper than smartwatch cellular; "bag tag" for women commuting alone. Works without the phone at all. Use Airtel / Jio IoT SIM.
+</div>
+
+<div class="device">
+  <div class="title">9.3 Bluetooth-Mesh Canopy (Metro Stations)</div>
+  Deploy HearMe BLE gateways across Delhi Metro / Bengaluru Metro stations. Any user in distress on a platform routes SOS through infrastructure. Strong PPP / grant opportunity with transit authorities.
+</div>
+
+<!-- ================== B2B KITS ================== -->
+<h2>10. B2B Institutional Deployment Kits</h2>
+
+<div class="grid-2">
+  <div>
+    <div class="device">
+      <span class="price">CSR Pitch</span>
+      <div class="title">HearMe Campus Kit</div>
+      100 × T1 panic buttons + 10 × LoRa gateways + admin dashboard. Indian corporates must spend 2% profits on CSR &mdash; ready-made target.
+    </div>
+    <div class="device">
+      <span class="price">PoSH Act</span>
+      <div class="title">HearMe Workplace Kit</div>
+      Desk-fob button + admin duty-of-care dashboard. IT and Facilities will pay for compliance with PoSH Act 2013 obligations.
+    </div>
+  </div>
+  <div>
+    <div class="device">
+      <span class="price">State Tender</span>
+      <div class="title">HearMe Transit Kit</div>
+      In-bus panic button at every seat + DVR + HearMe backend. Delhi, Bengaluru, Hyderabad have active women-safe-bus tenders.
+    </div>
+    <div class="device">
+      <span class="price">NGO Bundle</span>
+      <div class="title">HearMe NGO Kit</div>
+      500 T1 buttons + offline BLE-mesh gateway + multilingual training material. Suitable for rural deployment via Sakhi / women SHGs.
+    </div>
+  </div>
+</div>
+
+<!-- ================== ARCHITECTURE ================== -->
+<h2>11. Reference Technical Architecture</h2>
+
+<div class="arch">
+[ Hardware Devices ]   ->   [ Edge Protocols ]     ->   [ HearMe App ]      ->   [ Cloud ]
+
+  BLE Button                BLE GATT + PSK pairing      Expo BLE plugin           Supabase
+  LoRa Beacon               LoRaWAN  ->  MQTT           (react-native-ble-plx)    + Hash-Chain
+  NB-IoT Tracker            CoAP / LwM2M                Companion device mgr      Anchor
+  Wearable (Watch)          BLE + OTA DFU               Webhook consumer          Evidence Vault
+  Smart Home                Matter / Zigbee  ->  MQTT
+</div>
+
+<h3>Security Posture (non-negotiable)</h3>
+<ul>
+  <li>All devices use pre-shared-key + ECDH pairing. <em>No "enter 000000" weak PINs.</em></li>
+  <li>Firmware OTA signed with HearMe ed25519 key.</li>
+  <li>Every GATT write carries a replay-protected monotonic counter.</li>
+  <li>Devices store nothing identifying &mdash; the phone is the only source of truth.</li>
+  <li>Cloud-side hash-chain anchoring ensures evidence is court-admissible.</li>
+</ul>
+
+<!-- ================== PARTNERSHIP MAP ================== -->
+<h2>12. Partnership Map &mdash; Don't Build, Integrate</h2>
+
+<table>
+  <thead>
+    <tr><th>Category</th><th>Don't Build</th><th>Partner With</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Smartwatch</td><td>Your own SKU</td><td><span class="chip partner">Noise · boAt · Amazfit</span> co-branded edition</td></tr>
+    <tr><td>Jewellery</td><td>Your own line</td><td><span class="chip partner">Melorra · GIVA · CaratLane</span></td></tr>
+    <tr><td>Dashcam</td><td>Custom hardware</td><td><span class="chip partner">70mai · DDPAI</span> (Indian presence)</td></tr>
+    <tr><td>Satellite SOS</td><td>From scratch</td><td><span class="chip partner">Garmin inReach · Zoleo</span> white-label</td></tr>
+    <tr><td>Home sensors</td><td>Custom</td><td><span class="chip partner">Mi Home · Realme Link · Matter</span></td></tr>
+    <tr><td>Helmet</td><td>Your own</td><td><span class="chip partner">Steelbird · Vega</span> OEM MOU</td></tr>
+    <tr><td>Pepper spray</td><td>Custom canister</td><td><span class="chip partner">SABRE India</span> with HearMe pin module</td></tr>
+  </tbody>
+</table>
+
+<p>Build only <strong>Tier-1 panic buttons</strong> and <strong>BLE gateway firmware</strong> in-house. Everything else stacks on top once the protocol is stable.</p>
+
+<!-- ================== FIRST SHIP ================== -->
+<h2>13. Recommended First Hardware Ship</h2>
+
+<div class="ship-pick">
+  <h3>The HearMe Clip &mdash; ₹499</h3>
+  <p>
+    A single SKU: a BLE panic keychain with pin and magnetic back so it can clip
+    inside a bag, on a bra strap, on a keyring, or on a school ID lanyard. Runs
+    on a CR2032 cell for a year.
+  </p>
+  <p><strong>Why this one device first:</strong></p>
+  <ul>
+    <li>Hits the Tier-1 mass market price point.</li>
+    <li>Lets you validate the BLE pairing UX inside the existing HearMe app.</li>
+    <li>Becomes the reference device every future partner SKU must interoperate with.</li>
+    <li>Easy to bundle into NGO and university CSR grants.</li>
+  </ul>
+  <p>
+    Everything else &mdash; jewellery, watches, helmets, dashcams &mdash; stacks on top
+    once this protocol is stable in production.
+  </p>
+</div>
+
+<!-- ================== APPENDIX ================== -->
+<h2>Appendix &mdash; 12-Month Hardware Roadmap</h2>
+
+<table>
+  <thead>
+    <tr><th style="width:18%">Quarter</th><th>Milestone</th><th>Outcome</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Q1</td><td>HearMe Clip prototype + BLE protocol v1 + app pairing UX</td><td>10 internal testers; firmware OTA pipeline live</td></tr>
+    <tr><td>Q2</td><td>Pilot launch via Amazon &amp; D2C site; first NGO partnership</td><td>2,000 units shipped; Trust-Engine + hardware data fused</td></tr>
+    <tr><td>Q3</td><td>Jewellery co-brand SKU 1 (pendant); 3 university campus deployments</td><td>First B2B revenue; LoRa gateway firmware v1</td></tr>
+    <tr><td>Q4</td><td>HearMe Watch alpha; OBD-II dongle pilot with one ride-share partner</td><td>Cellular-fallback architecture proven; PR moment</td></tr>
+  </tbody>
+</table>
+
+<footer>
+  <span>HearMe · Hardware &amp; IoT Strategy &mdash; Volume III</span>
+  <span>16 April 2026 · v1.0 · Confidential</span>
+</footer>
+
+</body>
+</html>

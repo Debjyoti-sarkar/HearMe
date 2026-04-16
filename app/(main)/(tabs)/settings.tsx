@@ -22,6 +22,13 @@ import { colors, radii } from '../../../constants/theme';
 import { clearDemoAuth } from '../../../lib/demo-auth';
 import { useAuth } from '../../../providers/AuthProvider';
 import { useHearMe } from '../../../providers/HearMeProvider';
+import * as Session from '../../../lib/session';
+import {
+  autoReversePinFor,
+  clearDuressPin,
+  getDuressPin,
+  saveDuressPin,
+} from '../../../lib/duress';
 
 function RowSwitch({
   title,
@@ -66,10 +73,57 @@ export default function SettingsTab() {
   const { ready, settings, patchSettings } = useHearMe();
   const { signOut: doSignOut } = useAuth();
   const [numDraft, setNumDraft] = useState(settings.emergencyNumber);
+  const [safeWordDraft, setSafeWordDraft] = useState(settings.voiceSafeWord);
+  const [normalPin, setNormalPin] = useState<string | null>(null);
+  const [duressPin, setDuressPin] = useState<string | null>(null);
+  const [duressDraft, setDuressDraft] = useState('');
 
   useEffect(() => {
     if (ready) setNumDraft(settings.emergencyNumber);
   }, [ready, settings.emergencyNumber]);
+
+  useEffect(() => {
+    if (ready) setSafeWordDraft(settings.voiceSafeWord);
+  }, [ready, settings.voiceSafeWord]);
+
+  useEffect(() => {
+    if (!ready) return;
+    void (async () => {
+      const [p, d] = await Promise.all([Session.getPin(), getDuressPin()]);
+      setNormalPin(p);
+      setDuressPin(d);
+    })();
+  }, [ready]);
+
+  const autoReverse = normalPin ? autoReversePinFor(normalPin) : null;
+  const effectiveDuress = duressPin ?? autoReverse;
+
+  const onSaveDuressPin = async () => {
+    const digits = duressDraft.replace(/\D/g, '');
+    if (digits.length !== 4) {
+      Alert.alert('Invalid', 'Duress PIN must be 4 digits.');
+      return;
+    }
+    if (digits === normalPin) {
+      Alert.alert('Conflict', 'Duress PIN cannot equal your normal PIN.');
+      return;
+    }
+    await saveDuressPin(digits);
+    setDuressPin(digits);
+    setDuressDraft('');
+    Alert.alert('Saved', 'Custom duress PIN saved.');
+  };
+
+  const onClearDuressPin = async () => {
+    await clearDuressPin();
+    setDuressPin(null);
+    Alert.alert(
+      'Cleared',
+      autoReverse
+        ? `Duress PIN reset. The reversed normal PIN (${autoReverse}) will trigger silent SOS.`
+        : 'Duress PIN cleared.',
+    );
+  };
 
   const onSignOut = () => {
     Alert.alert('Sign out?', 'You will need to log in again to access HearMe.', [
@@ -230,6 +284,199 @@ export default function SettingsTab() {
           </View>
         </GlassCard>
 
+        {/* App Lock & Duress PIN */}
+        <Text style={styles.section}>App Lock & Duress</Text>
+        <GlassCard style={styles.card}>
+          <RowSwitch
+            title="Require PIN on launch"
+            subtitle="Lock screen on cold start and after 30s in background"
+            icon="shield-lock"
+            iconColor={colors.accentViolet}
+            value={settings.appLockEnabled}
+            disabled={!normalPin}
+            onValueChange={(v) => {
+              if (v && !normalPin) {
+                Alert.alert('Set a PIN first', 'Use Setup PIN before enabling app lock.');
+                return;
+              }
+              void patchSettings({ appLockEnabled: v });
+            }}
+          />
+          <RowSwitch
+            title="Reverse PIN = silent SOS"
+            subtitle={
+              effectiveDuress
+                ? `"${effectiveDuress}" unlocks a decoy and fires silent SOS`
+                : 'Set a normal PIN (non-palindrome) or a custom duress PIN below'
+            }
+            icon="alert-decagram"
+            iconColor={colors.danger}
+            value={settings.duressEnabled}
+            disabled={!effectiveDuress}
+            onValueChange={(v) => void patchSettings({ duressEnabled: v })}
+          />
+          <RowSwitch
+            title="Disguised UI on launch"
+            subtitle="Show a calculator decoy; type your PIN + = to reveal HearMe"
+            icon="calculator-variant"
+            iconColor={colors.accentCyan}
+            value={settings.disguiseEnabled}
+            disabled={!normalPin}
+            onValueChange={(v) => void patchSettings({ disguiseEnabled: v })}
+          />
+          <View style={styles.subRow}>
+            <Text style={styles.subRowLabel}>Custom duress PIN (optional)</Text>
+            <Text style={styles.subRowHint}>
+              {duressPin
+                ? `Currently: "${duressPin}"`
+                : autoReverse
+                ? `Default: reversed normal PIN ("${autoReverse}")`
+                : 'A non-palindrome normal PIN auto-creates a reversed duress PIN.'}
+            </Text>
+            <View style={styles.numRow}>
+              <View style={styles.numInputWrap}>
+                <MaterialCommunityIcons name="key-variant" size={20} color={colors.danger} />
+                <TextInput
+                  value={duressDraft}
+                  onChangeText={(t) => setDuressDraft(t.replace(/\D/g, '').slice(0, 4))}
+                  keyboardType="number-pad"
+                  placeholder="4-digit duress PIN"
+                  placeholderTextColor={colors.textSecondary}
+                  secureTextEntry
+                  style={styles.numInput}
+                />
+              </View>
+              <Pressable onPress={() => void onSaveDuressPin()}>
+                <LinearGradient
+                  colors={[colors.danger, colors.accentRose]}
+                  style={styles.saveChip}
+                >
+                  <Text style={styles.saveChipTxt}>Save</Text>
+                </LinearGradient>
+              </Pressable>
+            </View>
+            {duressPin && (
+              <Pressable onPress={() => void onClearDuressPin()} style={styles.linkBtn}>
+                <Text style={styles.linkText}>Clear custom duress PIN</Text>
+              </Pressable>
+            )}
+          </View>
+        </GlassCard>
+
+        {/* Voice Trigger */}
+        <Text style={styles.section}>Voice Trigger</Text>
+        <GlassCard style={styles.card}>
+          <RowSwitch
+            title="Listen for distress audio"
+            subtitle="Mic-on listener fires SOS prompt on sustained loud audio"
+            icon="microphone-outline"
+            iconColor={colors.accentEmerald}
+            value={settings.voiceTriggerEnabled}
+            onValueChange={(v) => void patchSettings({ voiceTriggerEnabled: v })}
+          />
+          <View style={styles.subRow}>
+            <Text style={styles.subRowLabel}>Safe-word label</Text>
+            <Text style={styles.subRowHint}>
+              True keyword spotting needs a custom dev client (Vosk / Picovoice).
+              Until then, this label is shown in the trigger prompt.
+            </Text>
+            <View style={styles.numRow}>
+              <View style={styles.numInputWrap}>
+                <MaterialCommunityIcons name="text-short" size={20} color={colors.accentEmerald} />
+                <TextInput
+                  value={safeWordDraft}
+                  onChangeText={setSafeWordDraft}
+                  placeholder="e.g. mausam kaisa hai"
+                  placeholderTextColor={colors.textSecondary}
+                  style={styles.numInput}
+                  maxLength={48}
+                />
+              </View>
+              <Pressable onPress={() => void patchSettings({ voiceSafeWord: safeWordDraft.trim() })}>
+                <LinearGradient
+                  colors={[colors.accentEmerald, colors.accentCyan]}
+                  style={styles.saveChip}
+                >
+                  <Text style={styles.saveChipTxt}>Save</Text>
+                </LinearGradient>
+              </Pressable>
+            </View>
+          </View>
+        </GlassCard>
+
+        {/* Timer Check-in */}
+        <Text style={styles.section}>Timer Check-in</Text>
+        <GlassCard style={styles.card}>
+          <Pressable
+            onPress={() => router.push('/(main)/check-in')}
+            style={({ pressed }) => [styles.linkRow, pressed && { opacity: 0.85 }]}
+          >
+            <View style={[settingStyles.rowIcon, { backgroundColor: colors.accentViolet + '18' }]}>
+              <MaterialCommunityIcons name="timer-sand" size={20} color={colors.accentViolet} />
+            </View>
+            <View style={settingStyles.rowContent}>
+              <Text style={settingStyles.rowTitle}>
+                {settings.activeCheckInExpiresAt ? 'Active check-in' : 'Start a check-in'}
+              </Text>
+              <Text style={settingStyles.rowSub}>
+                {settings.activeCheckInExpiresAt
+                  ? `Expires ${new Date(settings.activeCheckInExpiresAt).toLocaleTimeString()}`
+                  : 'Auto-SOS if you do not confirm by the deadline'}
+              </Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={22} color={colors.textMuted} />
+          </Pressable>
+        </GlassCard>
+
+        {/* Evidence Locker */}
+        <Text style={styles.section}>Evidence Locker</Text>
+        <GlassCard style={styles.card}>
+          <RowSwitch
+            title="Cloud sync (hash-chained)"
+            subtitle="Auto-upload SOS evidence to your private Supabase bucket"
+            icon="cloud-lock-outline"
+            iconColor={colors.accentEmerald}
+            value={settings.cloudSyncEvidence}
+            onValueChange={(v) => void patchSettings({ cloudSyncEvidence: v })}
+          />
+          <Pressable
+            onPress={() => router.push('/(main)/evidence-locker')}
+            style={({ pressed }) => [styles.linkRow, pressed && { opacity: 0.85 }]}
+          >
+            <View style={[settingStyles.rowIcon, { backgroundColor: colors.accentCyan + '18' }]}>
+              <MaterialCommunityIcons name="folder-lock-outline" size={20} color={colors.accentCyan} />
+            </View>
+            <View style={settingStyles.rowContent}>
+              <Text style={settingStyles.rowTitle}>Open evidence locker</Text>
+              <Text style={settingStyles.rowSub}>
+                View, sync, verify chain integrity
+              </Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={22} color={colors.textMuted} />
+          </Pressable>
+        </GlassCard>
+
+        {/* Accessibility */}
+        <Text style={styles.section}>Accessibility</Text>
+        <GlassCard style={styles.card}>
+          <RowSwitch
+            title="One-handed mode"
+            subtitle="Shift the home screen content lower for thumb reach"
+            icon="hand-back-right"
+            iconColor={colors.accentIndigo}
+            value={settings.oneHandedMode}
+            onValueChange={(v) => void patchSettings({ oneHandedMode: v })}
+          />
+          <RowSwitch
+            title="Dyslexia-friendly font"
+            subtitle="Use a heavier, more readable font weight throughout"
+            icon="format-letter-case"
+            iconColor={colors.accentAmber}
+            value={settings.dyslexiaFont}
+            onValueChange={(v) => void patchSettings({ dyslexiaFont: v })}
+          />
+        </GlassCard>
+
         {/* Account */}
         <Text style={styles.section}>Account</Text>
         <PrimaryButton
@@ -339,6 +586,35 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 20,
     fontWeight: '700',
+  },
+  subRow: {
+    paddingVertical: 14,
+    gap: 10,
+  },
+  subRowLabel: {
+    color: colors.text,
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  subRowHint: {
+    color: colors.textMuted,
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  linkBtn: {
+    alignSelf: 'flex-start',
+    paddingVertical: 6,
+  },
+  linkText: {
+    color: colors.accentViolet,
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  linkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    gap: 12,
   },
   footer: {
     marginTop: 28,

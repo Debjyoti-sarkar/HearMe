@@ -6,7 +6,9 @@ import { GestureTracker } from '../../components/GestureTracker';
 import { colors } from '../../constants/theme';
 import { isDemoAuthenticated } from '../../lib/demo-auth';
 import { useAuth } from '../../providers/AuthProvider';
-import { HearMeProvider } from '../../providers/HearMeProvider';
+import { HearMeProvider, useHearMe } from '../../providers/HearMeProvider';
+import LockScreen from '../lock';
+import DisguiseScreen from '../disguise';
 
 const MODAL_OPTIONS = {
   presentation: 'modal' as const,
@@ -20,27 +22,42 @@ const FULLSCREEN_OPTIONS = {
   contentStyle: { backgroundColor: '#020617' },
 };
 
+function LockGate({ children }: { children: React.ReactNode }) {
+  const { ready, locked, settings } = useHearMe();
+  if (!ready) return null;
+  if (locked) {
+    // If disguise is enabled, show the calculator decoy first; secret PIN inside
+    // it reveals the real app. Otherwise the standard lock screen.
+    return settings.disguiseEnabled ? <DisguiseScreen /> : <LockScreen />;
+  }
+  return <>{children}</>;
+}
+
 function MainStack() {
   return (
     <HearMeProvider>
-      <GestureTracker>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.bgTop },
-          animation: 'fade',
-        }}
-      >
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="helplines" options={MODAL_OPTIONS} />
-        <Stack.Screen name="fake-call" options={FULLSCREEN_OPTIONS} />
-        <Stack.Screen name="camera-detector" options={MODAL_OPTIONS} />
-        <Stack.Screen name="nearby-services" options={MODAL_OPTIONS} />
-        <Stack.Screen name="audio-recorder" options={MODAL_OPTIONS} />
-        <Stack.Screen name="alert-history" options={MODAL_OPTIONS} />
-        <Stack.Screen name="behavior-monitor" options={MODAL_OPTIONS} />
-      </Stack>
-      </GestureTracker>
+      <LockGate>
+        <GestureTracker>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: colors.bgTop },
+              animation: 'fade',
+            }}
+          >
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="helplines" options={MODAL_OPTIONS} />
+            <Stack.Screen name="fake-call" options={FULLSCREEN_OPTIONS} />
+            <Stack.Screen name="camera-detector" options={MODAL_OPTIONS} />
+            <Stack.Screen name="nearby-services" options={MODAL_OPTIONS} />
+            <Stack.Screen name="audio-recorder" options={MODAL_OPTIONS} />
+            <Stack.Screen name="alert-history" options={MODAL_OPTIONS} />
+            <Stack.Screen name="behavior-monitor" options={MODAL_OPTIONS} />
+            <Stack.Screen name="check-in" options={MODAL_OPTIONS} />
+            <Stack.Screen name="evidence-locker" options={MODAL_OPTIONS} />
+          </Stack>
+        </GestureTracker>
+      </LockGate>
     </HearMeProvider>
   );
 }

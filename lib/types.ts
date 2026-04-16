@@ -26,6 +26,19 @@ export type HearMeSettings = {
   crashDetection: boolean;
   crashSpeedThreshold: number;
   onboardingComplete: boolean;
+  // Phase-1 additions (PDF roadmap §4 + §5)
+  appLockEnabled: boolean;          // require PIN on launch / resume
+  duressEnabled: boolean;           // accept reversed PIN as silent SOS
+  disguiseEnabled: boolean;         // start in calculator decoy
+  voiceTriggerEnabled: boolean;     // listen for safe word
+  voiceSafeWord: string;            // user-recorded label
+  oneHandedMode: boolean;           // shift content for thumb reach
+  dyslexiaFont: boolean;            // accessible font swap
+  // Timer check-in (Kitestring) — single active check-in
+  activeCheckInExpiresAt: number | null; // epoch ms; null = none
+  activeCheckInLabel: string | null;
+  // Cloud-synced evidence locker
+  cloudSyncEvidence: boolean;       // auto-upload sessions to Supabase
 };
 
 export const DEFAULT_SETTINGS: HearMeSettings = {
@@ -38,4 +51,14 @@ export const DEFAULT_SETTINGS: HearMeSettings = {
   crashDetection: false,
   crashSpeedThreshold: 50,
   onboardingComplete: false,
+  appLockEnabled: false,
+  duressEnabled: true,
+  disguiseEnabled: false,
+  voiceTriggerEnabled: false,
+  voiceSafeWord: '',
+  oneHandedMode: false,
+  dyslexiaFont: false,
+  activeCheckInExpiresAt: null,
+  activeCheckInLabel: null,
+  cloudSyncEvidence: false,
 };

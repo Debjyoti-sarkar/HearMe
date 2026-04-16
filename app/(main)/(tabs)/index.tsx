@@ -99,20 +99,28 @@ export default function HomeTab() {
     return <GradientBackground><View style={{ flex: 1 }} /></GradientBackground>;
   }
 
+  const oneHandedShift = settings.oneHandedMode ? 80 : 0;
+  const dyslexiaTextStyle = settings.dyslexiaFont
+    ? { fontWeight: '900' as const, letterSpacing: 0.4 }
+    : null;
+
   return (
     <GradientBackground>
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
-          { paddingTop: insets.top + 12, paddingBottom: tabBarHeight + 28 },
+          {
+            paddingTop: insets.top + 12 + oneHandedShift,
+            paddingBottom: tabBarHeight + 28,
+          },
         ]}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
-            <Text style={styles.greeting}>{getGreeting()}</Text>
-            <Text style={styles.userName}>{profile?.name ?? 'User'}</Text>
+            <Text style={[styles.greeting, dyslexiaTextStyle]}>{getGreeting()}</Text>
+            <Text style={[styles.userName, dyslexiaTextStyle]}>{profile?.name ?? 'User'}</Text>
           </View>
           <Pressable onPress={() => router.push('/profile')} style={styles.avatarBtn}>
             {profile?.avatar_url ? (
@@ -182,6 +190,32 @@ export default function HomeTab() {
             onPress={() => router.push('/(main)/helplines')}
           />
         </View>
+
+        {/* Timer Check-in entry */}
+        <Pressable
+          onPress={() => router.push('/(main)/check-in')}
+          style={({ pressed }) => [{ marginBottom: 20 }, pressed && { opacity: 0.9 }]}
+        >
+          <GlassCard variant="accent" style={styles.checkInRow}>
+            <LinearGradient
+              colors={['rgba(167,139,250,0.18)', 'rgba(56,189,248,0.12)']}
+              style={styles.checkInGrad}
+            >
+              <MaterialCommunityIcons name="timer-sand" size={26} color={colors.accentViolet} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.checkInTitle}>
+                  {settings.activeCheckInExpiresAt ? 'Active check-in' : 'Start a timer check-in'}
+                </Text>
+                <Text style={styles.checkInSub}>
+                  {settings.activeCheckInExpiresAt
+                    ? `Expires ${new Date(settings.activeCheckInExpiresAt).toLocaleTimeString()} — auto-SOS if you don't confirm`
+                    : 'Auto-SOS if you don\u2019t confirm by the deadline'}
+                </Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={22} color={colors.textMuted} />
+            </LinearGradient>
+          </GlassCard>
+        </Pressable>
 
         {/* Feature Cards */}
         <Text style={styles.sectionLabel}>SAFETY TOOLS</Text>
@@ -398,5 +432,25 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 13,
     lineHeight: 20,
+  },
+  checkInRow: {
+    padding: 0,
+  },
+  checkInGrad: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    padding: 16,
+  },
+  checkInTitle: {
+    color: colors.text,
+    fontWeight: '800',
+    fontSize: 15,
+  },
+  checkInSub: {
+    color: colors.textMuted,
+    fontSize: 12,
+    marginTop: 2,
+    lineHeight: 16,
   },
 });

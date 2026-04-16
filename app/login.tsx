@@ -20,7 +20,7 @@ import { GradientBackground } from '../components/GradientBackground';
 import { GlassCard } from '../components/GlassCard';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { colors, radii } from '../constants/theme';
-import { isDemoAuthenticated } from '../lib/demo-auth';
+import { clearDemoAuth } from '../lib/demo-auth';
 import { useLanguage } from '../lib/i18n';
 import { saveSettings, loadSettings } from '../lib/app-data';
 import { DEMO_OTP } from '../lib/otp';
@@ -31,6 +31,21 @@ import { useAuth } from '../providers/AuthProvider';
 WebBrowser.maybeCompleteAuthSession();
 
 type UserType = 'new' | 'existing' | null;
+
+function extractSessionFromUrl(url: string) {
+  const [base, fragment = ''] = url.split('#');
+  const parsed = Linking.parse(base);
+  const params = new URLSearchParams(fragment);
+  const queryAccessToken = parsed.queryParams?.access_token;
+  const queryRefreshToken = parsed.queryParams?.refresh_token;
+  const accessToken =
+    params.get('access_token') ??
+    (typeof queryAccessToken === 'string' ? queryAccessToken : null);
+  const refreshToken =
+    params.get('refresh_token') ??
+    (typeof queryRefreshToken === 'string' ? queryRefreshToken : null);
+  return { accessToken, refreshToken };
+}
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
@@ -56,12 +71,7 @@ export default function LoginScreen() {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const demo = await isDemoAuthenticated();
       if (!mounted) return;
-      if (demo) {
-        router.replace('/(main)');
-        return;
-      }
       if (!session) return;
       router.replace(profileComplete ? '/(main)' : '/profile');
     })();
@@ -83,6 +93,7 @@ export default function LoginScreen() {
       return;
     }
     if (!useDemoOtp) {
+      await clearDemoAuth();
       setOtpLoading(true);
       const { error: sendError } = await supabase.auth.signInWithOtp({
         phone: normalizedPhone,
@@ -117,7 +128,7 @@ export default function LoginScreen() {
     setError(null);
     setInfo(null);
     setGoogleLoading(true);
-    const redirectTo = Linking.createURL('/');
+    const redirectTo = Linking.createURL('/login');
     const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo, skipBrowserRedirect: true },
@@ -129,7 +140,25 @@ export default function LoginScreen() {
     }
     const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
     setGoogleLoading(false);
-    if (result.type !== 'success' && result.type !== 'dismiss') {
+    if (result.type === 'success' && result.url) {
+      const { accessToken, refreshToken } = extractSessionFromUrl(result.url);
+      if (!accessToken || !refreshToken) {
+        setError('Google login succeeded but session tokens were missing. Please try again.');
+        return;
+      }
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+      if (sessionError) {
+        setError(sessionError.message);
+        return;
+      }
+      await clearDemoAuth();
+      router.replace('/profile');
+      return;
+    }
+    if (result.type !== 'dismiss' && result.type !== 'cancel') {
       setError('Google login was cancelled.');
     }
   };

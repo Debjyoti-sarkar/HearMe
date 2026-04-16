@@ -25,6 +25,8 @@ export default function RootLayout() {
             <Stack.Screen name="aadhaar" />
             <Stack.Screen name="setup-pin" />
             <Stack.Screen name="profile" />
+            <Stack.Screen name="lock" options={{ animation: 'fade' }} />
+            <Stack.Screen name="disguise" options={{ animation: 'fade' }} />
             <Stack.Screen name="(main)" />
           </Stack>
         </AuthProvider>

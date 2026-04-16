@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext } from 'react';
+import i18next from 'i18next';
+import { initReactI18next } from 'react-i18next';
 
 const LANG_KEY = 'hearme_language';
 
@@ -717,8 +719,24 @@ for (const code of fallbackLangs) {
   translations[code] = { ...translations.en };
 }
 
+const resources = Object.fromEntries(
+  Object.entries(translations).map(([code, value]) => [code, { translation: value }]),
+);
+
+if (!i18next.isInitialized) {
+  void i18next.use(initReactI18next).init({
+    resources,
+    lng: 'en',
+    fallbackLng: 'en',
+    interpolation: { escapeValue: false },
+    returnNull: false,
+  });
+}
+
+export const i18n = i18next;
+
 export function t(lang: LangCode, key: keyof TranslationKeys): string {
-  return translations[lang]?.[key] ?? translations.en[key] ?? key;
+  return i18n.getFixedT(lang)(key as string, { defaultValue: translations.en[key] ?? key });
 }
 
 export async function saveLanguage(code: LangCode): Promise<void> {

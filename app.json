@@ -45,7 +45,8 @@
         {
           "locationWhenInUsePermission": "HearMe uses your location for emergency SMS links and live speed."
         }
-      ]
+      ],
+      "expo-web-browser"
     ]
   }
 }

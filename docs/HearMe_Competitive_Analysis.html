@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HearMe — Competitive Analysis & Unique Feature Roadmap</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  :root {
+    --ink: #1a1a2e;
+    --muted: #4a4a5e;
+    --accent: #c2185b;
+    --accent-soft: #fce4ec;
+    --rule: #e3e3ea;
+    --chip-bg: #f3f4f8;
+    --ok: #1b7a47;
+    --warn: #b85900;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    font-size: 10.5pt;
+    line-height: 1.45;
+  }
+  .cover {
+    page-break-after: always;
+    padding: 40mm 0 0 0;
+    text-align: center;
+  }
+  .cover .badge {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    font-size: 9pt;
+    text-transform: uppercase;
+  }
+  .cover h1 {
+    font-size: 34pt;
+    margin: 18px 0 6px 0;
+    letter-spacing: -0.02em;
+  }
+  .cover .sub {
+    font-size: 14pt;
+    color: var(--muted);
+    margin-bottom: 40px;
+  }
+  .cover .meta {
+    margin-top: 70mm;
+    color: var(--muted);
+    font-size: 10pt;
+  }
+  .cover .meta strong { color: var(--ink); }
+  h1, h2, h3 { color: var(--ink); letter-spacing: -0.01em; }
+  h2 {
+    font-size: 16pt;
+    margin: 22px 0 8px 0;
+    padding-bottom: 4px;
+    border-bottom: 2px solid var(--accent);
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 12pt;
+    margin: 16px 0 6px 0;
+    page-break-after: avoid;
+  }
+  p { margin: 6px 0; }
+  ul, ol { margin: 6px 0 10px 22px; padding: 0; }
+  li { margin: 3px 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 12px 0;
+    font-size: 9.8pt;
+    page-break-inside: avoid;
+  }
+  thead th {
+    background: var(--accent);
+    color: #fff;
+    text-align: left;
+    padding: 7px 9px;
+    font-weight: 600;
+  }
+  tbody td {
+    border-bottom: 1px solid var(--rule);
+    padding: 7px 9px;
+    vertical-align: top;
+  }
+  tbody tr:nth-child(even) td { background: #fafbfd; }
+  .chip {
+    display: inline-block;
+    background: var(--chip-bg);
+    color: var(--muted);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 8.5pt;
+    margin-right: 4px;
+  }
+  .chip.ok { background: #e4f3ea; color: var(--ok); }
+  .chip.warn { background: #fdecd8; color: var(--warn); }
+  .chip.new { background: var(--accent-soft); color: var(--accent); }
+  .callout {
+    background: var(--accent-soft);
+    border-left: 4px solid var(--accent);
+    padding: 10px 14px;
+    border-radius: 4px;
+    margin: 10px 0;
+    page-break-inside: avoid;
+  }
+  .feature {
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin: 8px 0;
+    page-break-inside: avoid;
+  }
+  .feature .title { font-weight: 700; color: var(--accent); }
+  .feature .tag { float: right; }
+  .two-col { column-count: 2; column-gap: 18px; }
+  .two-col p { break-inside: avoid; }
+  .roadmap {
+    display: table;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 8px 0;
+    margin: 10px 0;
+  }
+  .roadmap .phase {
+    display: table-cell;
+    width: 33.33%;
+    background: #fafbfd;
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 10px 12px;
+    vertical-align: top;
+  }
+  .roadmap .phase h4 {
+    margin: 0 0 6px 0;
+    font-size: 10pt;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .roadmap .phase ul { margin-left: 16px; }
+  footer {
+    position: fixed;
+    bottom: 8mm;
+    left: 16mm;
+    right: 16mm;
+    font-size: 8.5pt;
+    color: var(--muted);
+    border-top: 1px solid var(--rule);
+    padding-top: 4px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .page-break { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<!-- ================== COVER ================== -->
+<section class="cover">
+  <span class="badge">Product Strategy · Confidential</span>
+  <h1>HearMe</h1>
+  <div class="sub">Competitive Analysis &amp; Unique Feature Roadmap</div>
+  <div class="meta">
+    <div><strong>Prepared for:</strong> Debjyoti Sarkar</div>
+    <div><strong>Product:</strong> HearMe — Women's Personal Safety App</div>
+    <div><strong>Date:</strong> 16 April 2026</div>
+    <div><strong>Version:</strong> 1.0</div>
+  </div>
+</section>
+
+<!-- ================== SECTION 1 ================== -->
+<h2>1. Executive Summary</h2>
+<p>
+HearMe is a React Native / Expo based women's personal safety app targeting the
+Indian market. It already ships a set of features that are common across
+mainstream safety apps (shake-to-SOS, journey monitor, evidence locker,
+fake call, emergency SMS) and one category of features that is genuinely
+novel: <strong>behavioural biometrics</strong> — panic-pattern tap detection,
+coercion hesitation, phone-handoff detection, and a 0–100 Trust Engine score.
+</p>
+<div class="callout">
+  <strong>Core insight:</strong> HearMe's behavioural biometrics are not present in
+  any mainstream women's safety app on the Play Store. This is the moat.
+  The opportunity is to (a) close the parity gap on standard SOS features and
+  (b) stack <em>coercion-resistant</em> UX patterns on top of the biometric core
+  — creating an app attackers cannot easily disable even with the phone in hand.
+</div>
+
+<!-- ================== SECTION 2 ================== -->
+<h2>2. Competitive Landscape</h2>
+<table>
+  <thead>
+    <tr>
+      <th style="width:18%">App</th>
+      <th style="width:28%">Core Strength</th>
+      <th>Weakness vs. HearMe Opportunity</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>bSafe</strong></td><td>Live audio/video stream, fake call, follow-me</td><td>No behavioural AI; subscription paywall; western-centric UX</td></tr>
+    <tr><td><strong>Noonlight</strong></td><td>24/7 human dispatcher routes police directly</td><td>US-only; no India / 112 integration</td></tr>
+    <tr><td><strong>Life360</strong></td><td>Family location circle + driving reports</td><td>Not SOS-first; privacy criticism; no distress detection</td></tr>
+    <tr><td><strong>SafetiPin</strong></td><td>Crowd-sourced area safety scores</td><td>No personal distress detection or SOS pipeline</td></tr>
+    <tr><td><strong>Raksha / Himmat</strong></td><td>Govt police linkage</td><td>Outdated UX; no AI; poor offline handling</td></tr>
+    <tr><td><strong>Kitestring</strong></td><td>Smart check-ins ("reply or I call help")</td><td>Text-only; no sensors, no evidence</td></tr>
+    <tr><td><strong>Citizen</strong></td><td>Real-time crime heatmap</td><td>Voyeuristic; US-only; no personal safety layer</td></tr>
+    <tr><td><strong>VithU / CircleOf6</strong></td><td>Simple SOS circle</td><td>Minimal features; no active detection</td></tr>
+  </tbody>
+</table>
+
+<!-- ================== SECTION 3 ================== -->
+<h2>3. Where HearMe Already Leads</h2>
+<ul>
+  <li><span class="chip new">Moat</span> <strong>Behavioural biometrics</strong> — panic tap, coercion hesitation, phone handoff, inactivity alerts.</li>
+  <li><span class="chip new">Moat</span> <strong>Trust Engine 0–100 score</strong> with normal / unusual / suspect / alert bands.</li>
+  <li><span class="chip ok">Parity</span> Shake-to-SOS, GPS emergency SMS, evidence locker, journey monitor.</li>
+  <li><span class="chip ok">Parity</span> Speed tracker with crash-detection logic, nearby services, fake call.</li>
+  <li><span class="chip ok">Parity</span> Full i18n scaffold (48 KB language file) ready for regional rollout.</li>
+</ul>
+
+<h2>4. Unique Differentiators to Add (Your Moat)</h2>
+<p>These features, to the best of current market knowledge, are <em>not</em> shipped by any mainstream competitor in the personal-safety category.</p>
+
+<div class="feature">
+  <span class="tag"><span class="chip new">Unique</span></span>
+  <div class="title">1. Duress PIN / Reverse PIN Unlock</div>
+  Correct PIN unlocks normally; reverse PIN unlocks a <em>decoy</em> home screen while silently triggering SOS. A banking-grade pattern absent from every mainstream safety app.
+</div>
+
+<div class="feature">
+  <span class="tag"><span class="chip new">Unique</span></span>
+  <div class="title">2. Disguised-UI Mode</div>
+  Launcher icon and splash can impersonate a calculator, notes, or weather app. Single toggle in settings. Lifesaving in forced-unlock or phone-snatch scenarios.
+</div>
+
+<div class="feature">
+  <span class="tag"><span class="chip new">Unique</span></span>
+  <div class="title">3. Voice-Keyword Trigger</div>
+  On-device Whisper / Vosk listens for a user-defined safe word (e.g. "mausam kaisa hai"). Zero cloud upload until triggered. Works screen-off.
+</div>
+
+<div class="feature">
+  <span class="tag"><span class="chip new">Unique</span></span>
+  <div class="title">4. Coercion-Aware Fake Deactivation</div>
+  If an attacker forces the user to uninstall or disable, the app <em>appears</em> to turn off but retains a 30-minute grace trigger. Requires Android foreground-service hygiene.
+</div>
+
+<div class="feature">
+  <span class="tag"><span class="chip new">Unique</span></span>
+  <div class="title">5. AI Threat-Narrator</div>
+  During an active SOS, an on-device LLM (Gemini Nano) auto-transcribes recorded audio and generates a timeline summary — e.g. "raised voices at 21:04, vehicle start at 21:06" — attached to the evidence bundle.
+</div>
+
+<div class="feature">
+  <span class="tag"><span class="chip new">Unique</span></span>
+  <div class="title">6. Bluetooth-Mesh SOS</div>
+  When no cellular is available, broadcast SOS to any HearMe user within ~100 m (Bridgefy-style mesh). Critical for metros, tunnels, rural zones.
+</div>
+
+<div class="feature">
+  <span class="tag"><span class="chip new">Unique</span></span>
+  <div class="title">7. Safe-Route AI</div>
+  Overlay on Google Maps that re-routes around low-safety zones using your crowd heatmap and NCRB open-crime data (India).
+</div>
+
+<div class="feature">
+  <span class="tag"><span class="chip new">Unique</span></span>
+  <div class="title">8. Guardian Mode (Peer Live-Watch)</div>
+  Any trusted contact across the city can live-watch your journey on their phone and confirm "I'm watching." Reduces escalation burden on police.
+</div>
+
+<div class="feature">
+  <span class="tag"><span class="chip new">Unique</span></span>
+  <div class="title">9. Post-Incident Auto-FIR Draft</div>
+  Uses evidence timeline + location + transcript to pre-fill an FIR PDF compatible with state police portals. Major value in India.
+</div>
+
+<div class="feature">
+  <span class="tag"><span class="chip new">Unique</span></span>
+  <div class="title">10. Wearable &amp; Panic-Button Integration</div>
+  Apple Watch, Noise / boAt smartwatches, and Bluetooth keychain panic buttons (~₹300). Triple-press triggers SOS even when the phone is locked in a bag.
+</div>
+
+<!-- ================== SECTION 5 ================== -->
+<h2>5. Industry-Standard Features Currently Missing</h2>
+<table>
+  <thead>
+    <tr><th style="width:32%">Feature</th><th>Why It Matters</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Live audio/video streaming during SOS</td><td>Table-stakes vs. bSafe; reduces evidence loss if phone is destroyed.</td></tr>
+    <tr><td>Timer check-ins (Kitestring pattern)</td><td>"I'll be home by 10:30 — ping me." Covers low-intensity risk well.</td></tr>
+    <tr><td>Cloud-synced, E2E-encrypted evidence</td><td>Today evidence is local-only; courts need tamper-proof timestamps (hash-chain / Object-Lock).</td></tr>
+    <tr><td>112 / state-police API integration</td><td>India's 112 service offers an official SOS API — direct dispatcher route.</td></tr>
+    <tr><td>Family Circle / group journey</td><td>Life360-style parity for household users.</td></tr>
+    <tr><td>Heart-rate distress trigger</td><td>Via connected wearables — elevated HR + anomaly = stronger signal.</td></tr>
+    <tr><td>Quick-settings tile / Action Button / lock-screen widget</td><td>One-tap SOS without unlocking.</td></tr>
+    <tr><td>Accessibility: TalkBack, dyslexia font, regional TTS</td><td>Your i18n is already wired — just add TTS + a11y audits.</td></tr>
+    <tr><td>Offline-first + E2E encryption of contacts</td><td>libsignal / tweetnacl for contacts and evidence metadata.</td></tr>
+    <tr><td>One-handed mode &amp; dark-mode</td><td>Distress UX fundamentals.</td></tr>
+  </tbody>
+</table>
+
+<!-- ================== SECTION 6 ================== -->
+<h2>6. Trust, Compliance &amp; Monetisation</h2>
+<ul>
+  <li><strong>Subscription tier (Noonlight model):</strong> 24/7 human dispatcher via a partnered private-security firm.</li>
+  <li><strong>Compliance:</strong> SOC 2 + India DPDP Act badges in onboarding — trust is a conversion lever.</li>
+  <li><strong>Open-source the Trust Engine:</strong> reinforces credibility (you already adapted PhishSafe) and invites academic validation.</li>
+  <li><strong>Institutional partnerships:</strong> Ola / Uber / Rapido integration; campus safety programmes; NGO distribution.</li>
+</ul>
+
+<!-- ================== SECTION 7 ================== -->
+<h2>7. Recommended Ship Order</h2>
+<div class="roadmap">
+  <div class="phase">
+    <h4>Phase 1 · 0–4 weeks</h4>
+    <ul>
+      <li>Duress PIN / reverse PIN</li>
+      <li>Disguised-UI mode</li>
+      <li>Voice-keyword trigger</li>
+      <li>Cloud-encrypted evidence sync</li>
+      <li>Live audio streaming</li>
+    </ul>
+  </div>
+  <div class="phase">
+    <h4>Phase 2 · 4–8 weeks</h4>
+    <ul>
+      <li>Guardian-mode peer watching</li>
+      <li>Bluetooth-mesh SOS</li>
+      <li>Wearable + panic-button support</li>
+      <li>112 / state-police API</li>
+      <li>Timer check-ins</li>
+    </ul>
+  </div>
+  <div class="phase">
+    <h4>Phase 3 · 8–12 weeks</h4>
+    <ul>
+      <li>AI Threat-Narrator</li>
+      <li>Auto-FIR draft generator</li>
+      <li>Safe-Route AI overlay</li>
+      <li>Family Circle / group journeys</li>
+      <li>Subscription dispatcher tier</li>
+    </ul>
+  </div>
+</div>
+
+<div class="callout">
+  <strong>Recommendation:</strong> Start with <em>Duress PIN, Disguised UI, and Voice Trigger</em>.
+  Combined with the existing behavioural biometrics, these three features alone put
+  HearMe ahead of every mainstream safety app on the Play Store today — and each is
+  achievable in a single sprint using the stack already in place.
+</div>
+
+<!-- ================== SECTION 8 ================== -->
+<h2>8. Risks &amp; Mitigations</h2>
+<table>
+  <thead>
+    <tr><th style="width:30%">Risk</th><th>Mitigation</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>False positives on behavioural alerts</td><td>Graduated response: local vibration → check-in prompt → SOS after 15 s no-cancel.</td></tr>
+    <tr><td>Battery drain from always-on sensors / voice trigger</td><td>Keep voice-keyword model on-device, VAD-gated; sensors sampled at 5 Hz off-motion.</td></tr>
+    <tr><td>Evidence tampering allegations in court</td><td>Hash-chain + Supabase Object Lock + server-side timestamp signature.</td></tr>
+    <tr><td>Police-API reliability across states</td><td>Fallback: SMS to 112 + WhatsApp Business template + email to state helpline.</td></tr>
+    <tr><td>Disguised-UI rejection on iOS</td><td>Use Alternate Icons API (iOS-approved) rather than full launcher spoof.</td></tr>
+  </tbody>
+</table>
+
+<footer>
+  <span>HearMe · Competitive Analysis &amp; Feature Roadmap</span>
+  <span>16 April 2026 · v1.0 · Confidential</span>
+</footer>
+
+</body>
+</html>
