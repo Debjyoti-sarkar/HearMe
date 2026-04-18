@@ -76,34 +76,67 @@ export default function ProfileCompletionScreen() {
     setLocation(readable);
   };
 
-  const uploadAvatar = async () => {
-    if (!user) return;
+  const handlePickedAsset = async (asset: ImagePicker.ImagePickerAsset) => {
+    setAvatarUrl(asset.uri);
+
+    if (!user || !isSupabaseConfigured) return;
+
+    try {
+      const response = await fetch(asset.uri);
+      const blob = await response.blob();
+      const ext = asset.uri.split('.').pop() ?? 'jpg';
+      const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from('avatars').upload(path, blob, {
+        upsert: true,
+        contentType: asset.mimeType ?? 'image/jpeg',
+      });
+      if (!error) {
+        const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+        setAvatarUrl(data.publicUrl);
+      }
+    } catch {
+      // Local preview is already set
+    }
+  };
+
+  const pickFromGallery = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Permission needed', 'Photo permission is required to upload your avatar.');
+      Alert.alert('Permission needed', 'Photo permission is required to choose a picture.');
       return;
     }
     const pick = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
+      aspect: [1, 1],
       quality: 0.8,
     });
     if (pick.canceled || !pick.assets[0]) return;
-    const asset = pick.assets[0];
-    const response = await fetch(asset.uri);
-    const blob = await response.blob();
-    const ext = asset.uri.split('.').pop() ?? 'jpg';
-    const path = `${user.id}/avatar-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from('avatars').upload(path, blob, {
-      upsert: true,
-      contentType: asset.mimeType ?? 'image/jpeg',
-    });
-    if (error) {
-      Alert.alert('Upload failed', error.message);
+    await handlePickedAsset(pick.assets[0]);
+  };
+
+  const takePhoto = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission needed', 'Camera permission is required to take a picture.');
       return;
     }
-    const { data } = supabase.storage.from('avatars').getPublicUrl(path);
-    setAvatarUrl(data.publicUrl);
+    const pick = await ImagePicker.launchCameraAsync({
+      cameraType: ImagePicker.CameraType.front,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (pick.canceled || !pick.assets[0]) return;
+    await handlePickedAsset(pick.assets[0]);
+  };
+
+  const uploadAvatar = () => {
+    Alert.alert('Profile Photo', 'Choose an option', [
+      { text: 'Take Photo', onPress: takePhoto },
+      { text: 'Choose from Gallery', onPress: pickFromGallery },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
   };
 
   const onSave = async () => {

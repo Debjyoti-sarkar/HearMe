@@ -1,9 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   Image,
@@ -21,6 +21,8 @@ import { SOSButton } from '../../../components/SOSButton';
 import { QuickAction } from '../../../components/QuickAction';
 import { StatusBadge } from '../../../components/StatusBadge';
 import { colors } from '../../../constants/theme';
+import { loadLocalAvatar } from '../../../lib/app-data';
+import { shareLocationWhatsApp } from '../../../lib/emergency-sms';
 import { useAuth } from '../../../providers/AuthProvider';
 import { useHearMe } from '../../../providers/HearMeProvider';
 import { generateSafetyCode } from '../../../lib/siren';
@@ -32,10 +34,18 @@ export default function HomeTab() {
   const { ready, contacts, settings, executeSos, shareLocation, callEmergencyLine } = useHearMe();
   const { profile, refreshProfile } = useAuth();
   const [sosActive, setSosActive] = useState(false);
+  const [localAvatar, setLocalAvatar] = useState<string | null>(null);
 
   useEffect(() => {
     if (!profile) void refreshProfile();
   }, []);
+
+  // Reload avatar whenever dashboard regains focus (e.g. after editing profile)
+  useFocusEffect(
+    useCallback(() => {
+      loadLocalAvatar().then(setLocalAvatar);
+    }, []),
+  );
 
   const handleSos = async () => {
     if (contacts.length === 0) {
@@ -122,9 +132,9 @@ export default function HomeTab() {
             <Text style={[styles.greeting, dyslexiaTextStyle]}>{getGreeting()}</Text>
             <Text style={[styles.userName, dyslexiaTextStyle]}>{profile?.name ?? 'User'}</Text>
           </View>
-          <Pressable onPress={() => router.push('/profile')} style={styles.avatarBtn}>
-            {profile?.avatar_url ? (
-              <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
+          <Pressable onPress={() => router.push('/(main)/user-profile')} style={styles.avatarBtn}>
+            {(profile?.avatar_url || localAvatar) ? (
+              <Image source={{ uri: profile?.avatar_url ?? localAvatar! }} style={styles.avatar} />
             ) : (
               <LinearGradient
                 colors={[colors.accentViolet, colors.accentPink]}
@@ -172,9 +182,25 @@ export default function HomeTab() {
             label="Share Location"
             gradient={['#3b82f6', '#2563eb']}
             onPress={() => {
-              void shareLocation().then((r) => {
-                Alert.alert(r.ok ? 'Sent' : 'Failed', r.message);
-              });
+              Alert.alert('Share Location', 'Choose how to share your location', [
+                {
+                  text: 'SMS',
+                  onPress: () => {
+                    void shareLocation().then((r) => {
+                      Alert.alert(r.ok ? 'Sent' : 'Failed', r.message);
+                    });
+                  },
+                },
+                {
+                  text: 'WhatsApp',
+                  onPress: () => {
+                    void shareLocationWhatsApp().then((r) => {
+                      if (!r.ok) Alert.alert('Failed', r.message);
+                    });
+                  },
+                },
+                { text: 'Cancel', style: 'cancel' },
+              ]);
             }}
           />
           <QuickAction

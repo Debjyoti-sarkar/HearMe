@@ -86,6 +86,26 @@ export async function shareLocationSms(contacts: EmergencyContact[]): Promise<Em
   }
 }
 
+export async function getLocationText(): Promise<string> {
+  return resolveLocationLine();
+}
+
+export async function shareLocationWhatsApp(): Promise<EmergencyResult> {
+  const loc = await resolveLocationLine();
+  const body = encodeURIComponent(`HearMe — sharing my location:\n${loc}`);
+  const url = `whatsapp://send?text=${body}`;
+  try {
+    const can = await Linking.canOpenURL(url);
+    if (!can) {
+      return { ok: false, message: 'WhatsApp is not installed on this device.' };
+    }
+    await Linking.openURL(url);
+    return { ok: true, message: 'WhatsApp opened with your location.' };
+  } catch (e) {
+    return { ok: false, message: `WhatsApp failed: ${String(e)}` };
+  }
+}
+
 export async function dialEmergency(raw: string): Promise<void> {
   const cleaned = raw.replace(/[^\d+]/g, '');
   if (!cleaned) return;

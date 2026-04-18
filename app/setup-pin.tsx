@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -32,6 +32,7 @@ export default function SetupPinScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     (async () => {
@@ -51,7 +52,11 @@ export default function SetupPinScreen() {
     if (step === 'enter') {
       setPin(digits);
       if (digits.length === 4) {
-        setTimeout(() => setStep('confirm'), 200);
+        setTimeout(() => {
+          setStep('confirm');
+          // Re-focus the input for the confirm step
+          setTimeout(() => inputRef.current?.focus(), 100);
+        }, 200);
       }
     } else {
       setConfirmPin(digits);
@@ -132,29 +137,31 @@ export default function SetupPinScreen() {
               {step === 'enter' ? T('enterPin') : T('confirmPin')}
             </Text>
 
-            {/* PIN dots display */}
-            <View style={styles.pinDotsRow}>
-              {[0, 1, 2, 3].map((i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.pinDot,
-                    i < currentValue.length && styles.pinDotFilled,
-                  ]}
-                />
-              ))}
+            {/* PIN dots with invisible TextInput overlay */}
+            <View style={styles.pinDotsContainer}>
+              <View style={styles.pinDotsRow}>
+                {[0, 1, 2, 3].map((i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.pinDot,
+                      i < currentValue.length && styles.pinDotFilled,
+                    ]}
+                  />
+                ))}
+              </View>
+              <TextInput
+                ref={inputRef}
+                value={currentValue}
+                onChangeText={onPinChange}
+                keyboardType="number-pad"
+                maxLength={4}
+                style={styles.pinOverlayInput}
+                autoFocus
+                secureTextEntry
+                caretHidden
+              />
             </View>
-
-            {/* Hidden text input for keyboard */}
-            <TextInput
-              value={currentValue}
-              onChangeText={onPinChange}
-              keyboardType="number-pad"
-              maxLength={4}
-              style={styles.hiddenInput}
-              autoFocus
-              secureTextEntry
-            />
 
             {error && <Text style={styles.error}>{error}</Text>}
 
@@ -254,11 +261,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
   },
+  pinDotsContainer: {
+    position: 'relative',
+    marginBottom: 16,
+  },
   pinDotsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 18,
-    marginBottom: 16,
+    paddingVertical: 12,
   },
   pinDot: {
     width: 20,
@@ -272,11 +283,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accentViolet,
     borderColor: colors.accentViolet,
   },
-  hiddenInput: {
+  pinOverlayInput: {
     position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     opacity: 0,
-    height: 0,
-    width: 0,
+    fontSize: 1,
   },
   error: {
     color: colors.accentRose,

@@ -1,5 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { makeRedirectUri } from 'expo-auth-session';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
@@ -68,6 +69,29 @@ export default function LoginScreen() {
     })();
   }, []);
 
+  // Handle deep link return from Google OAuth (e.g. when app is cold-started via redirect)
+  useEffect(() => {
+    const handleUrl = async (event: { url: string }) => {
+      const { accessToken, refreshToken } = extractSessionFromUrl(event.url);
+      if (accessToken && refreshToken) {
+        await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        await clearDemoAuth();
+      }
+    };
+
+    const subscription = Linking.addEventListener('url', handleUrl);
+
+    // Also check the initial URL in case the app was opened from a cold start
+    Linking.getInitialURL().then((url) => {
+      if (url) handleUrl({ url });
+    });
+
+    return () => subscription.remove();
+  }, []);
+
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -128,7 +152,7 @@ export default function LoginScreen() {
     setError(null);
     setInfo(null);
     setGoogleLoading(true);
-    const redirectTo = Linking.createURL('/login');
+    const redirectTo = makeRedirectUri({ path: 'login' });
     const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo, skipBrowserRedirect: true },
@@ -138,28 +162,37 @@ export default function LoginScreen() {
       setError(oauthError?.message ?? 'Could not start Google login.');
       return;
     }
-    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-    setGoogleLoading(false);
-    if (result.type === 'success' && result.url) {
-      const { accessToken, refreshToken } = extractSessionFromUrl(result.url);
-      if (!accessToken || !refreshToken) {
-        setError('Google login succeeded but session tokens were missing. Please try again.');
+    try {
+      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+      if (result.type === 'success' && result.url) {
+        const { accessToken, refreshToken } = extractSessionFromUrl(result.url);
+        if (!accessToken || !refreshToken) {
+          setGoogleLoading(false);
+          setError('Google login succeeded but session tokens were missing. Please try again.');
+          return;
+        }
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        setGoogleLoading(false);
+        if (sessionError) {
+          setError(sessionError.message);
+          return;
+        }
+        await clearDemoAuth();
+        // Navigation is handled by the session useEffect listener
         return;
       }
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      });
-      if (sessionError) {
-        setError(sessionError.message);
+      setGoogleLoading(false);
+      if (result.type === 'dismiss' || result.type === 'cancel') {
+        // User dismissed — no error needed
         return;
       }
-      await clearDemoAuth();
-      router.replace('/profile');
-      return;
-    }
-    if (result.type !== 'dismiss' && result.type !== 'cancel') {
       setError('Google login was cancelled.');
+    } catch (e: any) {
+      setGoogleLoading(false);
+      setError(e?.message ?? 'An error occurred during Google login.');
     }
   };
 

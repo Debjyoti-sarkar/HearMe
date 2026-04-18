@@ -6,6 +6,7 @@ import { DEFAULT_SETTINGS } from './types';
 const KEYS = {
   contacts: '@hearme/contacts_v1',
   settings: '@hearme/settings_v1',
+  localAvatar: '@hearme/local_avatar',
 } as const;
 
 export async function loadContacts(): Promise<EmergencyContact[]> {
@@ -46,6 +47,18 @@ export async function saveSettings(s: HearMeSettings) {
   await AsyncStorage.setItem(KEYS.settings, JSON.stringify(s));
 }
 
+export async function saveLocalAvatar(uri: string) {
+  await AsyncStorage.setItem(KEYS.localAvatar, uri);
+}
+
+export async function loadLocalAvatar(): Promise<string | null> {
+  return AsyncStorage.getItem(KEYS.localAvatar);
+}
+
+export async function clearLocalAvatar() {
+  await AsyncStorage.removeItem(KEYS.localAvatar);
+}
+
 export async function clearAppData() {
-  await AsyncStorage.multiRemove([KEYS.contacts, KEYS.settings]);
+  await AsyncStorage.multiRemove([KEYS.contacts, KEYS.settings, KEYS.localAvatar]);
 }

@@ -24,7 +24,10 @@
       "Read(//c/Program Files \\(x86\\)/Microsoft/Edge/Application/**)",
       "Bash(\"/c/Program Files/Google/Chrome/Application/chrome.exe\" --headless=new --disable-gpu --no-pdf-header-footer --print-to-pdf=\"C:\\\\Users\\\\DebSarkar\\\\Desktop\\\\HearMe\\\\docs\\\\HearMe_Competitive_Analysis.pdf\" \"file:///C:/Users/DebSarkar/Desktop/HearMe/docs/HearMe_Competitive_Analysis.html\")",
       "Bash(\"/c/Program Files/Google/Chrome/Application/chrome.exe\" --headless=new --disable-gpu --no-pdf-header-footer --print-to-pdf=\"C:\\\\Users\\\\DebSarkar\\\\Desktop\\\\HearMe\\\\docs\\\\HearMe_Hardware_IoT_Strategy.pdf\" \"file:///C:/Users/DebSarkar/Desktop/HearMe/docs/HearMe_Hardware_IoT_Strategy.html\")",
-      "Bash(echo \"EXIT=$?\")"
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(ls -la \"C:/Users/DebSarkar/Desktop/HearMe/.env\"*)",
+      "Bash(node -e \"try { require.resolve\\('expo-auth-session'\\); console.log\\('installed'\\); } catch\\(e\\) { console.log\\('not installed'\\); }\")",
+      "Bash(node -e ':*)"
     ]
   }
 }

@@ -55,6 +55,7 @@ function MainStack() {
             <Stack.Screen name="behavior-monitor" options={MODAL_OPTIONS} />
             <Stack.Screen name="check-in" options={MODAL_OPTIONS} />
             <Stack.Screen name="evidence-locker" options={MODAL_OPTIONS} />
+            <Stack.Screen name="user-profile" options={MODAL_OPTIONS} />
           </Stack>
         </GestureTracker>
       </LockGate>
