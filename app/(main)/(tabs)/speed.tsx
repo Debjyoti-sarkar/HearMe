@@ -3,8 +3,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
-import { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GradientBackground } from '../../../components/GradientBackground';
@@ -15,17 +15,96 @@ import { useHearMe } from '../../../providers/HearMeProvider';
 import { saveAlertRecord } from '../../../lib/alert-history';
 import { generateSafetyCode } from '../../../lib/siren';
 
+const COUNTDOWN_SECONDS = 15;
+
 export default function SpeedTab() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const { settings, contacts, executeSos } = useHearMe();
-  const [kmh, setKmh] = useState<number | null>(null);
+  const [kmh, setKmh] = useState<number>(0);
   const [maxKmh, setMaxKmh] = useState(0);
   const [status, setStatus] = useState('Starting...');
   const [crashAlert, setCrashAlert] = useState(false);
+  const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
   const prevSpeed = useRef<number>(0);
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const crashAlertRef = useRef(false);
 
+  // Keep refs in sync so the location callback always sees latest values
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+  const contactsRef = useRef(contacts);
+  contactsRef.current = contacts;
+
+  const sendCrashSos = useCallback(async () => {
+    clearCountdown();
+    setCrashAlert(false);
+    crashAlertRef.current = false;
+
+    const code = generateSafetyCode();
+    const result = await executeSos();
+    await saveAlertRecord({
+      id: `alert-${Date.now()}`,
+      type: 'crash',
+      timestamp: new Date().toISOString(),
+      location: null,
+      safetyCode: code,
+      contactsNotified: contactsRef.current.length,
+      status: result.ok ? 'sent' : 'failed',
+    });
+
+    Alert.alert(
+      result.ok ? 'SOS Sent' : 'SOS Failed',
+      result.ok
+        ? `Emergency contacts have been notified.\nSafety Code: ${code}`
+        : result.message,
+    );
+  }, [executeSos]);
+
+  const clearCountdown = () => {
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
+    }
+  };
+
+  const dismissCrash = () => {
+    clearCountdown();
+    setCrashAlert(false);
+    crashAlertRef.current = false;
+  };
+
+  const startCrashCountdown = useCallback(() => {
+    if (crashAlertRef.current) return;
+    crashAlertRef.current = true;
+    setCrashAlert(true);
+    setCountdown(COUNTDOWN_SECONDS);
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+
+    let remaining = COUNTDOWN_SECONDS;
+    countdownRef.current = setInterval(() => {
+      remaining -= 1;
+      setCountdown(remaining);
+
+      // Haptic tick every 3 seconds
+      if (remaining % 3 === 0 && remaining > 0) {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      }
+
+      if (remaining <= 0) {
+        clearCountdown();
+        void sendCrashSos();
+      }
+    }, 1000);
+  }, [sendCrashSos]);
+
+  // Cleanup countdown on unmount
+  useEffect(() => {
+    return () => clearCountdown();
+  }, []);
+
+  // GPS tracking
   useEffect(() => {
     let sub: Location.LocationSubscription | undefined;
     let alive = true;
@@ -46,26 +125,27 @@ export default function SpeedTab() {
       setStatus('Acquiring GPS signal...');
       sub = await Location.watchPositionAsync(
         {
-          accuracy: Location.Accuracy.High,
-          distanceInterval: 5,
+          accuracy: Location.Accuracy.BestForNavigation,
+          distanceInterval: 3,
           timeInterval: 1000,
         },
         (loc) => {
           const mps = loc.coords.speed;
-          if (mps == null || mps < 0) {
-            setKmh(null);
-            return;
-          }
-          const currentKmh = mps * 3.6;
+          const currentKmh = mps != null && mps > 0 ? mps * 3.6 : 0;
           setKmh(currentKmh);
-          setMaxKmh((m) => Math.max(m, currentKmh));
-          setStatus('GPS active');
+          if (currentKmh > 0) {
+            setMaxKmh((m) => Math.max(m, currentKmh));
+          }
+          setStatus(loc.coords.speed != null ? 'GPS active' : 'GPS active (no speed data)');
 
-          // Crash detection
-          if (settings.crashDetection && prevSpeed.current > settings.crashSpeedThreshold) {
+          // Crash detection — check using refs for latest settings
+          const s = settingsRef.current;
+          if (s.crashDetection && prevSpeed.current > s.crashSpeedThreshold) {
             const decel = prevSpeed.current - currentKmh;
-            if (decel > settings.crashSpeedThreshold * 0.7) {
-              handleCrashDetected();
+            // Require deceleration > 80% of previous speed (e.g. 80→10 = sudden stop)
+            // AND the decel must be at least the threshold value
+            if (decel >= s.crashSpeedThreshold && decel > prevSpeed.current * 0.6) {
+              startCrashCountdown();
             }
           }
           prevSpeed.current = currentKmh;
@@ -77,44 +157,9 @@ export default function SpeedTab() {
       alive = false;
       sub?.remove();
     };
-  }, [settings.crashDetection, settings.crashSpeedThreshold]);
+  }, [startCrashCountdown]);
 
-  const handleCrashDetected = () => {
-    if (crashAlert) return;
-    setCrashAlert(true);
-    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-
-    Alert.alert(
-      'Crash Detected!',
-      'A sudden deceleration was detected. Are you safe?\n\nAuto-alerting contacts in 10 seconds...',
-      [
-        {
-          text: "I'm Safe",
-          style: 'cancel',
-          onPress: () => setCrashAlert(false),
-        },
-        {
-          text: 'Send SOS Now',
-          style: 'destructive',
-          onPress: async () => {
-            const code = generateSafetyCode();
-            const result = await executeSos();
-            await saveAlertRecord({
-              id: `alert-${Date.now()}`,
-              type: 'crash',
-              timestamp: new Date().toISOString(),
-              location: null,
-              safetyCode: code,
-              contactsNotified: contacts.length,
-              status: result.ok ? 'sent' : 'failed',
-            });
-            setCrashAlert(false);
-          },
-        },
-      ],
-    );
-  };
-
+  // Pulse animation for crash alert
   useEffect(() => {
     if (!crashAlert) return;
     const anim = Animated.loop(
@@ -128,17 +173,17 @@ export default function SpeedTab() {
   }, [crashAlert, pulseAnim]);
 
   const getSpeedColor = (): [string, string] => {
-    if (kmh == null) return ['rgba(99,102,241,0.4)', 'rgba(129,140,248,0.3)'];
     if (kmh > 100) return ['rgba(239,68,68,0.5)', 'rgba(220,38,38,0.4)'];
     if (kmh > 60) return ['rgba(245,158,11,0.5)', 'rgba(217,119,6,0.4)'];
-    return ['rgba(16,185,129,0.4)', 'rgba(5,150,105,0.3)'];
+    if (kmh > 0) return ['rgba(16,185,129,0.4)', 'rgba(5,150,105,0.3)'];
+    return ['rgba(99,102,241,0.4)', 'rgba(129,140,248,0.3)'];
   };
 
   const getSpeedTextColor = () => {
-    if (kmh == null) return colors.text;
     if (kmh > 100) return '#ef4444';
     if (kmh > 60) return '#f59e0b';
-    return '#10b981';
+    if (kmh > 0) return '#10b981';
+    return colors.text;
   };
 
   return (
@@ -164,11 +209,11 @@ export default function SpeedTab() {
           <LinearGradient colors={getSpeedColor()} style={styles.dialOuter}>
             <GlassCard variant="elevated" style={styles.dial}>
               <Text style={[styles.speedValue, { color: getSpeedTextColor() }]}>
-                {kmh == null ? '—' : kmh.toFixed(0)}
+                {kmh.toFixed(0)}
               </Text>
               <Text style={styles.speedUnit}>km/h</Text>
               <View style={styles.statusRow}>
-                <View style={[styles.statusDot, { backgroundColor: kmh != null ? colors.success : colors.textMuted }]} />
+                <View style={[styles.statusDot, { backgroundColor: status === 'GPS active' ? colors.success : colors.textMuted }]} />
                 <Text style={styles.statusText}>{status}</Text>
               </View>
             </GlassCard>
@@ -178,12 +223,12 @@ export default function SpeedTab() {
         <View style={styles.statsRow}>
           <GlassCard style={styles.statCard}>
             <MaterialCommunityIcons name="speedometer-slow" size={22} color={colors.accentCyan} />
-            <Text style={styles.statValue}>{kmh?.toFixed(1) ?? '—'}</Text>
+            <Text style={styles.statValue}>{kmh.toFixed(1)}</Text>
             <Text style={styles.statLabel}>Current</Text>
           </GlassCard>
           <GlassCard style={styles.statCard}>
             <MaterialCommunityIcons name="speedometer" size={22} color={colors.accentPink} />
-            <Text style={styles.statValue}>{maxKmh > 0 ? maxKmh.toFixed(1) : '—'}</Text>
+            <Text style={styles.statValue}>{maxKmh > 0 ? maxKmh.toFixed(1) : '0'}</Text>
             <Text style={styles.statLabel}>Max</Text>
           </GlassCard>
           <GlassCard style={styles.statCard}>
@@ -195,10 +240,31 @@ export default function SpeedTab() {
 
         {crashAlert && (
           <GlassCard style={styles.crashBanner}>
-            <MaterialCommunityIcons name="alert" size={24} color={colors.danger} />
+            <View style={styles.crashHeader}>
+              <MaterialCommunityIcons name="alert" size={24} color={colors.danger} />
+              <View style={styles.crashCountdownCircle}>
+                <Text style={styles.crashCountdownText}>{countdown}</Text>
+              </View>
+            </View>
             <Text style={styles.crashText}>
-              Sudden deceleration detected! Respond within 10 seconds or contacts will be alerted.
+              Sudden deceleration detected! Auto-sending SOS in {countdown}s.
             </Text>
+            <View style={styles.crashActions}>
+              <Pressable
+                onPress={dismissCrash}
+                style={({ pressed }) => [styles.crashSafeBtn, pressed && { opacity: 0.8 }]}
+              >
+                <MaterialCommunityIcons name="shield-check" size={18} color={colors.success} />
+                <Text style={styles.crashSafeText}>I'm Safe</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => void sendCrashSos()}
+                style={({ pressed }) => [styles.crashSosBtn, pressed && { opacity: 0.8 }]}
+              >
+                <MaterialCommunityIcons name="alert-circle" size={18} color="#fff" />
+                <Text style={styles.crashSosText}>Send SOS Now</Text>
+              </Pressable>
+            </View>
           </GlassCard>
         )}
 
@@ -206,7 +272,7 @@ export default function SpeedTab() {
           <MaterialCommunityIcons name="information-outline" size={20} color={colors.accentViolet} />
           <Text style={styles.infoText}>
             Enable crash detection in Settings to auto-alert contacts when sudden deceleration
-            is detected. GPS speed may lag indoors — use as a situational tool.
+            is detected. If you don't respond within {COUNTDOWN_SECONDS} seconds, SOS is sent automatically.
           </Text>
         </GlassCard>
       </View>
@@ -285,19 +351,74 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   crashBanner: {
-    flexDirection: 'row',
-    gap: 12,
     padding: 16,
     marginBottom: 12,
     borderColor: 'rgba(239,68,68,0.3)',
     backgroundColor: 'rgba(239,68,68,0.08)',
   },
+  crashHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  crashCountdownCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(239,68,68,0.2)',
+    borderWidth: 2,
+    borderColor: colors.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  crashCountdownText: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: colors.danger,
+  },
   crashText: {
-    flex: 1,
     color: colors.danger,
     fontSize: 14,
     fontWeight: '700',
     lineHeight: 20,
+    marginBottom: 14,
+  },
+  crashActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  crashSafeBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: 'rgba(16,185,129,0.3)',
+    backgroundColor: 'rgba(16,185,129,0.08)',
+  },
+  crashSafeText: {
+    color: colors.success,
+    fontWeight: '800',
+    fontSize: 14,
+  },
+  crashSosBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: radii.md,
+    backgroundColor: colors.danger,
+  },
+  crashSosText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 14,
   },
   infoCard: {
     flexDirection: 'row',

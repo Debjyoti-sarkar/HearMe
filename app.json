@@ -31,7 +31,9 @@
         "CALL_PHONE",
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
-        "VIBRATE"
+        "VIBRATE",
+        "CAMERA",
+        "READ_CONTACTS"
       ]
     },
     "web": {
@@ -46,7 +48,13 @@
           "locationWhenInUsePermission": "HearMe uses your location for emergency SMS links and live speed."
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "HearMe uses your camera to detect hidden camera IR LEDs."
+        }
+      ]
     ]
   }
 }

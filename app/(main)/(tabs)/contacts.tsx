@@ -1,6 +1,7 @@
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Contacts from 'expo-contacts';
 import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
 import {
@@ -40,6 +41,76 @@ export default function ContactsTab() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [relation, setRelation] = useState('');
+
+  const [pickingContact, setPickingContact] = useState(false);
+
+  const pickFromPhone = async () => {
+    const { status } = await Contacts.requestPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Contacts permission is required to import from your phone.');
+      return;
+    }
+    // Close the add modal first to avoid collision
+    setModal(false);
+    setPickingContact(true);
+    const { data } = await Contacts.getContactsAsync({
+      fields: [Contacts.Fields.Name, Contacts.Fields.PhoneNumbers],
+      sort: Contacts.SortTypes.FirstName,
+    });
+    setPickingContact(false);
+
+    const withPhone = data.filter(
+      (c) => c.name && c.phoneNumbers && c.phoneNumbers.length > 0,
+    );
+
+    if (withPhone.length === 0) {
+      Alert.alert('No contacts', 'No contacts with phone numbers found on your device.');
+      return;
+    }
+
+    setPhoneContacts(withPhone);
+    setPhoneSearchQuery('');
+    // Delay opening picker until add modal closes
+    setTimeout(() => setPhonePickerModal(true), 350);
+  };
+
+  const [phoneContacts, setPhoneContacts] = useState<Contacts.Contact[]>([]);
+  const [phonePickerModal, setPhonePickerModal] = useState(false);
+  const [phoneSearchQuery, setPhoneSearchQuery] = useState('');
+
+  const fillAndShowAddModal = (contactName: string, contactPhone: string) => {
+    setName(contactName);
+    setPhone(contactPhone);
+    setEditing(null);
+    setPhonePickerModal(false);
+    // Delay opening add modal until picker modal animation finishes
+    setTimeout(() => setModal(true), 350);
+  };
+
+  const selectPhoneContact = (contact: Contacts.Contact) => {
+    const contactName = contact.name ?? '';
+    const phones = contact.phoneNumbers ?? [];
+
+    if (phones.length === 1) {
+      fillAndShowAddModal(contactName, phones[0].number ?? '');
+      return;
+    }
+
+    // Multiple numbers — let user pick
+    Alert.alert(
+      contactName,
+      'Choose a phone number',
+      [
+        ...phones.map((p) => ({
+          text: `${p.label ?? 'Phone'}: ${p.number ?? ''}`,
+          onPress: () => {
+            fillAndShowAddModal(contactName, p.number ?? '');
+          },
+        })),
+        { text: 'Cancel', style: 'cancel' as const },
+      ],
+    );
+  };
 
   const openNew = () => {
     setEditing(null);
@@ -187,6 +258,28 @@ export default function ContactsTab() {
               </Pressable>
             </View>
 
+            {!editing && (
+              <Pressable
+                onPress={pickFromPhone}
+                disabled={pickingContact}
+                style={({ pressed }) => [styles.importBtn, pressed && { opacity: 0.8 }]}
+              >
+                <LinearGradient
+                  colors={['rgba(167,139,250,0.12)', 'rgba(52,211,153,0.08)']}
+                  style={styles.importBtnGrad}
+                >
+                  <MaterialCommunityIcons name="contacts" size={22} color={colors.accentViolet} />
+                  <View style={styles.importBtnInfo}>
+                    <Text style={styles.importBtnTitle}>
+                      {pickingContact ? 'Loading contacts...' : 'Import from Phone'}
+                    </Text>
+                    <Text style={styles.importBtnSub}>Pick from your saved contacts</Text>
+                  </View>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
+                </LinearGradient>
+              </Pressable>
+            )}
+
             <Text style={styles.label}>Full Name</Text>
             <TextInput
               value={name}
@@ -213,6 +306,60 @@ export default function ContactsTab() {
               </Pressable>
               <PrimaryButton title="Save Contact" onPress={() => void save()} style={{ flex: 1 }} />
             </View>
+          </GlassCard>
+        </View>
+      </Modal>
+
+      {/* Phone Contact Picker Modal */}
+      <Modal visible={phonePickerModal} animationType="slide" transparent>
+        <View style={styles.modalBg}>
+          <GlassCard variant="elevated" style={[styles.pickerCard, { marginBottom: insets.bottom + 16, maxHeight: '75%' }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Contact</Text>
+              <Pressable onPress={() => setPhonePickerModal(false)} hitSlop={12}>
+                <MaterialCommunityIcons name="close" size={24} color={colors.textMuted} />
+              </Pressable>
+            </View>
+
+            <TextInput
+              value={phoneSearchQuery}
+              onChangeText={setPhoneSearchQuery}
+              placeholder="Search contacts..."
+              placeholderTextColor={colors.textSecondary}
+              style={[styles.input, styles.searchInput]}
+            />
+
+            <FlatList
+              data={phoneContacts.filter((c) =>
+                (c.name ?? '').toLowerCase().includes(phoneSearchQuery.toLowerCase()),
+              )}
+              keyExtractor={(item) => item.id ?? item.name ?? ''}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item, index }) => {
+                const gradColors = AVATAR_COLORS[index % AVATAR_COLORS.length];
+                const firstPhone = item.phoneNumbers?.[0]?.number ?? '';
+                return (
+                  <Pressable
+                    onPress={() => selectPhoneContact(item)}
+                    style={({ pressed }) => [styles.pickerItem, pressed && { opacity: 0.7 }]}
+                  >
+                    <LinearGradient colors={gradColors} style={styles.pickerAvatar}>
+                      <Text style={styles.pickerAvatarTxt}>
+                        {(item.name ?? '?').charAt(0).toUpperCase()}
+                      </Text>
+                    </LinearGradient>
+                    <View style={styles.pickerMeta}>
+                      <Text style={styles.pickerName}>{item.name}</Text>
+                      <Text style={styles.pickerPhone}>{firstPhone}</Text>
+                    </View>
+                    <MaterialCommunityIcons name="plus-circle-outline" size={22} color={colors.accentViolet} />
+                  </Pressable>
+                );
+              }}
+              ListEmptyComponent={
+                <Text style={styles.pickerEmpty}>No matching contacts</Text>
+              }
+            />
           </GlassCard>
         </View>
       </Modal>
@@ -345,4 +492,72 @@ const styles = StyleSheet.create({
   },
   cancelBtn: { paddingVertical: 14, paddingHorizontal: 16 },
   cancelTxt: { color: colors.textMuted, fontWeight: '700', fontSize: 15 },
+  // Import from phone button
+  importBtn: {
+    marginBottom: 18,
+    borderRadius: radii.md,
+    overflow: 'hidden',
+  },
+  importBtnGrad: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: 'rgba(167,139,250,0.15)',
+    gap: 12,
+  },
+  importBtnInfo: { flex: 1 },
+  importBtnTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.text,
+  },
+  importBtnSub: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  // Phone contact picker modal
+  pickerCard: { padding: 20 },
+  searchInput: {
+    marginBottom: 12,
+  },
+  pickerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
+    gap: 12,
+  },
+  pickerAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pickerAvatarTxt: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#fff',
+  },
+  pickerMeta: { flex: 1 },
+  pickerName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  pickerPhone: {
+    fontSize: 13,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  pickerEmpty: {
+    textAlign: 'center',
+    color: colors.textMuted,
+    fontSize: 14,
+    paddingVertical: 24,
+  },
 });
