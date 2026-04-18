@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GradientBackground } from '../../../components/GradientBackground';
 import { GlassCard } from '../../../components/GlassCard';
 import { colors } from '../../../constants/theme';
+import { useAccessibility } from '../../../providers/AccessibilityProvider';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -140,6 +141,7 @@ const TOPICS: Topic[] = [
 export default function SafetyTab() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
+  const { oneHandedShift, bodyText, headingText } = useAccessibility();
   const [open, setOpen] = useState<string | null>('street');
 
   const toggle = (id: string) => {
@@ -152,12 +154,12 @@ export default function SafetyTab() {
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
-          { paddingTop: insets.top + 16, paddingBottom: tabBarHeight + 28 },
+          { paddingTop: insets.top + 16 + oneHandedShift, paddingBottom: tabBarHeight + 28 },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Safety Hub</Text>
-        <Text style={styles.sub}>
+        <Text style={[styles.title, headingText]}>Safety Hub</Text>
+        <Text style={[styles.sub, bodyText]}>
           Comprehensive safety education for every situation
         </Text>
 
@@ -203,7 +205,7 @@ export default function SafetyTab() {
                   {t.bullets.map((b, i) => (
                     <View key={i} style={styles.bulletRow}>
                       <LinearGradient colors={t.gradient} style={styles.bulletDot} />
-                      <Text style={styles.bulletText}>{b}</Text>
+                      <Text style={[styles.bulletText, bodyText]}>{b}</Text>
                     </View>
                   ))}
                 </View>

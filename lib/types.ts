@@ -39,6 +39,7 @@ export type HearMeSettings = {
   activeCheckInLabel: string | null;
   // Cloud-synced evidence locker
   cloudSyncEvidence: boolean;       // auto-upload sessions to Supabase
+  darkMode: boolean;                // true = dark, false = light
 };
 
 export const DEFAULT_SETTINGS: HearMeSettings = {
@@ -61,4 +62,5 @@ export const DEFAULT_SETTINGS: HearMeSettings = {
   activeCheckInExpiresAt: null,
   activeCheckInLabel: null,
   cloudSyncEvidence: false,
+  darkMode: true,
 };

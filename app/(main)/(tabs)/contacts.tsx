@@ -21,6 +21,7 @@ import { GlassCard } from '../../../components/GlassCard';
 import { PrimaryButton } from '../../../components/PrimaryButton';
 import { colors, radii } from '../../../constants/theme';
 import type { EmergencyContact } from '../../../lib/types';
+import { useAccessibility } from '../../../providers/AccessibilityProvider';
 import { useHearMe } from '../../../providers/HearMeProvider';
 
 const AVATAR_COLORS: [string, string][] = [
@@ -36,6 +37,7 @@ export default function ContactsTab() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const { ready, contacts, upsertContact, removeContact } = useHearMe();
+  const { oneHandedShift, bodyText, headingText } = useAccessibility();
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState<EmergencyContact | null>(null);
   const [name, setName] = useState('');
@@ -160,10 +162,10 @@ export default function ContactsTab() {
 
   return (
     <GradientBackground>
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 + oneHandedShift }]}>
         <View style={styles.headerLeft}>
-          <Text style={styles.title}>Trusted Circle</Text>
-          <Text style={styles.sub}>
+          <Text style={[styles.title, headingText]}>Trusted Circle</Text>
+          <Text style={[styles.sub, bodyText]}>
             {contacts.length === 0
               ? 'Add your emergency contacts'
               : `${contacts.length} contact${contacts.length !== 1 ? 's' : ''} will receive SOS alerts`}
@@ -333,7 +335,7 @@ export default function ContactsTab() {
               data={phoneContacts.filter((c) =>
                 (c.name ?? '').toLowerCase().includes(phoneSearchQuery.toLowerCase()),
               )}
-              keyExtractor={(item) => item.id ?? item.name ?? ''}
+              keyExtractor={(item) => (item as any).id ?? item.name ?? String(Math.random())}
               showsVerticalScrollIndicator={false}
               renderItem={({ item, index }) => {
                 const gradColors = AVATAR_COLORS[index % AVATAR_COLORS.length];

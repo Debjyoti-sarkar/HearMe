@@ -5,21 +5,23 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '../../../constants/theme';
+import { useTheme } from '../../../providers/ThemeProvider';
 
 const TAB_CONTENT = 58;
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const bottom = Math.max(insets.bottom, Platform.OS === 'android' ? 12 : 10);
+  const { colors: tc } = useTheme();
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colors.tabBar,
+          backgroundColor: tc.tabBar,
           borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: colors.tabBarBorder,
+          borderTopColor: tc.tabBarBorder,
           height: TAB_CONTENT + bottom,
           paddingBottom: bottom,
           paddingTop: 6,
@@ -29,8 +31,8 @@ export default function TabsLayout() {
           shadowOpacity: 0.4,
           shadowRadius: 16,
         },
-        tabBarActiveTintColor: colors.accentViolet,
-        tabBarInactiveTintColor: 'rgba(241,245,249,0.35)',
+        tabBarActiveTintColor: tc.accentViolet,
+        tabBarInactiveTintColor: tc.textSecondary,
         tabBarLabelStyle: {
           fontSize: 10,
           fontWeight: '800',

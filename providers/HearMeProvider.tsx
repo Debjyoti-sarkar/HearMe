@@ -16,6 +16,7 @@ import * as Location from 'expo-location';
 
 import { loadContacts, loadSettings, saveContacts, saveSettings } from '../lib/app-data';
 import { dialEmergency, sendSosSms, shareLocationSms } from '../lib/emergency-sms';
+import { startSiren, stopSiren } from '../lib/siren';
 import * as VoiceTrigger from '../lib/voice-trigger';
 import { GRACE_MS } from '../lib/timer-checkin';
 import * as Session from '../lib/session';
@@ -231,7 +232,13 @@ export function HearMeProvider({ children }: { children: ReactNode }) {
   }, [settings.cloudSyncEvidence]);
 
   const executeSos = useCallback(async () => {
+    // Start siren immediately if enabled — don't wait for SMS
+    if (settings.sirenEnabled) {
+      void startSiren();
+    }
+
     const r = await sendSosSms(contacts, settings);
+
     if (r.ok) {
       try {
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -242,6 +249,7 @@ export function HearMeProvider({ children }: { children: ReactNode }) {
         await dialEmergency(settings.emergencyNumber);
       }
     }
+
     // Capture an evidence session regardless of SMS outcome — the location
     // stamp is still useful if the user dials emergency manually.
     void captureSosEvidence();

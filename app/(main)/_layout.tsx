@@ -5,8 +5,10 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { GestureTracker } from '../../components/GestureTracker';
 import { colors } from '../../constants/theme';
 import { isDemoAuthenticated } from '../../lib/demo-auth';
+import { AccessibilityProvider } from '../../providers/AccessibilityProvider';
 import { useAuth } from '../../providers/AuthProvider';
 import { HearMeProvider, useHearMe } from '../../providers/HearMeProvider';
+import { ThemeProvider, useTheme } from '../../providers/ThemeProvider';
 import LockScreen from '../lock';
 import DisguiseScreen from '../disguise';
 
@@ -22,12 +24,24 @@ const FULLSCREEN_OPTIONS = {
   contentStyle: { backgroundColor: '#020617' },
 };
 
+function SettingsBridge({ children }: { children: React.ReactNode }) {
+  const { settings } = useHearMe();
+  return (
+    <ThemeProvider darkMode={settings.darkMode}>
+      <AccessibilityProvider
+        oneHandedMode={settings.oneHandedMode}
+        dyslexiaFont={settings.dyslexiaFont}
+      >
+        {children}
+      </AccessibilityProvider>
+    </ThemeProvider>
+  );
+}
+
 function LockGate({ children }: { children: React.ReactNode }) {
   const { ready, locked, settings } = useHearMe();
   if (!ready) return null;
   if (locked) {
-    // If disguise is enabled, show the calculator decoy first; secret PIN inside
-    // it reveals the real app. Otherwise the standard lock screen.
     return settings.disguiseEnabled ? <DisguiseScreen /> : <LockScreen />;
   }
   return <>{children}</>;
@@ -36,6 +50,7 @@ function LockGate({ children }: { children: React.ReactNode }) {
 function MainStack() {
   return (
     <HearMeProvider>
+      <SettingsBridge>
       <LockGate>
         <GestureTracker>
           <Stack
@@ -59,6 +74,7 @@ function MainStack() {
           </Stack>
         </GestureTracker>
       </LockGate>
+      </SettingsBridge>
     </HearMeProvider>
   );
 }

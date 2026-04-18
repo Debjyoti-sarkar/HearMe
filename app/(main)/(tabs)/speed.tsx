@@ -11,6 +11,7 @@ import { GradientBackground } from '../../../components/GradientBackground';
 import { GlassCard } from '../../../components/GlassCard';
 import { StatusBadge } from '../../../components/StatusBadge';
 import { colors, radii } from '../../../constants/theme';
+import { useAccessibility } from '../../../providers/AccessibilityProvider';
 import { useHearMe } from '../../../providers/HearMeProvider';
 import { saveAlertRecord } from '../../../lib/alert-history';
 import { generateSafetyCode } from '../../../lib/siren';
@@ -21,6 +22,7 @@ export default function SpeedTab() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const { settings, contacts, executeSos } = useHearMe();
+  const { oneHandedShift, bodyText, headingText } = useAccessibility();
   const [kmh, setKmh] = useState<number>(0);
   const [maxKmh, setMaxKmh] = useState(0);
   const [status, setStatus] = useState('Starting...');
@@ -191,13 +193,13 @@ export default function SpeedTab() {
       <View
         style={[
           styles.container,
-          { paddingTop: insets.top + 16, paddingBottom: tabBarHeight + 24 },
+          { paddingTop: insets.top + 16 + oneHandedShift, paddingBottom: tabBarHeight + 24 },
         ]}
       >
         <View style={styles.headerRow}>
           <View>
-            <Text style={styles.title}>Speed Monitor</Text>
-            <Text style={styles.sub}>GPS-based speed with crash detection</Text>
+            <Text style={[styles.title, headingText]}>Speed Monitor</Text>
+            <Text style={[styles.sub, bodyText]}>GPS-based speed with crash detection</Text>
           </View>
           <StatusBadge
             label={settings.crashDetection ? 'Crash ON' : 'Crash OFF'}

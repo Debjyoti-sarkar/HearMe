@@ -28,7 +28,8 @@
       "Bash(ls -la \"C:/Users/DebSarkar/Desktop/HearMe/.env\"*)",
       "Bash(node -e \"try { require.resolve\\('expo-auth-session'\\); console.log\\('installed'\\); } catch\\(e\\) { console.log\\('not installed'\\); }\")",
       "Bash(node -e ':*)",
-      "Bash(node -e \"try { require.resolve\\('expo-contacts'\\); console.log\\('installed'\\); } catch\\(e\\) { console.log\\('not installed'\\); }\")"
+      "Bash(node -e \"try { require.resolve\\('expo-contacts'\\); console.log\\('installed'\\); } catch\\(e\\) { console.log\\('not installed'\\); }\")",
+      "Bash(node -e \"try { require.resolve\\('expo-av'\\); console.log\\('installed'\\); } catch\\(e\\) { console.log\\('not installed'\\); }\")"
     ]
   }
 }

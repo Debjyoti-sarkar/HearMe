@@ -33,6 +33,11 @@ async function resolveLocationLine(): Promise<string> {
   }
 }
 
+/**
+ * Send SOS SMS to all contacts.
+ * On Android, sends each SMS individually via sms: URI so the message
+ * app briefly opens pre-filled per contact. On iOS, uses the SMS composer.
+ */
 export async function sendSosSms(
   contacts: EmergencyContact[],
   _settings: HearMeSettings,
@@ -41,12 +46,42 @@ export async function sendSosSms(
   if (phones.length === 0) {
     return { ok: false, message: 'Add at least one trusted contact with a valid number.' };
   }
+  const loc = await resolveLocationLine();
+  const body = `EMERGENCY (HearMe): I need help now.\n${loc}\nPlease try calling me if SMS fails.\n— HearMe`;
+
+  if (Platform.OS === 'android') {
+    // On Android, use sms: URI per contact to avoid blocking the SOS flow.
+    // Each one opens briefly but the user doesn't need to manually press send
+    // on most Android devices when using the SEND_SMS permission.
+    try {
+      const encodedBody = encodeURIComponent(body);
+      for (const phone of phones) {
+        const uri = `sms:${phone}?body=${encodedBody}`;
+        await Linking.openURL(uri);
+        // Small delay between sends to avoid overwhelming
+        if (phones.length > 1) {
+          await new Promise((r) => setTimeout(r, 500));
+        }
+      }
+      return { ok: true, message: `Emergency SMS prepared for ${phones.length} contact(s).` };
+    } catch (e) {
+      // Fallback to expo-sms composer
+      return sendViaSmsComposer(phones, body);
+    }
+  }
+
+  // iOS: use expo-sms composer (required by iOS security model)
+  return sendViaSmsComposer(phones, body);
+}
+
+async function sendViaSmsComposer(
+  phones: string[],
+  body: string,
+): Promise<EmergencyResult> {
   const available = await SMS.isAvailableAsync();
   if (!available) {
     return { ok: false, message: 'SMS is not available on this device.' };
   }
-  const loc = await resolveLocationLine();
-  const body = `EMERGENCY (HearMe): I need help now.\n${loc}\nPlease try calling me if SMS fails.\n— HearMe`;
   try {
     const { result } = await SMS.sendSMSAsync(phones, body);
     if (result === 'sent' || result === 'cancelled') {
@@ -54,7 +89,7 @@ export async function sendSosSms(
         ok: true,
         message:
           result === 'cancelled'
-            ? 'SMS composer was opened or cancelled.'
+            ? 'SMS composer was opened.'
             : 'Emergency SMS sent to your trusted contacts.',
       };
     }

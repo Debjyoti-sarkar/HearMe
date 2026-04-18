@@ -23,9 +23,12 @@ import { StatusBadge } from '../../../components/StatusBadge';
 import { colors } from '../../../constants/theme';
 import { loadLocalAvatar } from '../../../lib/app-data';
 import { shareLocationWhatsApp } from '../../../lib/emergency-sms';
+import { useAccessibility } from '../../../providers/AccessibilityProvider';
 import { useAuth } from '../../../providers/AuthProvider';
 import { useHearMe } from '../../../providers/HearMeProvider';
-import { generateSafetyCode } from '../../../lib/siren';
+import { useTheme } from '../../../providers/ThemeProvider';
+import { generateSafetyCode, isSirenPlaying, stopSiren } from '../../../lib/siren';
+import * as Session from '../../../lib/session';
 import { saveAlertRecord } from '../../../lib/alert-history';
 
 export default function HomeTab() {
@@ -33,19 +36,61 @@ export default function HomeTab() {
   const tabBarHeight = useBottomTabBarHeight();
   const { ready, contacts, settings, executeSos, shareLocation, callEmergencyLine } = useHearMe();
   const { profile, refreshProfile } = useAuth();
+  const { oneHandedShift, dyslexiaFont, bodyText, headingText } = useAccessibility();
+  const { colors: tc } = useTheme();
   const [sosActive, setSosActive] = useState(false);
   const [localAvatar, setLocalAvatar] = useState<string | null>(null);
+  const [sirenActive, setSirenActive] = useState(false);
 
   useEffect(() => {
     if (!profile) void refreshProfile();
   }, []);
 
-  // Reload avatar whenever dashboard regains focus (e.g. after editing profile)
+  // Reload avatar and siren status whenever dashboard regains focus
   useFocusEffect(
     useCallback(() => {
       loadLocalAvatar().then(setLocalAvatar);
+      setSirenActive(isSirenPlaying());
+      const interval = setInterval(() => setSirenActive(isSirenPlaying()), 1000);
+      return () => clearInterval(interval);
     }, []),
   );
+
+  const handleStopSiren = async () => {
+    const pin = await Session.getPin();
+    if (!pin) {
+      await stopSiren();
+      setSirenActive(false);
+      return;
+    }
+    Alert.prompt
+      ? Alert.prompt('Stop Siren', 'Enter your 4-digit PIN', [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Stop',
+            onPress: async (val: string | undefined) => {
+              if (val === pin) {
+                await stopSiren();
+                setSirenActive(false);
+              } else {
+                Alert.alert('Wrong PIN', 'Incorrect PIN entered.');
+              }
+            },
+          },
+        ], 'secure-text')
+      : // Android doesn't have Alert.prompt — just stop with confirmation
+        Alert.alert('Stop Siren', 'Are you sure you want to stop the siren?', [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Stop Siren',
+            style: 'destructive',
+            onPress: async () => {
+              await stopSiren();
+              setSirenActive(false);
+            },
+          },
+        ]);
+  };
 
   const handleSos = async () => {
     if (contacts.length === 0) {
@@ -95,6 +140,16 @@ export default function HomeTab() {
       result.ok
         ? `Safety Code: ${code}\nShare this code with responders to verify your identity.`
         : result.message,
+      [
+        {
+          text: 'Stop Siren',
+          onPress: () => void stopSiren(),
+        },
+        {
+          text: 'OK',
+          onPress: () => void stopSiren(),
+        },
+      ],
     );
   };
 
@@ -108,11 +163,6 @@ export default function HomeTab() {
   if (!ready) {
     return <GradientBackground><View style={{ flex: 1 }} /></GradientBackground>;
   }
-
-  const oneHandedShift = settings.oneHandedMode ? 80 : 0;
-  const dyslexiaTextStyle = settings.dyslexiaFont
-    ? { fontWeight: '900' as const, letterSpacing: 0.4 }
-    : null;
 
   return (
     <GradientBackground>
@@ -129,8 +179,8 @@ export default function HomeTab() {
         {/* Header */}
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
-            <Text style={[styles.greeting, dyslexiaTextStyle]}>{getGreeting()}</Text>
-            <Text style={[styles.userName, dyslexiaTextStyle]}>{profile?.name ?? 'User'}</Text>
+            <Text style={[styles.greeting, bodyText, { color: tc.textMuted }]}>{getGreeting()}</Text>
+            <Text style={[styles.userName, headingText, { color: tc.text }]}>{profile?.name ?? 'User'}</Text>
           </View>
           <Pressable onPress={() => router.push('/(main)/user-profile')} style={styles.avatarBtn}>
             {(profile?.avatar_url || localAvatar) ? (
@@ -163,13 +213,25 @@ export default function HomeTab() {
           )}
         </View>
 
+        {/* Stop Siren Banner */}
+        {sirenActive && (
+          <Pressable
+            onPress={() => void handleStopSiren()}
+            style={({ pressed }) => [styles.sirenBanner, pressed && { opacity: 0.8 }]}
+          >
+            <MaterialCommunityIcons name="bullhorn" size={22} color={colors.danger} />
+            <Text style={styles.sirenBannerText}>Siren Active — Tap to Stop</Text>
+            <MaterialCommunityIcons name="stop-circle" size={24} color={colors.danger} />
+          </Pressable>
+        )}
+
         {/* SOS Button */}
         <View style={styles.sosContainer}>
           <SOSButton onPress={() => void handleSos()} disabled={sosActive} />
         </View>
 
         {/* Quick Actions */}
-        <Text style={styles.sectionLabel}>QUICK ACTIONS</Text>
+        <Text style={[styles.sectionLabel, bodyText]}>QUICK ACTIONS</Text>
         <View style={styles.quickActions}>
           <QuickAction
             icon="phone-alert"
@@ -244,7 +306,7 @@ export default function HomeTab() {
         </Pressable>
 
         {/* Feature Cards */}
-        <Text style={styles.sectionLabel}>SAFETY TOOLS</Text>
+        <Text style={[styles.sectionLabel, bodyText]}>SAFETY TOOLS</Text>
         <View style={styles.featureGrid}>
           <Pressable
             onPress={() => router.push('/(main)/camera-detector')}
@@ -384,6 +446,24 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 24,
     flexWrap: 'wrap',
+  },
+  sirenBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: 'rgba(239,68,68,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.25)',
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    marginBottom: 16,
+  },
+  sirenBannerText: {
+    flex: 1,
+    color: '#ef4444',
+    fontWeight: '800',
+    fontSize: 15,
   },
   sosContainer: {
     alignItems: 'center',

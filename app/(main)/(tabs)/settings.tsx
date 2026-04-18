@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   Alert,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -20,6 +21,8 @@ import { GlassCard } from '../../../components/GlassCard';
 import { PrimaryButton } from '../../../components/PrimaryButton';
 import { colors, radii } from '../../../constants/theme';
 import { clearDemoAuth } from '../../../lib/demo-auth';
+import { isSirenPlaying, stopSiren } from '../../../lib/siren';
+import { useAccessibility } from '../../../providers/AccessibilityProvider';
 import { useAuth } from '../../../providers/AuthProvider';
 import { useHearMe } from '../../../providers/HearMeProvider';
 import * as Session from '../../../lib/session';
@@ -47,14 +50,15 @@ function RowSwitch({
   disabled?: boolean;
   onValueChange: (v: boolean) => void;
 }) {
+  const { bodyText } = useAccessibility();
   return (
     <View style={[settingStyles.row, disabled && { opacity: 0.4 }]}>
       <View style={[settingStyles.rowIcon, { backgroundColor: iconColor + '18' }]}>
         <MaterialCommunityIcons name={icon} size={20} color={iconColor} />
       </View>
       <View style={settingStyles.rowContent}>
-        <Text style={settingStyles.rowTitle}>{title}</Text>
-        <Text style={settingStyles.rowSub}>{subtitle}</Text>
+        <Text style={[settingStyles.rowTitle, bodyText]}>{title}</Text>
+        <Text style={[settingStyles.rowSub, bodyText]}>{subtitle}</Text>
       </View>
       <Switch
         value={value}
@@ -72,11 +76,15 @@ export default function SettingsTab() {
   const tabBarHeight = useBottomTabBarHeight();
   const { ready, settings, patchSettings } = useHearMe();
   const { signOut: doSignOut } = useAuth();
+  const { oneHandedShift, bodyText, headingText } = useAccessibility();
   const [numDraft, setNumDraft] = useState(settings.emergencyNumber);
   const [safeWordDraft, setSafeWordDraft] = useState(settings.voiceSafeWord);
   const [normalPin, setNormalPin] = useState<string | null>(null);
   const [duressPin, setDuressPin] = useState<string | null>(null);
   const [duressDraft, setDuressDraft] = useState('');
+  const [sirenActive, setSirenActive] = useState(isSirenPlaying());
+  const [stopPinModal, setStopPinModal] = useState(false);
+  const [stopPinDraft, setStopPinDraft] = useState('');
 
   useEffect(() => {
     if (ready) setNumDraft(settings.emergencyNumber);
@@ -94,6 +102,33 @@ export default function SettingsTab() {
       setDuressPin(d);
     })();
   }, [ready]);
+
+  // Check siren status periodically
+  useEffect(() => {
+    const interval = setInterval(() => setSirenActive(isSirenPlaying()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const onStopSirenWithPin = async () => {
+    const digits = stopPinDraft.replace(/\D/g, '');
+    if (!normalPin) {
+      // No PIN set — just stop
+      await stopSiren();
+      setSirenActive(false);
+      setStopPinModal(false);
+      setStopPinDraft('');
+      return;
+    }
+    if (digits !== normalPin) {
+      Alert.alert('Wrong PIN', 'Enter your security PIN to stop the siren.');
+      setStopPinDraft('');
+      return;
+    }
+    await stopSiren();
+    setSirenActive(false);
+    setStopPinModal(false);
+    setStopPinDraft('');
+  };
 
   const autoReverse = normalPin ? autoReversePinFor(normalPin) : null;
   const effectiveDuress = duressPin ?? autoReverse;
@@ -148,12 +183,32 @@ export default function SettingsTab() {
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
-          { paddingTop: insets.top + 16, paddingBottom: tabBarHeight + 28 },
+          { paddingTop: insets.top + 16 + oneHandedShift, paddingBottom: tabBarHeight + 28 },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Settings</Text>
-        <Text style={styles.sub}>Configure SOS behavior, detection, and account</Text>
+        <Text style={[styles.title, headingText]}>Settings</Text>
+        <Text style={[styles.sub, bodyText]}>Configure SOS behavior, detection, and account</Text>
+
+        {/* Active Siren Banner */}
+        {sirenActive && (
+          <Pressable
+            onPress={() => setStopPinModal(true)}
+            style={({ pressed }) => [styles.sirenBanner, pressed && { opacity: 0.8 }]}
+          >
+            <LinearGradient
+              colors={['rgba(239,68,68,0.15)', 'rgba(239,68,68,0.05)']}
+              style={styles.sirenBannerGrad}
+            >
+              <MaterialCommunityIcons name="bullhorn" size={24} color={colors.danger} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.sirenBannerTitle}>Siren is Active</Text>
+                <Text style={styles.sirenBannerSub}>Tap to stop (PIN required)</Text>
+              </View>
+              <MaterialCommunityIcons name="stop-circle" size={28} color={colors.danger} />
+            </LinearGradient>
+          </Pressable>
+        )}
 
         {/* Emergency Number */}
         <Text style={styles.section}>Emergency Line</Text>
@@ -456,6 +511,19 @@ export default function SettingsTab() {
           </Pressable>
         </GlassCard>
 
+        {/* Appearance */}
+        <Text style={styles.section}>Appearance</Text>
+        <GlassCard style={styles.card}>
+          <RowSwitch
+            title={settings.darkMode ? 'Dark Mode' : 'Light Mode'}
+            subtitle={settings.darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
+            icon={settings.darkMode ? 'weather-night' : 'white-balance-sunny'}
+            iconColor={settings.darkMode ? colors.accentIndigo : colors.accentAmber}
+            value={settings.darkMode}
+            onValueChange={(v) => void patchSettings({ darkMode: v })}
+          />
+        </GlassCard>
+
         {/* Accessibility */}
         <Text style={styles.section}>Accessibility</Text>
         <GlassCard style={styles.card}>
@@ -495,6 +563,56 @@ export default function SettingsTab() {
           </Text>
         </View>
       </ScrollView>
+
+      {/* Stop Siren PIN Modal */}
+      <Modal visible={stopPinModal} animationType="fade" transparent>
+        <View style={styles.modalBg}>
+          <GlassCard variant="elevated" style={styles.stopModal}>
+            <MaterialCommunityIcons name="bullhorn" size={40} color={colors.danger} style={{ alignSelf: 'center' }} />
+            <Text style={styles.stopModalTitle}>Stop Siren</Text>
+            <Text style={styles.stopModalSub}>
+              {normalPin ? 'Enter your 4-digit PIN to stop the siren' : 'Tap Stop to silence the siren'}
+            </Text>
+
+            {normalPin && (
+              <TextInput
+                value={stopPinDraft}
+                onChangeText={(t) => setStopPinDraft(t.replace(/\D/g, '').slice(0, 4))}
+                keyboardType="number-pad"
+                secureTextEntry
+                maxLength={4}
+                placeholder="Enter PIN"
+                placeholderTextColor={colors.textSecondary}
+                style={styles.stopPinInput}
+                autoFocus
+              />
+            )}
+
+            <View style={styles.stopModalActions}>
+              <Pressable
+                onPress={() => { setStopPinModal(false); setStopPinDraft(''); }}
+                style={styles.stopCancelBtn}
+              >
+                <Text style={styles.stopCancelText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => void onStopSirenWithPin()}
+                disabled={normalPin ? stopPinDraft.length < 4 : false}
+                style={({ pressed }) => [
+                  styles.stopConfirmBtn,
+                  pressed && { opacity: 0.8 },
+                  normalPin && stopPinDraft.length < 4 && { opacity: 0.4 },
+                ]}
+              >
+                <LinearGradient colors={['#ef4444', '#dc2626']} style={styles.stopConfirmGrad}>
+                  <MaterialCommunityIcons name="stop" size={18} color="#fff" />
+                  <Text style={styles.stopConfirmText}>Stop Siren</Text>
+                </LinearGradient>
+              </Pressable>
+            </View>
+          </GlassCard>
+        </View>
+      </Modal>
     </GradientBackground>
   );
 }
@@ -640,5 +758,100 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     textAlign: 'center',
     maxWidth: 300,
+  },
+  // Siren banner
+  sirenBanner: {
+    borderRadius: radii.xl,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  sirenBannerGrad: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    padding: 18,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.3)',
+  },
+  sirenBannerTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.danger,
+  },
+  sirenBannerSub: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  // Stop siren modal
+  modalBg: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  stopModal: {
+    padding: 28,
+    alignItems: 'stretch',
+  },
+  stopModalTitle: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: colors.text,
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  stopModalSub: {
+    fontSize: 14,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 20,
+  },
+  stopPinInput: {
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.inputBorder,
+    backgroundColor: colors.inputBg,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    color: colors.text,
+    fontSize: 24,
+    fontWeight: '800',
+    textAlign: 'center',
+    letterSpacing: 8,
+    marginBottom: 20,
+  },
+  stopModalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+  },
+  stopCancelBtn: {
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+  },
+  stopCancelText: {
+    color: colors.textMuted,
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  stopConfirmBtn: {
+    flex: 1,
+    borderRadius: radii.md,
+    overflow: 'hidden',
+  },
+  stopConfirmGrad: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+  },
+  stopConfirmText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 15,
   },
 });
