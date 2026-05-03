@@ -16,8 +16,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GradientBackground } from '../../../components/GradientBackground';
 import { GlassCard } from '../../../components/GlassCard';
-import { colors } from '../../../constants/theme';
+import { useThemedStyles } from '../../../hooks/useThemedStyles';
 import { useAccessibility } from '../../../providers/AccessibilityProvider';
+import { useTheme, type ThemeColors } from '../../../providers/ThemeProvider';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -142,6 +143,8 @@ export default function SafetyTab() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const { oneHandedShift, bodyText, headingText } = useAccessibility();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [open, setOpen] = useState<string | null>('street');
 
   const toggle = (id: string) => {
@@ -168,7 +171,7 @@ export default function SafetyTab() {
             colors={['rgba(167,139,250,0.3)', 'rgba(236,72,153,0.2)']}
             style={styles.introIcon}
           >
-            <MaterialCommunityIcons name="shield-star" size={24} color={colors.accentViolet} />
+            <MaterialCommunityIcons name="shield-star" size={24} color={tc.accentViolet} />
           </LinearGradient>
           <View style={styles.introContent}>
             <Text style={styles.introTitle}>Stay Informed, Stay Safe</Text>
@@ -197,7 +200,7 @@ export default function SafetyTab() {
                 <MaterialCommunityIcons
                   name={expanded ? 'chevron-up' : 'chevron-down'}
                   size={24}
-                  color={colors.textMuted}
+                  color={tc.textMuted}
                 />
               </Pressable>
               {expanded && (
@@ -218,10 +221,10 @@ export default function SafetyTab() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   scroll: { paddingHorizontal: 20 },
-  title: { fontSize: 28, fontWeight: '900', color: colors.text, letterSpacing: -0.5 },
-  sub: { marginTop: 6, color: colors.textMuted, fontSize: 14, marginBottom: 18 },
+  title: { fontSize: 28, fontWeight: '900', color: c.text, letterSpacing: -0.5 },
+  sub: { marginTop: 6, color: c.textMuted, fontSize: 14, marginBottom: 18 },
   intro: {
     flexDirection: 'row',
     gap: 14,
@@ -240,11 +243,11 @@ const styles = StyleSheet.create({
   introTitle: {
     fontSize: 15,
     fontWeight: '800',
-    color: colors.text,
+    color: c.text,
     marginBottom: 4,
   },
   introText: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 13,
     lineHeight: 19,
   },
@@ -267,8 +270,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   topicMeta: { flex: 1 },
-  topicTitle: { fontSize: 15, fontWeight: '800', color: colors.text },
-  topicCount: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
+  topicTitle: { fontSize: 15, fontWeight: '800', color: c.text },
+  topicCount: { fontSize: 12, color: c.textSecondary, marginTop: 2 },
   bullets: { paddingHorizontal: 16, paddingVertical: 14, gap: 12 },
   bulletRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   bulletDot: {
@@ -277,5 +280,5 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginTop: 6,
   },
-  bulletText: { flex: 1, color: colors.textMuted, fontSize: 14, lineHeight: 20 },
+  bulletText: { flex: 1, color: c.textMuted, fontSize: 14, lineHeight: 20 },
 });

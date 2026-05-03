@@ -16,7 +16,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GradientBackground } from '../../components/GradientBackground';
 import { GlassCard } from '../../components/GlassCard';
-import { colors, radii } from '../../constants/theme';
+import { radii } from '../../constants/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { useTheme, type ThemeColors } from '../../providers/ThemeProvider';
 import {
   deleteEvidenceSession,
   formatEvidenceCount,
@@ -27,13 +29,15 @@ import {
 import { syncSessionAsync, verifyChainAsync } from '../../lib/evidence-cloud';
 import { isSupabaseConfigured } from '../../lib/supabase';
 
-function statusColor(s: EvidenceSyncStatus): string {
-  switch (s) {
-    case 'synced': return colors.success;
-    case 'pending': return colors.info;
-    case 'failed': return colors.danger;
-    default: return colors.textMuted;
-  }
+function makeStatusColor(c: ThemeColors) {
+  return (s: EvidenceSyncStatus): string => {
+    switch (s) {
+      case 'synced': return c.success;
+      case 'pending': return c.info;
+      case 'failed': return c.danger;
+      default: return c.textMuted;
+    }
+  };
 }
 
 function statusLabel(s: EvidenceSyncStatus): string {
@@ -52,6 +56,9 @@ function shortHash(h: string | null): string {
 
 export default function EvidenceLockerScreen() {
   const insets = useSafeAreaInsets();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const statusColor = makeStatusColor(tc);
   const [sessions, setSessions] = useState<EvidenceSession[] | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -115,7 +122,7 @@ export default function EvidenceLockerScreen() {
     <GradientBackground>
       <View style={[styles.header, { paddingTop: insets.top + 14 }]}>
         <Pressable onPress={() => router.back()} style={styles.closeBtn}>
-          <MaterialCommunityIcons name="close" size={22} color={colors.text} />
+          <MaterialCommunityIcons name="close" size={22} color={tc.text} />
         </Pressable>
         <Text style={styles.title}>Evidence Locker</Text>
         <View style={{ width: 40 }} />
@@ -128,14 +135,14 @@ export default function EvidenceLockerScreen() {
 
       {sessions === null ? (
         <View style={styles.center}>
-          <ActivityIndicator color={colors.accentViolet} />
+          <ActivityIndicator color={tc.accentViolet} />
         </View>
       ) : sessions.length === 0 ? (
         <View style={styles.center}>
           <MaterialCommunityIcons
             name="folder-open-outline"
             size={48}
-            color={colors.textMuted}
+            color={tc.textMuted}
           />
           <Text style={styles.empty}>No evidence sessions yet.</Text>
           <Text style={styles.emptySub}>
@@ -151,7 +158,7 @@ export default function EvidenceLockerScreen() {
             <RefreshControl
               refreshing={false}
               onRefresh={reload}
-              tintColor={colors.accentViolet}
+              tintColor={tc.accentViolet}
             />
           }
           renderItem={({ item }) => (
@@ -173,7 +180,7 @@ export default function EvidenceLockerScreen() {
               </View>
 
               <View style={styles.hashRow}>
-                <MaterialCommunityIcons name="key-link" size={14} color={colors.accentEmerald} />
+                <MaterialCommunityIcons name="key-link" size={14} color={tc.accentEmerald} />
                 <Text style={styles.hashTxt}>chain: {shortHash(item.chainHash)}</Text>
               </View>
               {item.syncError && (
@@ -189,7 +196,7 @@ export default function EvidenceLockerScreen() {
                   style={({ pressed }) => [styles.actBtn, pressed && { opacity: 0.85 }]}
                 >
                   <LinearGradient
-                    colors={[colors.accentViolet, colors.accentPink]}
+                    colors={[tc.accentViolet, tc.accentPink]}
                     style={styles.actGrad}
                   >
                     {busyId === item.id ? (
@@ -209,14 +216,14 @@ export default function EvidenceLockerScreen() {
                   disabled={busyId === item.id || !item.chainHash}
                   style={({ pressed }) => [styles.ghostBtn, pressed && { opacity: 0.85 }]}
                 >
-                  <MaterialCommunityIcons name="check-decagram-outline" size={16} color={colors.text} />
+                  <MaterialCommunityIcons name="check-decagram-outline" size={16} color={tc.text} />
                   <Text style={styles.ghostTxt}>Verify chain</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => onDelete(item)}
                   style={({ pressed }) => [styles.ghostBtn, pressed && { opacity: 0.85 }]}
                 >
-                  <MaterialCommunityIcons name="trash-can-outline" size={16} color={colors.accentRose} />
+                  <MaterialCommunityIcons name="trash-can-outline" size={16} color={tc.accentRose} />
                 </Pressable>
               </View>
             </GlassCard>
@@ -227,7 +234,7 @@ export default function EvidenceLockerScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -243,9 +250,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.06)',
   },
-  title: { fontSize: 20, fontWeight: '900', color: colors.text },
+  title: { fontSize: 20, fontWeight: '900', color: c.text },
   sub: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 13,
     lineHeight: 18,
     paddingHorizontal: 22,
@@ -253,12 +260,12 @@ const styles = StyleSheet.create({
   },
   list: { paddingHorizontal: 22, gap: 12 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, padding: 32 },
-  empty: { color: colors.textMuted, fontSize: 15, fontWeight: '700' },
-  emptySub: { color: colors.textSecondary, fontSize: 12, textAlign: 'center' },
+  empty: { color: c.textMuted, fontSize: 15, fontWeight: '700' },
+  emptySub: { color: c.textSecondary, fontSize: 12, textAlign: 'center' },
   card: { padding: 16, marginBottom: 0, gap: 10 },
   rowTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  cardTitle: { color: colors.text, fontWeight: '800', fontSize: 14 },
-  cardSub: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
+  cardTitle: { color: c.text, fontWeight: '800', fontSize: 14 },
+  cardSub: { color: c.textMuted, fontSize: 12, marginTop: 2 },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -276,11 +283,11 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   hashTxt: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 12,
     fontFamily: 'monospace',
   },
-  errorTxt: { color: colors.accentRose, fontSize: 12 },
+  errorTxt: { color: c.accentRose, fontSize: 12 },
   actions: { flexDirection: 'row', gap: 8, marginTop: 6, alignItems: 'center' },
   actBtn: { borderRadius: radii.md, overflow: 'hidden', flex: 1 },
   actGrad: {
@@ -299,7 +306,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: c.cardBorder,
   },
-  ghostTxt: { color: colors.text, fontSize: 13, fontWeight: '700' },
+  ghostTxt: { color: c.text, fontSize: 13, fontWeight: '700' },
 });

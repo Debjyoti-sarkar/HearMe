@@ -16,7 +16,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GradientBackground } from '../../components/GradientBackground';
 import { GlassCard } from '../../components/GlassCard';
-import { colors, radii } from '../../constants/theme';
+import { radii } from '../../constants/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { useTheme, type ThemeColors } from '../../providers/ThemeProvider';
 
 type Service = {
   id: string;
@@ -96,6 +98,8 @@ const SERVICES: Service[] = [
 
 export default function NearbyServicesScreen() {
   const insets = useSafeAreaInsets();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [loading, setLoading] = useState<string | null>(null);
 
   const openNearby = async (service: Service) => {
@@ -124,7 +128,7 @@ export default function NearbyServicesScreen() {
     <GradientBackground>
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <MaterialCommunityIcons name="arrow-left" size={28} color={colors.text} />
+          <MaterialCommunityIcons name="arrow-left" size={28} color={tc.text} />
         </Pressable>
         <Text style={styles.headerTitle}>Nearby Services</Text>
         <View style={{ width: 28 }} />
@@ -158,7 +162,7 @@ export default function NearbyServicesScreen() {
                 <Text style={styles.serviceSub}>{s.subtitle}</Text>
                 <View style={styles.openRow}>
                   <Text style={styles.openText}>Open Maps</Text>
-                  <MaterialCommunityIcons name="open-in-new" size={14} color={colors.accentViolet} />
+                  <MaterialCommunityIcons name="open-in-new" size={14} color={tc.accentViolet} />
                 </View>
               </GlassCard>
             </Pressable>
@@ -166,7 +170,7 @@ export default function NearbyServicesScreen() {
         </View>
 
         <GlassCard style={styles.tip}>
-          <MaterialCommunityIcons name="lightbulb-outline" size={20} color={colors.warning} />
+          <MaterialCommunityIcons name="lightbulb-outline" size={20} color={tc.warning} />
           <Text style={styles.tipText}>
             Save important locations offline in Google Maps for areas with poor connectivity.
             Download offline maps for your regular routes.
@@ -177,7 +181,7 @@ export default function NearbyServicesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -185,9 +189,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 8,
   },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: colors.text },
+  headerTitle: { fontSize: 20, fontWeight: '800', color: c.text },
   intro: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 14,
     lineHeight: 20,
     paddingHorizontal: 20,
@@ -226,13 +230,13 @@ const styles = StyleSheet.create({
   serviceTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: colors.text,
+    color: c.text,
     textAlign: 'center',
     marginBottom: 4,
   },
   serviceSub: {
     fontSize: 11,
-    color: colors.textMuted,
+    color: c.textMuted,
     textAlign: 'center',
     lineHeight: 15,
     marginBottom: 10,
@@ -245,7 +249,7 @@ const styles = StyleSheet.create({
   openText: {
     fontSize: 12,
     fontWeight: '700',
-    color: colors.accentViolet,
+    color: c.accentViolet,
   },
   tip: {
     flexDirection: 'row',
@@ -255,7 +259,7 @@ const styles = StyleSheet.create({
   },
   tipText: {
     flex: 1,
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 13,
     lineHeight: 18,
   },

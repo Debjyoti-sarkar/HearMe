@@ -19,13 +19,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GradientBackground } from '../components/GradientBackground';
 import { GlassCard } from '../components/GlassCard';
 import { PrimaryButton } from '../components/PrimaryButton';
-import { colors, radii } from '../constants/theme';
+import { radii } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useLanguage } from '../lib/i18n';
 import * as Session from '../lib/session';
+import { useTheme, type ThemeColors } from '../providers/ThemeProvider';
 
 export default function SetupPinScreen() {
   const insets = useSafeAreaInsets();
   const { T } = useLanguage();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [step, setStep] = useState<'enter' | 'confirm'>('enter');
@@ -124,7 +128,7 @@ export default function SetupPinScreen() {
               <MaterialCommunityIcons
                 name="lock-check-outline"
                 size={40}
-                color={colors.text}
+                color={tc.text}
               />
             </LinearGradient>
             <Text style={styles.title}>{T('setupPin')}</Text>
@@ -205,7 +209,7 @@ export default function SetupPinScreen() {
                     colors={['rgba(52,211,153,0.15)', 'rgba(56,189,248,0.1)']}
                     style={styles.biometricGradient}
                   >
-                    <MaterialCommunityIcons name="fingerprint" size={32} color={colors.accentEmerald} />
+                    <MaterialCommunityIcons name="fingerprint" size={32} color={tc.accentEmerald} />
                     <View style={styles.biometricInfo}>
                       <Text style={styles.biometricTitle}>{T('useBiometric')}</Text>
                       <Text style={styles.biometricDesc}>{T('biometricDesc')}</Text>
@@ -226,7 +230,7 @@ export default function SetupPinScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   flex: { flex: 1 },
   scroll: { paddingHorizontal: 22, flexGrow: 1 },
   hero: { alignItems: 'center', marginBottom: 22 },
@@ -238,16 +242,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: c.cardBorder,
   },
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: colors.text,
+    color: c.text,
   },
   sub: {
     marginTop: 10,
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 14,
     lineHeight: 20,
     textAlign: 'center',
@@ -255,7 +259,7 @@ const styles = StyleSheet.create({
   },
   card: { padding: 24 },
   label: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 15,
     fontWeight: '700',
     textAlign: 'center',
@@ -276,12 +280,12 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: colors.cardBorder,
+    borderColor: c.cardBorder,
     backgroundColor: 'transparent',
   },
   pinDotFilled: {
-    backgroundColor: colors.accentViolet,
-    borderColor: colors.accentViolet,
+    backgroundColor: c.accentViolet,
+    borderColor: c.accentViolet,
   },
   pinOverlayInput: {
     position: 'absolute',
@@ -293,7 +297,7 @@ const styles = StyleSheet.create({
     fontSize: 1,
   },
   error: {
-    color: colors.accentRose,
+    color: c.accentRose,
     marginTop: 8,
     fontSize: 14,
     textAlign: 'center',
@@ -305,7 +309,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   resetText: {
-    color: colors.accentViolet,
+    color: c.accentViolet,
     fontWeight: '700',
     fontSize: 14,
   },
@@ -321,7 +325,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.12)',
   },
   dividerText: {
-    color: colors.textSecondary,
+    color: c.textSecondary,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -342,12 +346,12 @@ const styles = StyleSheet.create({
   biometricTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: colors.text,
+    color: c.text,
     marginBottom: 2,
   },
   biometricDesc: {
     fontSize: 12,
-    color: colors.textMuted,
+    color: c.textMuted,
     lineHeight: 16,
   },
   skipBtn: {
@@ -356,7 +360,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   skipText: {
-    color: colors.textSecondary,
+    color: c.textSecondary,
     fontSize: 14,
     fontWeight: '600',
   },

@@ -8,7 +8,9 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { colors, radii } from '../constants/theme';
+import { radii } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import type { ThemeColors } from '../providers/ThemeProvider';
 
 type Props = Omit<PressableProps, 'children'> & {
   title: string;
@@ -18,6 +20,7 @@ type Props = Omit<PressableProps, 'children'> & {
 };
 
 export function OutlineButton({ title, icon, disabled, compact, style, ...rest }: Props) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <Pressable
       accessibilityRole="button"
@@ -45,32 +48,33 @@ export function OutlineButton({ title, icon, disabled, compact, style, ...rest }
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: {
-    borderRadius: radii.lg,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-  },
-  inner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    minHeight: 50,
-  },
-  compact: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    minHeight: 40,
-  },
-  text: {
-    color: colors.text,
-    fontWeight: '700',
-    fontSize: 15,
-  },
-  dim: { opacity: 0.4 },
-  pressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    wrap: {
+      borderRadius: radii.lg,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: c.cardBorder,
+    },
+    inner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+      minHeight: 50,
+    },
+    compact: {
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      minHeight: 40,
+    },
+    text: {
+      color: c.text,
+      fontWeight: '700',
+      fontSize: 15,
+    },
+    dim: { opacity: 0.4 },
+    pressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
+  });

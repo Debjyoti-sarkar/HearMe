@@ -20,24 +20,95 @@ import { GlassCard } from '../../../components/GlassCard';
 import { SOSButton } from '../../../components/SOSButton';
 import { QuickAction } from '../../../components/QuickAction';
 import { StatusBadge } from '../../../components/StatusBadge';
-import { colors } from '../../../constants/theme';
+import { useThemedStyles } from '../../../hooks/useThemedStyles';
 import { loadLocalAvatar } from '../../../lib/app-data';
 import { shareLocationWhatsApp } from '../../../lib/emergency-sms';
 import { useAccessibility } from '../../../providers/AccessibilityProvider';
 import { useAuth } from '../../../providers/AuthProvider';
 import { useHearMe } from '../../../providers/HearMeProvider';
-import { useTheme } from '../../../providers/ThemeProvider';
+import { useTheme, type ThemeColors } from '../../../providers/ThemeProvider';
 import { generateSafetyCode, isSirenPlaying, stopSiren } from '../../../lib/siren';
 import * as Session from '../../../lib/session';
 import { saveAlertRecord } from '../../../lib/alert-history';
+import type { NeuroBandLiveState } from '../../../providers/HearMeProvider';
+import type { HearMeSettings } from '../../../lib/types';
+
+function nbStateLabel(state: string, mock: boolean): string {
+  if (state === 'connected') return mock ? 'Mock stream' : 'Monitoring';
+  if (state === 'reconnecting') return 'Reconnecting';
+  if (state === 'pairing') return 'Pairing';
+  if (state === 'scanning') return 'Scanning';
+  if (state === 'error') return 'Error';
+  if (state === 'disabled') return 'Off';
+  return 'Idle';
+}
+
+function nbSubLabel(nb: NeuroBandLiveState, s: HearMeSettings): string {
+  if (s.neuroBandWorkoutModeUntil && Date.now() < s.neuroBandWorkoutModeUntil) {
+    const mins = Math.ceil((s.neuroBandWorkoutModeUntil - Date.now()) / 60000);
+    return `Workout mode · ${mins} min remaining`;
+  }
+  if (nb.connection === 'connected') {
+    if (nb.calibrationProgress < 1) {
+      return `Calibrating · ${Math.round(nb.calibrationProgress * 100)}%`;
+    }
+    return s.neuroBandMockMode
+      ? 'Synthetic data — fusion + UI test path'
+      : 'Bio-signal silent trigger armed';
+  }
+  if (s.neuroBandEnabled && !s.neuroBandSerial) return 'Tap to pair a band';
+  if (!s.neuroBandEnabled) return 'Tap to enable';
+  return 'Tap to manage';
+}
+
+function nbMarkersFiring(nb: NeuroBandLiveState): number {
+  let n = 0;
+  for (const m of ['hr', 'gsr', 'temp', 'spo2', 'semg'] as const) {
+    if (nb.instant[m]) n++;
+  }
+  return n;
+}
+
+function NbKpi({
+  label,
+  value,
+  unit,
+  accent = false,
+}: {
+  label: string;
+  value: string;
+  unit: string;
+  accent?: boolean;
+}) {
+  const styles = useThemedStyles(makeStyles);
+  const { colors: c } = useTheme();
+  return (
+    <View style={styles.nbKpi}>
+      <Text style={styles.nbKpiLabel}>{label}</Text>
+      <Text style={[styles.nbKpiValue, accent && { color: c.accentPink }]}>
+        {value}
+      </Text>
+      <Text style={styles.nbKpiUnit}>{unit}</Text>
+    </View>
+  );
+}
 
 export default function HomeTab() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
-  const { ready, contacts, settings, executeSos, shareLocation, callEmergencyLine } = useHearMe();
+  const {
+    ready,
+    contacts,
+    settings,
+    executeSos,
+    shareLocation,
+    callEmergencyLine,
+    neuroBand,
+  } = useHearMe();
   const { profile, refreshProfile } = useAuth();
   const { oneHandedShift, dyslexiaFont, bodyText, headingText } = useAccessibility();
   const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [sosActive, setSosActive] = useState(false);
   const [localAvatar, setLocalAvatar] = useState<string | null>(null);
   const [sirenActive, setSirenActive] = useState(false);
@@ -204,7 +275,7 @@ export default function HomeTab() {
               <Image source={{ uri: profile?.avatar_url ?? localAvatar! }} style={styles.avatar} />
             ) : (
               <LinearGradient
-                colors={[colors.accentViolet, colors.accentPink]}
+                colors={[tc.accentViolet, tc.accentPink]}
                 style={styles.avatar}
               >
                 <Text style={styles.avatarText}>
@@ -236,9 +307,9 @@ export default function HomeTab() {
             onPress={() => void handleStopSiren()}
             style={({ pressed }) => [styles.sirenBanner, pressed && { opacity: 0.8 }]}
           >
-            <MaterialCommunityIcons name="bullhorn" size={22} color={colors.danger} />
+            <MaterialCommunityIcons name="bullhorn" size={22} color={tc.danger} />
             <Text style={styles.sirenBannerText}>Siren Active — Tap to Stop</Text>
-            <MaterialCommunityIcons name="stop-circle" size={24} color={colors.danger} />
+            <MaterialCommunityIcons name="stop-circle" size={24} color={tc.danger} />
           </Pressable>
         )}
 
@@ -246,6 +317,91 @@ export default function HomeTab() {
         <View style={styles.sosContainer}>
           <SOSButton onPress={() => void handleSos()} disabled={sosActive} />
         </View>
+
+        {/* NeuroBand dashboard */}
+        <Pressable
+          onPress={() => router.push('/(main)/neuroband')}
+          style={({ pressed }) => [styles.nbWrap, pressed && { opacity: 0.92 }]}
+        >
+          <GlassCard variant="accent" style={styles.nbCard}>
+            <LinearGradient
+              colors={
+                neuroBand.connection === 'connected'
+                  ? ['rgba(167,139,250,0.22)', 'rgba(236,72,153,0.16)']
+                  : ['rgba(100,116,139,0.18)', 'rgba(71,85,105,0.10)']
+              }
+              style={styles.nbGrad}
+            >
+              <View style={styles.nbHeader}>
+                <LinearGradient
+                  colors={
+                    neuroBand.connection === 'connected'
+                      ? ['#a78bfa', '#ec4899']
+                      : ['#475569', '#64748b']
+                  }
+                  style={styles.nbIcon}
+                >
+                  <MaterialCommunityIcons name="watch-variant" size={22} color="#fff" />
+                </LinearGradient>
+                <View style={{ flex: 1 }}>
+                  <View style={styles.nbTitleRow}>
+                    <Text style={styles.nbTitle}>NeuroBand</Text>
+                    <View
+                      style={[
+                        styles.nbDot,
+                        {
+                          backgroundColor:
+                            neuroBand.connection === 'connected'
+                              ? tc.success
+                              : neuroBand.connection === 'reconnecting'
+                                ? tc.warning
+                                : tc.textSecondary,
+                        },
+                      ]}
+                    />
+                    <Text style={styles.nbState}>
+                      {nbStateLabel(neuroBand.connection, settings.neuroBandMockMode)}
+                    </Text>
+                  </View>
+                  <Text style={styles.nbSub}>
+                    {nbSubLabel(neuroBand, settings)}
+                  </Text>
+                </View>
+                <MaterialCommunityIcons
+                  name="chevron-right"
+                  size={22}
+                  color={tc.textMuted}
+                />
+              </View>
+
+              {neuroBand.connection === 'connected' && neuroBand.lastFrame && (
+                <View style={styles.nbKpiRow}>
+                  <NbKpi
+                    label="HR"
+                    value={`${neuroBand.lastFrame.hr}`}
+                    unit="bpm"
+                  />
+                  <NbKpi
+                    label="GSR"
+                    value={neuroBand.lastFrame.gsrUs.toFixed(1)}
+                    unit="µS"
+                  />
+                  <NbKpi
+                    label="Skin"
+                    value={neuroBand.lastFrame.skinTempC.toFixed(1)}
+                    unit="°C"
+                  />
+                  <NbKpi
+                    label="Markers"
+                    value={`${nbMarkersFiring(neuroBand)}`}
+                    unit="/5"
+                    accent={nbMarkersFiring(neuroBand) >= 2}
+                  />
+                </View>
+              )}
+            </LinearGradient>
+          </GlassCard>
+        </Pressable>
 
         {/* Quick Actions */}
         <Text style={[styles.sectionLabel, bodyText]}>QUICK ACTIONS</Text>
@@ -306,7 +462,7 @@ export default function HomeTab() {
               colors={['rgba(167,139,250,0.18)', 'rgba(56,189,248,0.12)']}
               style={styles.checkInGrad}
             >
-              <MaterialCommunityIcons name="timer-sand" size={26} color={colors.accentViolet} />
+              <MaterialCommunityIcons name="timer-sand" size={26} color={tc.accentViolet} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.checkInTitle}>
                   {settings.activeCheckInExpiresAt ? 'Active check-in' : 'Start a timer check-in'}
@@ -317,7 +473,7 @@ export default function HomeTab() {
                     : 'Auto-SOS if you don\u2019t confirm by the deadline'}
                 </Text>
               </View>
-              <MaterialCommunityIcons name="chevron-right" size={22} color={colors.textMuted} />
+              <MaterialCommunityIcons name="chevron-right" size={22} color={tc.textMuted} />
             </LinearGradient>
           </GlassCard>
         </Pressable>
@@ -425,7 +581,7 @@ export default function HomeTab() {
         {/* Safety Tip of the Day */}
         <GlassCard variant="elevated" style={styles.tipCard}>
           <View style={styles.tipHeader}>
-            <MaterialCommunityIcons name="lightbulb-on" size={20} color={colors.warning} />
+            <MaterialCommunityIcons name="lightbulb-on" size={20} color={tc.warning} />
             <Text style={styles.tipLabel}>Safety Tip</Text>
           </View>
           <Text style={styles.tipText}>
@@ -438,7 +594,7 @@ export default function HomeTab() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   scroll: { paddingHorizontal: 20 },
   headerRow: {
     flexDirection: 'row',
@@ -449,13 +605,13 @@ const styles = StyleSheet.create({
   headerLeft: {},
   greeting: {
     fontSize: 14,
-    color: colors.textMuted,
+    color: c.textMuted,
     fontWeight: '600',
   },
   userName: {
     fontSize: 28,
     fontWeight: '900',
-    color: colors.text,
+    color: c.text,
     letterSpacing: -0.5,
     marginTop: 2,
   },
@@ -505,7 +661,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 12,
     fontWeight: '800',
-    color: colors.textSecondary,
+    color: c.textSecondary,
     letterSpacing: 1.5,
     marginBottom: 14,
   },
@@ -544,13 +700,13 @@ const styles = StyleSheet.create({
   featureTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: colors.text,
+    color: c.text,
     lineHeight: 20,
     marginBottom: 4,
   },
   featureSub: {
     fontSize: 12,
-    color: colors.textMuted,
+    color: c.textMuted,
   },
   tipCard: {
     padding: 18,
@@ -565,12 +721,85 @@ const styles = StyleSheet.create({
   tipLabel: {
     fontSize: 14,
     fontWeight: '800',
-    color: colors.warning,
+    color: c.warning,
   },
   tipText: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 13,
     lineHeight: 20,
+  },
+  nbWrap: { marginBottom: 22 },
+  nbCard: { padding: 0, overflow: 'hidden' },
+  nbGrad: { padding: 16, gap: 14 },
+  nbHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  nbIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nbTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  nbTitle: {
+    color: c.text,
+    fontWeight: '800',
+    fontSize: 16,
+  },
+  nbDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    marginLeft: 4,
+  },
+  nbState: {
+    color: c.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+  },
+  nbSub: {
+    color: c.textMuted,
+    fontSize: 12,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  nbKpiRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  nbKpi: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+    alignItems: 'center',
+  },
+  nbKpiLabel: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: c.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  nbKpiValue: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: c.text,
+    marginTop: 2,
+  },
+  nbKpiUnit: {
+    fontSize: 10,
+    color: c.textSecondary,
   },
   checkInRow: {
     padding: 0,
@@ -582,12 +811,12 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   checkInTitle: {
-    color: colors.text,
+    color: c.text,
     fontWeight: '800',
     fontSize: 15,
   },
   checkInSub: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 12,
     marginTop: 2,
     lineHeight: 16,

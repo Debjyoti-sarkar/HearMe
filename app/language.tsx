@@ -11,12 +11,15 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GradientBackground } from '../components/GradientBackground';
-import { colors, radii } from '../constants/theme';
+import { radii } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { LANGUAGES, type LangCode, useLanguage } from '../lib/i18n';
+import { type ThemeColors } from '../providers/ThemeProvider';
 
 export default function LanguageScreen() {
   const insets = useSafeAreaInsets();
   const { lang, setLang, T } = useLanguage();
+  const styles = useThemedStyles(makeStyles);
   const [selected, setSelected] = useState<LangCode>(lang);
 
   const onContinue = async () => {
@@ -91,7 +94,7 @@ export default function LanguageScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 20 },
   header: { alignItems: 'center', marginBottom: 20 },
   logoCircle: {
@@ -110,13 +113,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: '900',
-    color: colors.text,
+    color: c.text,
     textAlign: 'center',
     marginBottom: 6,
   },
   subtitle: {
     fontSize: 14,
-    color: colors.textMuted,
+    color: c.textMuted,
     textAlign: 'center',
     maxWidth: 280,
   },
@@ -133,7 +136,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   langCardSelected: {
-    borderColor: colors.accentViolet,
+    borderColor: c.accentViolet,
     backgroundColor: 'rgba(167,139,250,0.12)',
   },
   scriptBadge: {
@@ -148,24 +151,24 @@ const styles = StyleSheet.create({
   scriptText: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.textMuted,
+    color: c.textMuted,
   },
   scriptTextSelected: {
-    color: colors.accentViolet,
+    color: c.accentViolet,
   },
   langName: {
     fontSize: 15,
     fontWeight: '800',
-    color: colors.text,
+    color: c.text,
     textAlign: 'center',
     marginBottom: 2,
   },
   langNameSelected: {
-    color: colors.accentViolet,
+    color: c.accentViolet,
   },
   langNameEn: {
     fontSize: 11,
-    color: colors.textSecondary,
+    color: c.textSecondary,
     fontWeight: '600',
   },
   checkBadge: {
@@ -175,7 +178,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: colors.accentViolet,
+    backgroundColor: c.accentViolet,
     alignItems: 'center',
     justifyContent: 'center',
   },

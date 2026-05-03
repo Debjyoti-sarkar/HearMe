@@ -19,10 +19,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GradientBackground } from '../../../components/GradientBackground';
 import { GlassCard } from '../../../components/GlassCard';
 import { PrimaryButton } from '../../../components/PrimaryButton';
-import { colors, radii } from '../../../constants/theme';
+import { radii } from '../../../constants/theme';
+import { useThemedStyles } from '../../../hooks/useThemedStyles';
 import type { EmergencyContact } from '../../../lib/types';
 import { useAccessibility } from '../../../providers/AccessibilityProvider';
 import { useHearMe } from '../../../providers/HearMeProvider';
+import { useTheme, type ThemeColors } from '../../../providers/ThemeProvider';
 
 const AVATAR_COLORS: [string, string][] = [
   ['#7c3aed', '#a78bfa'],
@@ -38,6 +40,8 @@ export default function ContactsTab() {
   const tabBarHeight = useBottomTabBarHeight();
   const { ready, contacts, upsertContact, removeContact } = useHearMe();
   const { oneHandedShift, bodyText, headingText } = useAccessibility();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState<EmergencyContact | null>(null);
   const [name, setName] = useState('');
@@ -186,7 +190,7 @@ export default function ContactsTab() {
         </View>
         <Pressable onPress={openNew} style={styles.addBtn}>
           <LinearGradient
-            colors={[colors.accentPink, colors.accentRose]}
+            colors={[tc.accentPink, tc.accentRose]}
             style={styles.addBtnGrad}
           >
             <MaterialCommunityIcons name="plus" size={26} color="#fff" />
@@ -207,7 +211,7 @@ export default function ContactsTab() {
               colors={['rgba(167,139,250,0.2)', 'rgba(236,72,153,0.1)']}
               style={styles.emptyIcon}
             >
-              <MaterialCommunityIcons name="account-heart-outline" size={48} color={colors.accentViolet} />
+              <MaterialCommunityIcons name="account-heart-outline" size={48} color={tc.accentViolet} />
             </LinearGradient>
             <Text style={styles.emptyTitle}>No contacts yet</Text>
             <Text style={styles.emptyText}>
@@ -216,7 +220,7 @@ export default function ContactsTab() {
             </Text>
             <Pressable onPress={openNew}>
               <LinearGradient
-                colors={[colors.accentViolet, colors.accentPink]}
+                colors={[tc.accentViolet, tc.accentPink]}
                 style={styles.addFirstBtn}
               >
                 <MaterialCommunityIcons name="plus" size={20} color="#fff" />
@@ -242,16 +246,16 @@ export default function ContactsTab() {
                   <View style={styles.meta}>
                     <Text style={styles.contactName}>{item.name}</Text>
                     <View style={styles.phoneRow}>
-                      <MaterialCommunityIcons name="phone" size={14} color={colors.textMuted} />
+                      <MaterialCommunityIcons name="phone" size={14} color={tc.textMuted} />
                       <Text style={styles.contactPhone}>{item.phone}</Text>
                     </View>
                   </View>
                   <View style={styles.actions}>
                     <Pressable onPress={() => openEdit(item)} hitSlop={8} style={styles.actionBtn}>
-                      <MaterialCommunityIcons name="pencil-outline" size={18} color={colors.accentViolet} />
+                      <MaterialCommunityIcons name="pencil-outline" size={18} color={tc.accentViolet} />
                     </Pressable>
                     <Pressable onPress={() => confirmDelete(item)} hitSlop={8} style={styles.actionBtn}>
-                      <MaterialCommunityIcons name="trash-can-outline" size={18} color={colors.accentRose} />
+                      <MaterialCommunityIcons name="trash-can-outline" size={18} color={tc.accentRose} />
                     </Pressable>
                   </View>
                 </View>
@@ -269,7 +273,7 @@ export default function ContactsTab() {
                 {editing ? 'Edit Contact' : 'Add Contact'}
               </Text>
               <Pressable onPress={() => setModal(false)} hitSlop={12}>
-                <MaterialCommunityIcons name="close" size={24} color={colors.textMuted} />
+                <MaterialCommunityIcons name="close" size={24} color={tc.textMuted} />
               </Pressable>
             </View>
 
@@ -283,14 +287,14 @@ export default function ContactsTab() {
                   colors={['rgba(167,139,250,0.12)', 'rgba(52,211,153,0.08)']}
                   style={styles.importBtnGrad}
                 >
-                  <MaterialCommunityIcons name="contacts" size={22} color={colors.accentViolet} />
+                  <MaterialCommunityIcons name="contacts" size={22} color={tc.accentViolet} />
                   <View style={styles.importBtnInfo}>
                     <Text style={styles.importBtnTitle}>
                       {pickingContact ? 'Loading contacts...' : 'Import from Phone'}
                     </Text>
                     <Text style={styles.importBtnSub}>Pick from your saved contacts</Text>
                   </View>
-                  <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
+                  <MaterialCommunityIcons name="chevron-right" size={20} color={tc.textMuted} />
                 </LinearGradient>
               </Pressable>
             )}
@@ -300,7 +304,7 @@ export default function ContactsTab() {
               value={name}
               onChangeText={setName}
               placeholder="e.g. Priya Sharma"
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={tc.textSecondary}
               style={styles.input}
               autoCapitalize="words"
             />
@@ -310,7 +314,7 @@ export default function ContactsTab() {
               value={phone}
               onChangeText={setPhone}
               placeholder="+91 98765 43210"
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={tc.textSecondary}
               keyboardType="phone-pad"
               style={styles.input}
             />
@@ -332,7 +336,7 @@ export default function ContactsTab() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Contact</Text>
               <Pressable onPress={() => setPhonePickerModal(false)} hitSlop={12}>
-                <MaterialCommunityIcons name="close" size={24} color={colors.textMuted} />
+                <MaterialCommunityIcons name="close" size={24} color={tc.textMuted} />
               </Pressable>
             </View>
 
@@ -340,7 +344,7 @@ export default function ContactsTab() {
               value={phoneSearchQuery}
               onChangeText={setPhoneSearchQuery}
               placeholder="Search contacts..."
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={tc.textSecondary}
               style={[styles.input, styles.searchInput]}
             />
 
@@ -367,7 +371,7 @@ export default function ContactsTab() {
                       <Text style={styles.pickerName}>{item.name}</Text>
                       <Text style={styles.pickerPhone}>{firstPhone}</Text>
                     </View>
-                    <MaterialCommunityIcons name="plus-circle-outline" size={22} color={colors.accentViolet} />
+                    <MaterialCommunityIcons name="plus-circle-outline" size={22} color={tc.accentViolet} />
                   </Pressable>
                 );
               }}
@@ -382,7 +386,7 @@ export default function ContactsTab() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -391,13 +395,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   headerLeft: { flex: 1, marginRight: 16 },
-  title: { fontSize: 28, fontWeight: '900', color: colors.text, letterSpacing: -0.5 },
-  sub: { marginTop: 6, color: colors.textMuted, fontSize: 14, lineHeight: 20 },
+  title: { fontSize: 28, fontWeight: '900', color: c.text, letterSpacing: -0.5 },
+  sub: { marginTop: 6, color: c.textMuted, fontSize: 14, lineHeight: 20 },
   addBtn: {
     borderRadius: radii.full,
     overflow: 'hidden',
     elevation: 8,
-    shadowColor: colors.accentPink,
+    shadowColor: c.accentPink,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
@@ -421,9 +425,9 @@ const styles = StyleSheet.create({
   },
   avatarTxt: { fontSize: 20, fontWeight: '800', color: '#fff' },
   meta: { flex: 1, marginLeft: 14 },
-  contactName: { fontSize: 16, fontWeight: '800', color: colors.text },
+  contactName: { fontSize: 16, fontWeight: '800', color: c.text },
   phoneRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-  contactPhone: { color: colors.textMuted, fontSize: 14 },
+  contactPhone: { color: c.textMuted, fontSize: 14 },
   actions: { flexDirection: 'row', gap: 4 },
   actionBtn: {
     padding: 8,
@@ -442,12 +446,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: colors.text,
+    color: c.text,
     marginBottom: 8,
   },
   emptyText: {
     textAlign: 'center',
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 14,
     lineHeight: 20,
     marginBottom: 20,
@@ -479,9 +483,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  modalTitle: { fontSize: 22, fontWeight: '900', color: colors.text },
+  modalTitle: { fontSize: 22, fontWeight: '900', color: c.text },
   label: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -491,11 +495,11 @@ const styles = StyleSheet.create({
   input: {
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.inputBorder,
-    backgroundColor: colors.inputBg,
+    borderColor: c.inputBorder,
+    backgroundColor: c.inputBg,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: colors.text,
+    color: c.text,
     fontSize: 16,
     marginBottom: 16,
   },
@@ -506,7 +510,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelBtn: { paddingVertical: 14, paddingHorizontal: 16 },
-  cancelTxt: { color: colors.textMuted, fontWeight: '700', fontSize: 15 },
+  cancelTxt: { color: c.textMuted, fontWeight: '700', fontSize: 15 },
   // Import from phone button
   importBtn: {
     marginBottom: 18,
@@ -526,11 +530,11 @@ const styles = StyleSheet.create({
   importBtnTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: colors.text,
+    color: c.text,
   },
   importBtnSub: {
     fontSize: 12,
-    color: colors.textMuted,
+    color: c.textMuted,
     marginTop: 2,
   },
   // Phone contact picker modal
@@ -562,16 +566,16 @@ const styles = StyleSheet.create({
   pickerName: {
     fontSize: 15,
     fontWeight: '700',
-    color: colors.text,
+    color: c.text,
   },
   pickerPhone: {
     fontSize: 13,
-    color: colors.textMuted,
+    color: c.textMuted,
     marginTop: 2,
   },
   pickerEmpty: {
     textAlign: 'center',
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 14,
     paddingVertical: 24,
   },

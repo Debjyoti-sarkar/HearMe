@@ -13,7 +13,9 @@ import {
   type ViewToken,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii } from '../constants/theme';
+import { radii } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { useTheme, type ThemeColors } from '../providers/ThemeProvider';
 
 const { width } = Dimensions.get('window');
 
@@ -63,6 +65,8 @@ const SLIDES: Slide[] = [
 
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
@@ -122,7 +126,7 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <LinearGradient colors={[colors.bgTop, colors.bgMid, colors.bgBottom]} style={styles.root}>
+    <LinearGradient colors={[tc.bgTop, tc.bgMid, tc.bgBottom]} style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <Text style={styles.brand}>HearMe</Text>
         <Pressable onPress={skip} hitSlop={12}>
@@ -190,7 +194,7 @@ export default function OnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   root: { flex: 1 },
   header: {
     flexDirection: 'row',
@@ -202,11 +206,11 @@ const styles = StyleSheet.create({
   brand: {
     fontSize: 22,
     fontWeight: '900',
-    color: colors.text,
+    color: c.text,
     letterSpacing: -0.5,
   },
   skip: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -251,7 +255,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 36,
     fontWeight: '900',
-    color: colors.text,
+    color: c.text,
     textAlign: 'center',
     lineHeight: 42,
     marginBottom: 16,
@@ -259,7 +263,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 15,
-    color: colors.textMuted,
+    color: c.textMuted,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 32,
@@ -281,7 +285,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   featureText: {
-    color: colors.text,
+    color: c.text,
     fontSize: 15,
     fontWeight: '600',
   },
@@ -298,7 +302,7 @@ const styles = StyleSheet.create({
   dot: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.accentViolet,
+    backgroundColor: c.accentViolet,
   },
   nextBtn: {
     flexDirection: 'row',

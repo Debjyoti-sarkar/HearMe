@@ -17,13 +17,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GradientBackground } from '../components/GradientBackground';
 import { GlassCard } from '../components/GlassCard';
 import { PrimaryButton } from '../components/PrimaryButton';
-import { colors, radii } from '../constants/theme';
+import { radii } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { useAuth } from '../providers/AuthProvider';
+import { useTheme, type ThemeColors } from '../providers/ThemeProvider';
 
 export default function ProfileCompletionScreen() {
   const insets = useSafeAreaInsets();
   const { user, profile, refreshProfile, profileComplete } = useAuth();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [name, setName] = useState(profile?.name ?? '');
   const [age, setAge] = useState(profile?.age?.toString() ?? '');
   const [dob, setDob] = useState(profile?.dob ?? '');
@@ -186,11 +190,11 @@ export default function ProfileCompletionScreen() {
             </Pressable>
           </View>
 
-          <TextInput value={name} onChangeText={setName} placeholder="Full name" style={styles.input} placeholderTextColor={colors.textMuted} />
-          <TextInput value={age} onChangeText={(t) => setAge(t.replace(/\D/g, ''))} placeholder="Age" style={styles.input} keyboardType="number-pad" placeholderTextColor={colors.textMuted} />
-          <TextInput value={dob} onChangeText={setDob} placeholder="DOB (YYYY-MM-DD)" style={styles.input} placeholderTextColor={colors.textMuted} />
-          <TextInput value={phone} onChangeText={setPhone} placeholder="Phone number" style={styles.input} keyboardType="phone-pad" placeholderTextColor={colors.textMuted} />
-          <TextInput value={location} onChangeText={setLocation} placeholder="Location" style={styles.input} placeholderTextColor={colors.textMuted} />
+          <TextInput value={name} onChangeText={setName} placeholder="Full name" style={styles.input} placeholderTextColor={tc.textMuted} />
+          <TextInput value={age} onChangeText={(t) => setAge(t.replace(/\D/g, ''))} placeholder="Age" style={styles.input} keyboardType="number-pad" placeholderTextColor={tc.textMuted} />
+          <TextInput value={dob} onChangeText={setDob} placeholder="DOB (YYYY-MM-DD)" style={styles.input} placeholderTextColor={tc.textMuted} />
+          <TextInput value={phone} onChangeText={setPhone} placeholder="Phone number" style={styles.input} keyboardType="phone-pad" placeholderTextColor={tc.textMuted} />
+          <TextInput value={location} onChangeText={setLocation} placeholder="Location" style={styles.input} placeholderTextColor={tc.textMuted} />
 
           <PrimaryButton title="Auto-detect location" onPress={detectLocation} style={styles.secondary} />
           <PrimaryButton title="Save profile" onPress={onSave} loading={saving} disabled={!isValid} />
@@ -200,9 +204,9 @@ export default function ProfileCompletionScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  title: { fontSize: 28, fontWeight: '900', color: colors.text },
-  subTitle: { color: colors.textMuted, marginTop: 6, marginBottom: 16 },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  title: { fontSize: 28, fontWeight: '900', color: c.text },
+  subTitle: { color: c.textMuted, marginTop: 6, marginBottom: 16 },
   card: { padding: 16, gap: 10 },
   avatarRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 12 },
   avatar: {
@@ -211,23 +215,23 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     backgroundColor: 'rgba(255,255,255,0.12)',
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: c.cardBorder,
   },
   pickButton: {
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: c.cardBorder,
     borderRadius: radii.md,
     paddingHorizontal: 12,
     paddingVertical: 10,
     backgroundColor: 'rgba(255,255,255,0.08)',
   },
-  pickText: { color: colors.text, fontWeight: '700' },
+  pickText: { color: c.text, fontWeight: '700' },
   input: {
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: colors.inputBg,
-    color: colors.text,
+    borderColor: c.cardBorder,
+    backgroundColor: c.inputBg,
+    color: c.text,
     paddingHorizontal: 12,
     paddingVertical: 12,
   },

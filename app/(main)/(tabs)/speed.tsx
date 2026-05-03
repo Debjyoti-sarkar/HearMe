@@ -10,9 +10,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GradientBackground } from '../../../components/GradientBackground';
 import { GlassCard } from '../../../components/GlassCard';
 import { StatusBadge } from '../../../components/StatusBadge';
-import { colors, radii } from '../../../constants/theme';
+import { radii } from '../../../constants/theme';
+import { useThemedStyles } from '../../../hooks/useThemedStyles';
 import { useAccessibility } from '../../../providers/AccessibilityProvider';
 import { useHearMe } from '../../../providers/HearMeProvider';
+import { useTheme, type ThemeColors } from '../../../providers/ThemeProvider';
 import { saveAlertRecord } from '../../../lib/alert-history';
 import { generateSafetyCode } from '../../../lib/siren';
 
@@ -23,6 +25,8 @@ export default function SpeedTab() {
   const tabBarHeight = useBottomTabBarHeight();
   const { settings, contacts, executeSos } = useHearMe();
   const { oneHandedShift, bodyText, headingText } = useAccessibility();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [kmh, setKmh] = useState<number>(0);
   const [maxKmh, setMaxKmh] = useState(0);
   const [status, setStatus] = useState('Starting...');
@@ -185,7 +189,7 @@ export default function SpeedTab() {
     if (kmh > 100) return '#ef4444';
     if (kmh > 60) return '#f59e0b';
     if (kmh > 0) return '#10b981';
-    return colors.text;
+    return tc.text;
   };
 
   return (
@@ -215,7 +219,7 @@ export default function SpeedTab() {
               </Text>
               <Text style={styles.speedUnit}>km/h</Text>
               <View style={styles.statusRow}>
-                <View style={[styles.statusDot, { backgroundColor: status === 'GPS active' ? colors.success : colors.textMuted }]} />
+                <View style={[styles.statusDot, { backgroundColor: status === 'GPS active' ? tc.success : tc.textMuted }]} />
                 <Text style={styles.statusText}>{status}</Text>
               </View>
             </GlassCard>
@@ -224,17 +228,17 @@ export default function SpeedTab() {
 
         <View style={styles.statsRow}>
           <GlassCard style={styles.statCard}>
-            <MaterialCommunityIcons name="speedometer-slow" size={22} color={colors.accentCyan} />
+            <MaterialCommunityIcons name="speedometer-slow" size={22} color={tc.accentCyan} />
             <Text style={styles.statValue}>{kmh.toFixed(1)}</Text>
             <Text style={styles.statLabel}>Current</Text>
           </GlassCard>
           <GlassCard style={styles.statCard}>
-            <MaterialCommunityIcons name="speedometer" size={22} color={colors.accentPink} />
+            <MaterialCommunityIcons name="speedometer" size={22} color={tc.accentPink} />
             <Text style={styles.statValue}>{maxKmh > 0 ? maxKmh.toFixed(1) : '0'}</Text>
             <Text style={styles.statLabel}>Max</Text>
           </GlassCard>
           <GlassCard style={styles.statCard}>
-            <MaterialCommunityIcons name="car-emergency" size={22} color={colors.warning} />
+            <MaterialCommunityIcons name="car-emergency" size={22} color={tc.warning} />
             <Text style={styles.statValue}>{settings.crashSpeedThreshold}</Text>
             <Text style={styles.statLabel}>Threshold</Text>
           </GlassCard>
@@ -243,7 +247,7 @@ export default function SpeedTab() {
         {crashAlert && (
           <GlassCard style={styles.crashBanner}>
             <View style={styles.crashHeader}>
-              <MaterialCommunityIcons name="alert" size={24} color={colors.danger} />
+              <MaterialCommunityIcons name="alert" size={24} color={tc.danger} />
               <View style={styles.crashCountdownCircle}>
                 <Text style={styles.crashCountdownText}>{countdown}</Text>
               </View>
@@ -256,7 +260,7 @@ export default function SpeedTab() {
                 onPress={dismissCrash}
                 style={({ pressed }) => [styles.crashSafeBtn, pressed && { opacity: 0.8 }]}
               >
-                <MaterialCommunityIcons name="shield-check" size={18} color={colors.success} />
+                <MaterialCommunityIcons name="shield-check" size={18} color={tc.success} />
                 <Text style={styles.crashSafeText}>I'm Safe</Text>
               </Pressable>
               <Pressable
@@ -271,7 +275,7 @@ export default function SpeedTab() {
         )}
 
         <GlassCard style={styles.infoCard}>
-          <MaterialCommunityIcons name="information-outline" size={20} color={colors.accentViolet} />
+          <MaterialCommunityIcons name="information-outline" size={20} color={tc.accentViolet} />
           <Text style={styles.infoText}>
             Enable crash detection in Settings to auto-alert contacts when sudden deceleration
             is detected. If you don't respond within {COUNTDOWN_SECONDS} seconds, SOS is sent automatically.
@@ -282,7 +286,7 @@ export default function SpeedTab() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 20 },
   headerRow: {
     flexDirection: 'row',
@@ -290,8 +294,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 24,
   },
-  title: { fontSize: 28, fontWeight: '900', color: colors.text, letterSpacing: -0.5 },
-  sub: { marginTop: 6, color: colors.textMuted, fontSize: 14 },
+  title: { fontSize: 28, fontWeight: '900', color: c.text, letterSpacing: -0.5 },
+  sub: { marginTop: 6, color: c.textMuted, fontSize: 14 },
   dialContainer: { alignItems: 'center', marginBottom: 24 },
   dialOuter: {
     borderRadius: radii.xl + 4,
@@ -311,7 +315,7 @@ const styles = StyleSheet.create({
   },
   speedUnit: {
     fontSize: 18,
-    color: colors.textMuted,
+    color: c.textMuted,
     fontWeight: '700',
     marginTop: 2,
   },
@@ -327,7 +331,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   statusText: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -345,12 +349,12 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: '900',
-    color: colors.text,
+    color: c.text,
   },
   statLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: colors.textMuted,
+    color: c.textMuted,
   },
   crashBanner: {
     padding: 16,
@@ -370,17 +374,17 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: 'rgba(239,68,68,0.2)',
     borderWidth: 2,
-    borderColor: colors.danger,
+    borderColor: c.danger,
     alignItems: 'center',
     justifyContent: 'center',
   },
   crashCountdownText: {
     fontSize: 18,
     fontWeight: '900',
-    color: colors.danger,
+    color: c.danger,
   },
   crashText: {
-    color: colors.danger,
+    color: c.danger,
     fontSize: 14,
     fontWeight: '700',
     lineHeight: 20,
@@ -403,7 +407,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(16,185,129,0.08)',
   },
   crashSafeText: {
-    color: colors.success,
+    color: c.success,
     fontWeight: '800',
     fontSize: 14,
   },
@@ -415,7 +419,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 12,
     borderRadius: radii.md,
-    backgroundColor: colors.danger,
+    backgroundColor: c.danger,
   },
   crashSosText: {
     color: '#fff',
@@ -430,7 +434,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     flex: 1,
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 13,
     lineHeight: 19,
   },

@@ -19,7 +19,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GradientBackground } from '../../components/GradientBackground';
 import { GlassCard } from '../../components/GlassCard';
 import { PrimaryButton } from '../../components/PrimaryButton';
-import { colors, radii } from '../../constants/theme';
+import { radii } from '../../constants/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { useTheme, type ThemeColors } from '../../providers/ThemeProvider';
 import { useHearMe } from '../../providers/HearMeProvider';
 import { saveAlertRecord } from '../../lib/alert-history';
 import { generateSafetyCode } from '../../lib/siren';
@@ -40,6 +42,8 @@ const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
 export default function JourneyMonitorScreen() {
   const insets = useSafeAreaInsets();
   const { contacts, executeSos } = useHearMe();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [journey, setJourney] = useState<Journey | null>(null);
   const [destination, setDestination] = useState('');
   const [duration, setDuration] = useState(30);
@@ -209,7 +213,7 @@ export default function JourneyMonitorScreen() {
     <GradientBackground>
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <MaterialCommunityIcons name="arrow-left" size={28} color={colors.text} />
+          <MaterialCommunityIcons name="arrow-left" size={28} color={tc.text} />
         </Pressable>
         <Text style={styles.headerTitle}>Journey Monitor</Text>
         <View style={{ width: 28 }} />
@@ -222,7 +226,7 @@ export default function JourneyMonitorScreen() {
         {!journey ? (
           <>
             <GlassCard variant="accent" style={styles.infoCard}>
-              <MaterialCommunityIcons name="shield-account" size={24} color={colors.accentViolet} />
+              <MaterialCommunityIcons name="shield-account" size={24} color={tc.accentViolet} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.infoTitle}>Dead Man's Switch</Text>
                 <Text style={styles.infoText}>
@@ -237,7 +241,7 @@ export default function JourneyMonitorScreen() {
               value={destination}
               onChangeText={setDestination}
               placeholder="e.g. Office, Friend's place, Airport"
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={tc.textSecondary}
               style={styles.input}
             />
 
@@ -265,7 +269,7 @@ export default function JourneyMonitorScreen() {
 
             {contacts.length === 0 && (
               <GlassCard style={styles.warnCard}>
-                <MaterialCommunityIcons name="alert" size={20} color={colors.warning} />
+                <MaterialCommunityIcons name="alert" size={20} color={tc.warning} />
                 <Text style={styles.warnText}>
                   Add emergency contacts first — they'll be notified if you don't check in.
                 </Text>
@@ -339,7 +343,7 @@ export default function JourneyMonitorScreen() {
                 <Text style={[styles.label, { marginTop: 24 }]}>RECENT CHECK-INS</Text>
                 {journey.checkIns.slice(-5).reverse().map((ci, i) => (
                   <GlassCard key={i} style={styles.checkInCard}>
-                    <MaterialCommunityIcons name="map-marker-check" size={20} color={colors.success} />
+                    <MaterialCommunityIcons name="map-marker-check" size={20} color={tc.success} />
                     <View style={{ flex: 1 }}>
                       <Text style={styles.checkInTime}>
                         {new Date(ci.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
@@ -359,7 +363,7 @@ export default function JourneyMonitorScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -367,7 +371,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 16,
   },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: colors.text },
+  headerTitle: { fontSize: 20, fontWeight: '800', color: c.text },
   scroll: { paddingHorizontal: 20 },
   infoCard: {
     flexDirection: 'row',
@@ -376,10 +380,10 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     alignItems: 'flex-start',
   },
-  infoTitle: { fontSize: 16, fontWeight: '800', color: colors.text, marginBottom: 4 },
-  infoText: { color: colors.textMuted, fontSize: 13, lineHeight: 19 },
+  infoTitle: { fontSize: 16, fontWeight: '800', color: c.text, marginBottom: 4 },
+  infoText: { color: c.textMuted, fontSize: 13, lineHeight: 19 },
   label: {
-    color: colors.textSecondary,
+    color: c.textSecondary,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1.5,
@@ -389,11 +393,11 @@ const styles = StyleSheet.create({
   input: {
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.inputBorder,
-    backgroundColor: colors.inputBg,
+    borderColor: c.inputBorder,
+    backgroundColor: c.inputBg,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: colors.text,
+    color: c.text,
     fontSize: 16,
     marginBottom: 20,
   },
@@ -407,20 +411,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: radii.sm,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: colors.card,
+    borderColor: c.cardBorder,
+    backgroundColor: c.card,
   },
   durationActive: {
-    borderColor: colors.accentViolet,
+    borderColor: c.accentViolet,
     backgroundColor: 'rgba(167,139,250,0.15)',
   },
   durationText: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontWeight: '700',
     fontSize: 15,
   },
   durationTextActive: {
-    color: colors.accentViolet,
+    color: c.accentViolet,
   },
   warnCard: {
     flexDirection: 'row',
@@ -429,7 +433,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     alignItems: 'flex-start',
   },
-  warnText: { flex: 1, color: colors.warning, fontSize: 13, lineHeight: 18 },
+  warnText: { flex: 1, color: c.warning, fontSize: 13, lineHeight: 18 },
   timerCard: { marginBottom: 20 },
   timerInner: {
     padding: 28,
@@ -441,20 +445,20 @@ const styles = StyleSheet.create({
   timerLabel: {
     fontSize: 12,
     fontWeight: '800',
-    color: colors.textSecondary,
+    color: c.textSecondary,
     letterSpacing: 2,
     marginBottom: 8,
   },
   timerValue: {
     fontSize: 56,
     fontWeight: '900',
-    color: colors.text,
+    color: c.text,
     letterSpacing: -2,
     fontVariant: ['tabular-nums'],
   },
-  timerValueExpired: { color: colors.danger },
+  timerValueExpired: { color: c.danger },
   destLabel: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 16,
     fontWeight: '600',
     marginTop: 4,
@@ -466,8 +470,8 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   stat: { alignItems: 'center' },
-  statValue: { fontSize: 16, fontWeight: '800', color: colors.text },
-  statLabel: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
+  statValue: { fontSize: 16, fontWeight: '800', color: c.text },
+  statLabel: { fontSize: 11, color: c.textMuted, marginTop: 2 },
   statDivider: { width: 1, height: 30, backgroundColor: 'rgba(255,255,255,0.08)' },
   actionRow: {
     flexDirection: 'row',
@@ -498,6 +502,6 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 8,
   },
-  checkInTime: { color: colors.text, fontWeight: '700', fontSize: 14 },
-  checkInCoords: { color: colors.textSecondary, fontSize: 11, marginTop: 2 },
+  checkInTime: { color: c.text, fontWeight: '700', fontSize: 14 },
+  checkInCoords: { color: c.textSecondary, fontSize: 11, marginTop: 2 },
 });

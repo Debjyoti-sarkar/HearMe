@@ -36,7 +36,11 @@
       "Bash(xargs -I {} basename {})",
       "Bash(npx tsc *)",
       "Bash(echo \"exit=$?\")",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(where supabase *)",
+      "Bash(supabase --version)",
+      "Bash(awk -F'[\\(]' '{print $1}')",
+      "Bash(awk 'NR<755 && /[^a-zA-Z_]c\\\\./' \"app/\\(main\\)/neuroband.tsx\")"
     ]
   }
 }

@@ -23,7 +23,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GradientBackground } from '../../components/GradientBackground';
 import { GlassCard } from '../../components/GlassCard';
 import { PrimaryButton } from '../../components/PrimaryButton';
-import { colors } from '../../constants/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { useTheme, type ThemeColors } from '../../providers/ThemeProvider';
 
 import {
   type BehaviorBaseline,
@@ -52,6 +53,8 @@ import {
 
 export default function BehaviorMonitorScreen() {
   const insets = useSafeAreaInsets();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [session, setSession] = useState<BehaviorSession | null>(null);
   const [baseline, setBaseline] = useState<BehaviorBaseline | null>(null);
   const [trustResult, setTrustResult] = useState<TrustResult | null>(null);
@@ -214,7 +217,7 @@ export default function BehaviorMonitorScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.backBtn}>
-            <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
+            <MaterialCommunityIcons name="arrow-left" size={24} color={tc.text} />
           </Pressable>
           <Text style={styles.title}>Behavior Monitor</Text>
           <View style={{ width: 40 }} />
@@ -286,7 +289,7 @@ export default function BehaviorMonitorScreen() {
               <MaterialCommunityIcons
                 name="lightbulb-outline"
                 size={14}
-                color={colors.warning}
+                color={tc.warning}
               />
               <Text style={styles.alertSuggestionText}>
                 {detection.actionSuggestion}
@@ -301,7 +304,7 @@ export default function BehaviorMonitorScreen() {
               <MaterialCommunityIcons
                 name="shield-check"
                 size={22}
-                color={colors.success}
+                color={tc.success}
               />
               <Text style={styles.normalText}>
                 Normal usage patterns detected
@@ -379,10 +382,10 @@ export default function BehaviorMonitorScreen() {
                         {
                           backgroundColor:
                             flag.penalty <= -10
-                              ? colors.danger
+                              ? tc.danger
                               : flag.penalty <= -6
-                                ? colors.warning
-                                : colors.info,
+                                ? tc.warning
+                                : tc.info,
                         },
                       ]}
                     />
@@ -409,7 +412,7 @@ export default function BehaviorMonitorScreen() {
                 <MaterialCommunityIcons
                   name="brain"
                   size={20}
-                  color={colors.accentViolet}
+                  color={tc.accentViolet}
                 />
                 <Text style={styles.baselineTitle}>
                   Baseline Active ({baseline.sessionsUsed} sessions)
@@ -438,7 +441,7 @@ export default function BehaviorMonitorScreen() {
               <MaterialCommunityIcons
                 name="brain"
                 size={28}
-                color={colors.textMuted}
+                color={tc.textMuted}
               />
               <Text style={styles.noBaselineTitle}>
                 Building Behavioral Profile
@@ -459,7 +462,7 @@ export default function BehaviorMonitorScreen() {
             <MaterialCommunityIcons
               name="information"
               size={18}
-              color={colors.info}
+              color={tc.info}
             />
             <Text style={styles.infoTitle}>How It Works</Text>
           </View>
@@ -485,7 +488,7 @@ export default function BehaviorMonitorScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   scroll: { paddingHorizontal: 20 },
   header: {
     flexDirection: 'row',
@@ -502,12 +505,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '900',
-    color: colors.text,
+    color: c.text,
     letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: 12,
-    color: colors.textMuted,
+    color: c.textMuted,
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -526,12 +529,12 @@ const styles = StyleSheet.create({
   scoreNumber: {
     fontSize: 56,
     fontWeight: '900',
-    color: colors.text,
+    color: c.text,
     letterSpacing: -2,
   },
   scoreLabel: {
     fontSize: 12,
-    color: colors.textMuted,
+    color: c.textMuted,
     fontWeight: '600',
     marginTop: -4,
   },
@@ -563,9 +566,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   alertContent: { flex: 1 },
-  alertTitle: { fontSize: 16, fontWeight: '800', color: colors.danger },
-  alertConfidence: { fontSize: 11, color: colors.textMuted },
-  alertDescription: { fontSize: 13, color: colors.textMuted, lineHeight: 19, marginBottom: 10 },
+  alertTitle: { fontSize: 16, fontWeight: '800', color: c.danger },
+  alertConfidence: { fontSize: 11, color: c.textMuted },
+  alertDescription: { fontSize: 13, color: c.textMuted, lineHeight: 19, marginBottom: 10 },
   alertSuggestion: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -575,12 +578,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 8,
   },
-  alertSuggestionText: { fontSize: 12, color: colors.warning, flex: 1 },
+  alertSuggestionText: { fontSize: 12, color: c.warning, flex: 1 },
 
   // Normal card
   normalCard: { padding: 14, marginBottom: 16 },
   normalRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  normalText: { fontSize: 14, fontWeight: '700', color: colors.success },
+  normalText: { fontSize: 14, fontWeight: '700', color: c.success },
 
   // Action
   actionRow: { marginBottom: 24 },
@@ -589,7 +592,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 12,
     fontWeight: '800',
-    color: colors.textSecondary,
+    color: c.textSecondary,
     letterSpacing: 1.5,
     marginBottom: 12,
   },
@@ -610,12 +613,12 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 22,
     fontWeight: '900',
-    color: colors.text,
+    color: c.text,
     letterSpacing: -0.5,
   },
   statLabel: {
     fontSize: 10,
-    color: colors.textMuted,
+    color: c.textMuted,
     fontWeight: '600',
     marginTop: 2,
   },
@@ -626,16 +629,16 @@ const styles = StyleSheet.create({
   flagDot: { width: 20, alignItems: 'center' },
   dot: { width: 8, height: 8, borderRadius: 4 },
   flagContent: { flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  flagTitle: { fontSize: 14, fontWeight: '700', color: colors.text },
-  flagPenalty: { fontSize: 12, color: colors.danger, fontWeight: '600' },
-  flagDetail: { fontSize: 12, color: colors.textMuted, lineHeight: 17, marginLeft: 30 },
+  flagTitle: { fontSize: 14, fontWeight: '700', color: c.text },
+  flagPenalty: { fontSize: 12, color: c.danger, fontWeight: '600' },
+  flagDetail: { fontSize: 12, color: c.textMuted, lineHeight: 17, marginLeft: 30 },
 
   // Baseline
   baselineCard: { padding: 18, marginBottom: 20 },
   baselineRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
-  baselineTitle: { fontSize: 15, fontWeight: '800', color: colors.text },
+  baselineTitle: { fontSize: 15, fontWeight: '800', color: c.text },
   baselineStats: { gap: 4, marginBottom: 14 },
-  baselineStat: { fontSize: 12, color: colors.textMuted, lineHeight: 18 },
+  baselineStat: { fontSize: 12, color: c.textMuted, lineHeight: 18 },
   resetBtn: {
     alignSelf: 'flex-start',
     paddingHorizontal: 14,
@@ -644,13 +647,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(239,68,68,0.3)',
   },
-  resetText: { fontSize: 12, color: colors.danger, fontWeight: '600' },
+  resetText: { fontSize: 12, color: c.danger, fontWeight: '600' },
 
   noBaseline: { alignItems: 'center', gap: 8, paddingVertical: 8 },
-  noBaselineTitle: { fontSize: 15, fontWeight: '800', color: colors.text },
+  noBaselineTitle: { fontSize: 15, fontWeight: '800', color: c.text },
   noBaselineText: {
     fontSize: 12,
-    color: colors.textMuted,
+    color: c.textMuted,
     textAlign: 'center',
     lineHeight: 18,
   },
@@ -658,12 +661,12 @@ const styles = StyleSheet.create({
   // Info card
   infoCard: { padding: 16, marginBottom: 16 },
   infoHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  infoTitle: { fontSize: 14, fontWeight: '800', color: colors.info },
-  infoText: { fontSize: 12, color: colors.textMuted, lineHeight: 18, marginBottom: 8 },
+  infoTitle: { fontSize: 14, fontWeight: '800', color: c.info },
+  infoText: { fontSize: 12, color: c.textMuted, lineHeight: 18, marginBottom: 8 },
 
   footerText: {
     fontSize: 11,
-    color: colors.textSecondary,
+    color: c.textSecondary,
     textAlign: 'center',
     marginBottom: 8,
   },

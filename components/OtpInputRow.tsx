@@ -7,6 +7,8 @@ import {
   View,
 } from 'react-native';
 import { colors, radii } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import type { ThemeColors } from '../providers/ThemeProvider';
 
 const N = 6;
 
@@ -16,6 +18,7 @@ type Props = {
 };
 
 export function OtpInputRow({ value, onChange }: Props) {
+  const styles = useThemedStyles(makeStyles);
   const clean = value.replace(/\D/g, '').slice(0, N);
   const refs = useRef<Array<TextInput | null>>([]);
   const [focused, setFocused] = useState(0);
@@ -71,30 +74,31 @@ export function OtpInputRow({ value, onChange }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  cell: {
-    flex: 1,
-    height: 52,
-    borderRadius: radii.md,
-    borderWidth: 1.5,
-    borderColor: colors.cardBorder,
-    backgroundColor: colors.inputBg,
-    textAlign: 'center',
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  cellFocused: {
-    borderColor: colors.accentViolet,
-    shadowColor: colors.accentViolet,
-    shadowOpacity: 0.45,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 4,
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      gap: 8,
+    },
+    cell: {
+      flex: 1,
+      height: 52,
+      borderRadius: radii.md,
+      borderWidth: 1.5,
+      borderColor: c.cardBorder,
+      backgroundColor: c.inputBg,
+      textAlign: 'center',
+      fontSize: 22,
+      fontWeight: '700',
+      color: c.text,
+    },
+    cellFocused: {
+      borderColor: c.accentViolet,
+      shadowColor: c.accentViolet,
+      shadowOpacity: 0.45,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 0 },
+      elevation: 4,
+    },
+  });

@@ -21,7 +21,9 @@ import { GradientBackground } from '../../components/GradientBackground';
 import { GlassCard } from '../../components/GlassCard';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { OutlineButton } from '../../components/OutlineButton';
-import { colors, radii } from '../../constants/theme';
+import { radii } from '../../constants/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { useTheme, type ThemeColors } from '../../providers/ThemeProvider';
 import { useHearMe } from '../../providers/HearMeProvider';
 import {
   getBleLoadError,
@@ -63,17 +65,24 @@ const SENSITIVITY_OPTIONS: Array<{
 
 const WORKOUT_OPTIONS = [30, 60, 120];
 
-const MARKER_LABELS: Record<Marker, { name: string; icon: keyof typeof MaterialCommunityIcons.glyphMap; color: string }> = {
-  hr: { name: 'Heart rate', icon: 'heart-pulse', color: colors.accentPink },
-  gsr: { name: 'Skin sweat', icon: 'water', color: colors.accentCyan },
-  temp: { name: 'Skin temp', icon: 'thermometer', color: colors.accentAmber },
-  spo2: { name: 'Blood O₂', icon: 'molecule-co2', color: colors.accentEmerald },
-  semg: { name: 'Muscle tension', icon: 'arm-flex', color: colors.accentViolet },
-};
+type MarkerLabel = { name: string; icon: keyof typeof MaterialCommunityIcons.glyphMap; color: string };
+
+function getMarkerLabels(c: ThemeColors): Record<Marker, MarkerLabel> {
+  return {
+    hr: { name: 'Heart rate', icon: 'heart-pulse', color: c.accentPink },
+    gsr: { name: 'Skin sweat', icon: 'water', color: c.accentCyan },
+    temp: { name: 'Skin temp', icon: 'thermometer', color: c.accentAmber },
+    spo2: { name: 'Blood O₂', icon: 'molecule-co2', color: c.accentEmerald },
+    semg: { name: 'Muscle tension', icon: 'arm-flex', color: c.accentViolet },
+  };
+}
 
 export default function NeuroBandScreen() {
   const insets = useSafeAreaInsets();
   const { settings, patchSettings, neuroBand, triggerNeuroBandSos } = useHearMe();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const markerLabels = useMemo(() => getMarkerLabels(tc), [tc]);
 
   const [pair, setPair] = useState<NeuroBandPairRecord | null>(null);
   const [events, setEvents] = useState<NeuroBandEvent[]>([]);
@@ -264,7 +273,7 @@ export default function NeuroBandScreen() {
       >
         <View style={styles.headerRow}>
           <Pressable onPress={() => router.back()} style={styles.backBtn}>
-            <MaterialCommunityIcons name="chevron-left" size={28} color={colors.text} />
+            <MaterialCommunityIcons name="chevron-left" size={28} color={tc.text} />
           </Pressable>
           <View style={{ flex: 1 }}>
             <Text style={styles.title}>NeuroBand</Text>
@@ -331,6 +340,7 @@ export default function NeuroBandScreen() {
                 marker={m}
                 fired={neuroBand.instant[m]}
                 sustained={neuroBand.sustained[m]}
+                meta={markerLabels[m]}
               />
             ))}
           </GlassCard>
@@ -359,7 +369,7 @@ export default function NeuroBandScreen() {
                 <MaterialCommunityIcons
                   name="bluetooth"
                   size={20}
-                  color={colors.accentViolet}
+                  color={tc.accentViolet}
                 />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.scanName}>
@@ -373,7 +383,7 @@ export default function NeuroBandScreen() {
                 <MaterialCommunityIcons
                   name="chevron-right"
                   size={20}
-                  color={colors.textMuted}
+                  color={tc.textMuted}
                 />
               </Pressable>
             ))}
@@ -409,7 +419,7 @@ export default function NeuroBandScreen() {
                 : 'Engine disabled'
             }
             icon="shield-check"
-            iconColor={colors.accentEmerald}
+            iconColor={tc.accentEmerald}
             value={settings.neuroBandEnabled}
             onValueChange={onToggleEnabled}
           />
@@ -418,7 +428,7 @@ export default function NeuroBandScreen() {
             title="Mock mode"
             subtitle="Generate a synthetic stream — no hardware needed"
             icon="cog-sync"
-            iconColor={colors.accentCyan}
+            iconColor={tc.accentCyan}
             value={settings.neuroBandMockMode}
             onValueChange={onToggleMockMode}
           />
@@ -439,14 +449,14 @@ export default function NeuroBandScreen() {
                             ? 'rgba(239,68,68,0.18)'
                             : 'rgba(167,139,250,0.18)',
                         borderColor:
-                          m === 'duress' ? colors.danger : colors.accentViolet,
+                          m === 'duress' ? tc.danger : tc.accentViolet,
                       },
                     ]}
                   >
                     <Text
                       style={[
                         styles.chipText,
-                        active && { color: colors.text, fontWeight: '700' },
+                        active && { color: tc.text, fontWeight: '700' },
                       ]}
                     >
                       {m}
@@ -470,7 +480,7 @@ export default function NeuroBandScreen() {
                 style={[
                   styles.optRow,
                   active && {
-                    borderColor: colors.accentViolet,
+                    borderColor: tc.accentViolet,
                     backgroundColor: 'rgba(167,139,250,0.08)',
                   },
                 ]}
@@ -478,7 +488,7 @@ export default function NeuroBandScreen() {
                 <MaterialCommunityIcons
                   name={active ? 'radiobox-marked' : 'radiobox-blank'}
                   size={22}
-                  color={active ? colors.accentViolet : colors.textMuted}
+                  color={active ? tc.accentViolet : tc.textMuted}
                 />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.optLabel}>{opt.label}</Text>
@@ -501,7 +511,7 @@ export default function NeuroBandScreen() {
               <MaterialCommunityIcons
                 name="run-fast"
                 size={20}
-                color={colors.warning}
+                color={tc.warning}
               />
               <Text style={styles.workoutActiveText}>
                 Active — {workoutRemaining} min remaining
@@ -611,7 +621,7 @@ export default function NeuroBandScreen() {
                 setPskError(null);
               }}
               placeholder="ABCD-EFGH-JKMN"
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={tc.textSecondary}
               autoCapitalize="characters"
               autoCorrect={false}
               style={styles.pskInput}
@@ -657,6 +667,7 @@ function labelForState(s: string): string {
 }
 
 function Kpi({ label, value, unit }: { label: string; value: string; unit: string }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.kpi}>
       <Text style={styles.kpiLabel}>{label}</Text>
@@ -667,15 +678,17 @@ function Kpi({ label, value, unit }: { label: string; value: string; unit: strin
 }
 
 function MarkerRow({
-  marker,
+  marker: _marker,
   fired,
   sustained,
+  meta,
 }: {
   marker: Marker;
   fired: boolean;
   sustained: number;
+  meta: MarkerLabel;
 }) {
-  const meta = MARKER_LABELS[marker];
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.markerRow}>
       <View
@@ -718,6 +731,8 @@ function Row({
   value: boolean;
   onValueChange: (v: boolean) => void;
 }) {
+  const styles = useThemedStyles(makeStyles);
+  const { colors: tc } = useTheme();
   return (
     <View style={styles.row}>
       <View style={[styles.rowIcon, { backgroundColor: iconColor + '18' }]}>
@@ -731,18 +746,18 @@ function Row({
         value={value}
         onValueChange={onValueChange}
         trackColor={{ false: 'rgba(255,255,255,0.12)', true: 'rgba(167,139,250,0.5)' }}
-        thumbColor={value ? colors.accentPink : '#64748b'}
+        thumbColor={value ? tc.accentPink : '#64748b'}
       />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   scroll: { paddingHorizontal: 20 },
   headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   backBtn: { marginRight: 8, padding: 4 },
-  title: { fontSize: 28, fontWeight: '900', color: colors.text, letterSpacing: -0.5 },
-  sub: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
+  title: { fontSize: 28, fontWeight: '900', color: c.text, letterSpacing: -0.5 },
+  sub: { color: c.textMuted, fontSize: 13, marginTop: 2 },
 
   hero: {
     flexDirection: 'row',
@@ -758,15 +773,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroState: { fontSize: 16, fontWeight: '800', color: colors.text },
-  heroDetail: { color: colors.textMuted, fontSize: 13, marginTop: 4 },
-  heroWarn: { color: colors.warning, fontSize: 12, marginTop: 6 },
+  heroState: { fontSize: 16, fontWeight: '800', color: c.text },
+  heroDetail: { color: c.textMuted, fontSize: 13, marginTop: 4 },
+  heroWarn: { color: c.warning, fontSize: 12, marginTop: 6 },
 
   card: { padding: 18, marginBottom: 12 },
   section: {
     fontSize: 13,
     fontWeight: '800',
-    color: colors.textMuted,
+    color: c.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 8,
@@ -774,13 +789,13 @@ const styles = StyleSheet.create({
   subSection: {
     fontSize: 12,
     fontWeight: '700',
-    color: colors.textSecondary,
+    color: c.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     marginBottom: 6,
   },
-  body: { color: colors.textMuted, fontSize: 13, lineHeight: 19 },
-  subtleNote: { color: colors.textSecondary, fontSize: 12, marginTop: 8 },
+  body: { color: c.textMuted, fontSize: 13, lineHeight: 19 },
+  subtleNote: { color: c.textSecondary, fontSize: 12, marginTop: 8 },
 
   kpiRow: { flexDirection: 'row', gap: 8 },
   kpi: {
@@ -793,12 +808,12 @@ const styles = StyleSheet.create({
   kpiLabel: {
     fontSize: 10,
     fontWeight: '700',
-    color: colors.textMuted,
+    color: c.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  kpiValue: { fontSize: 20, fontWeight: '800', color: colors.text, marginTop: 2 },
-  kpiUnit: { fontSize: 10, color: colors.textSecondary },
+  kpiValue: { fontSize: 20, fontWeight: '800', color: c.text, marginTop: 2 },
+  kpiUnit: { fontSize: 10, color: c.textSecondary },
 
   markerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 4 },
   markerIcon: {
@@ -808,7 +823,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  markerName: { width: 110, color: colors.text, fontSize: 13, fontWeight: '600' },
+  markerName: { width: 110, color: c.text, fontSize: 13, fontWeight: '600' },
   sustainBar: {
     flex: 1,
     height: 6,
@@ -819,7 +834,7 @@ const styles = StyleSheet.create({
   sustainFill: { height: 6, borderRadius: 3 },
   sustainCount: {
     fontSize: 11,
-    color: colors.textMuted,
+    color: c.textMuted,
     width: 36,
     textAlign: 'right',
   },
@@ -833,12 +848,12 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(255,255,255,0.08)',
     marginTop: 8,
   },
-  scanName: { color: colors.text, fontWeight: '700', fontSize: 14 },
-  scanMeta: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
+  scanName: { color: c.text, fontWeight: '700', fontSize: 14 },
+  scanMeta: { color: c.textMuted, fontSize: 12, marginTop: 2 },
 
   pairRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  pairSerial: { color: colors.text, fontWeight: '700', fontSize: 14 },
-  pairMeta: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
+  pairSerial: { color: c.text, fontWeight: '700', fontSize: 14 },
+  pairMeta: { color: c.textMuted, fontSize: 12, marginTop: 2 },
 
   row: {
     flexDirection: 'row',
@@ -853,8 +868,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rowTitle: { color: colors.text, fontSize: 14, fontWeight: '700' },
-  rowSub: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
+  rowTitle: { color: c.text, fontSize: 14, fontWeight: '700' },
+  rowSub: { color: c.textMuted, fontSize: 12, marginTop: 2 },
 
   mockChips: { flexDirection: 'row', gap: 8, marginTop: 8 },
   workoutChips: { flexDirection: 'row', gap: 8, marginTop: 12 },
@@ -866,7 +881,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.12)',
   },
-  chipText: { color: colors.textMuted, fontSize: 12, fontWeight: '600' },
+  chipText: { color: c.textMuted, fontSize: 12, fontWeight: '600' },
 
   optRow: {
     flexDirection: 'row',
@@ -879,8 +894,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.08)',
     marginVertical: 4,
   },
-  optLabel: { color: colors.text, fontWeight: '700', fontSize: 14 },
-  optHint: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
+  optLabel: { color: c.text, fontWeight: '700', fontSize: 14 },
+  optHint: { color: c.textMuted, fontSize: 12, marginTop: 2 },
 
   workoutActive: {
     flexDirection: 'row',
@@ -888,7 +903,7 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 10,
   },
-  workoutActiveText: { flex: 1, color: colors.text, fontWeight: '600', fontSize: 13 },
+  workoutActiveText: { flex: 1, color: c.text, fontWeight: '600', fontSize: 13 },
 
   progressOuter: {
     height: 8,
@@ -897,7 +912,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     overflow: 'hidden',
   },
-  progressInner: { height: 8, backgroundColor: colors.accentViolet, borderRadius: 4 },
+  progressInner: { height: 8, backgroundColor: c.accentViolet, borderRadius: 4 },
 
   eventRow: {
     flexDirection: 'row',
@@ -907,9 +922,9 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(255,255,255,0.05)',
   },
-  eventTime: { color: colors.textMuted, fontSize: 11, width: 80 },
-  eventKind: { color: colors.text, fontSize: 12, fontWeight: '700', width: 80 },
-  eventNote: { flex: 1, color: colors.textSecondary, fontSize: 12 },
+  eventTime: { color: c.textMuted, fontSize: 11, width: 80 },
+  eventKind: { color: c.text, fontSize: 12, fontWeight: '700', width: 80 },
+  eventNote: { flex: 1, color: c.textSecondary, fontSize: 12 },
 
   modalBg: {
     flex: 1,
@@ -921,28 +936,28 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '900',
-    color: colors.text,
+    color: c.text,
     marginBottom: 8,
   },
   pskInput: {
-    backgroundColor: colors.inputBg,
+    backgroundColor: c.inputBg,
     borderRadius: radii.md,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    color: colors.text,
+    color: c.text,
     fontSize: 16,
     fontFamily: 'Courier',
     letterSpacing: 2,
     borderWidth: 1,
-    borderColor: colors.inputBorder,
+    borderColor: c.inputBorder,
     marginTop: 12,
   },
   pskFormatted: {
-    color: colors.accentViolet,
+    color: c.accentViolet,
     fontFamily: 'Courier',
     fontSize: 14,
     marginTop: 6,
     letterSpacing: 2,
   },
-  pskError: { color: colors.danger, fontSize: 12, marginTop: 6 },
+  pskError: { color: c.danger, fontSize: 12, marginTop: 6 },
 });

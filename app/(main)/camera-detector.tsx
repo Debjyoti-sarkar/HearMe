@@ -17,7 +17,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GradientBackground } from '../../components/GradientBackground';
 import { GlassCard } from '../../components/GlassCard';
-import { colors, radii } from '../../constants/theme';
+import { radii } from '../../constants/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { useTheme, type ThemeColors } from '../../providers/ThemeProvider';
 
 // Baseline calibration: collect N samples then alert on deviation
 const CALIBRATION_SAMPLES = 20;
@@ -36,6 +38,8 @@ const TIPS = [
 
 export default function CameraDetectorScreen() {
   const insets = useSafeAreaInsets();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [mode, setMode] = useState<Mode>('magnet');
   const [active, setActive] = useState(false);
   const [magnitude, setMagnitude] = useState(0);
@@ -139,9 +143,9 @@ export default function CameraDetectorScreen() {
 
   const getColor = () => {
     switch (alertLevel) {
-      case 'danger': return colors.danger;
-      case 'caution': return colors.warning;
-      default: return colors.success;
+      case 'danger': return tc.danger;
+      case 'caution': return tc.warning;
+      default: return tc.success;
     }
   };
 
@@ -177,7 +181,7 @@ export default function CameraDetectorScreen() {
     <GradientBackground>
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <MaterialCommunityIcons name="arrow-left" size={28} color={colors.text} />
+          <MaterialCommunityIcons name="arrow-left" size={28} color={tc.text} />
         </Pressable>
         <Text style={styles.headerTitle}>Camera Detector</Text>
         <View style={{ width: 28 }} />
@@ -192,7 +196,7 @@ export default function CameraDetectorScreen() {
           <MaterialCommunityIcons
             name="magnet"
             size={18}
-            color={mode === 'magnet' ? colors.accentViolet : colors.textMuted}
+            color={mode === 'magnet' ? tc.accentViolet : tc.textMuted}
           />
           <Text style={[styles.tabText, mode === 'magnet' && styles.tabTextActive]}>
             Magnetic Scan
@@ -205,7 +209,7 @@ export default function CameraDetectorScreen() {
           <MaterialCommunityIcons
             name="flashlight"
             size={18}
-            color={mode === 'ir' ? colors.accentViolet : colors.textMuted}
+            color={mode === 'ir' ? tc.accentViolet : tc.textMuted}
           />
           <Text style={[styles.tabText, mode === 'ir' && styles.tabTextActive]}>
             IR Lens Scan
@@ -221,7 +225,7 @@ export default function CameraDetectorScreen() {
               <CameraView style={styles.camera} facing="back" />
             ) : (
               <View style={styles.cameraPlaceholder}>
-                <MaterialCommunityIcons name="camera-off" size={48} color={colors.textMuted} />
+                <MaterialCommunityIcons name="camera-off" size={48} color={tc.textMuted} />
                 <Text style={styles.cameraPlaceholderText}>Camera permission required</Text>
                 <Pressable onPress={requestCameraPermission} style={styles.grantBtn}>
                   <Text style={styles.grantBtnText}>Grant Permission</Text>
@@ -232,7 +236,7 @@ export default function CameraDetectorScreen() {
 
           <GlassCard style={styles.irTipCard}>
             <View style={styles.irTipHeader}>
-              <MaterialCommunityIcons name="information-outline" size={18} color={colors.accentViolet} />
+              <MaterialCommunityIcons name="information-outline" size={18} color={tc.accentViolet} />
               <Text style={styles.irTipTitle}>How to use IR detection</Text>
             </View>
             <Text style={styles.irTipText}>
@@ -347,7 +351,7 @@ export default function CameraDetectorScreen() {
                   colors={['rgba(167,139,250,0.3)', 'rgba(236,72,153,0.2)']}
                   style={styles.tipIcon}
                 >
-                  <MaterialCommunityIcons name={t.icon} size={22} color={colors.text} />
+                  <MaterialCommunityIcons name={t.icon} size={22} color={tc.text} />
                 </LinearGradient>
                 <View style={styles.tipMeta}>
                   <Text style={styles.tipTitle}>{t.title}</Text>
@@ -358,7 +362,7 @@ export default function CameraDetectorScreen() {
           ))}
 
           <GlassCard style={styles.disclaimer}>
-            <MaterialCommunityIcons name="information-outline" size={20} color={colors.accentViolet} />
+            <MaterialCommunityIcons name="information-outline" size={20} color={tc.accentViolet} />
             <Text style={styles.disclaimerText}>
               This tool detects magnetic field anomalies from electronic devices. The scanner first
               calibrates to your environment, then alerts on deviations. Metal objects, magnets, and
@@ -372,7 +376,7 @@ export default function CameraDetectorScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -380,7 +384,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 12,
   },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: colors.text },
+  headerTitle: { fontSize: 20, fontWeight: '800', color: c.text },
   tabRow: {
     flexDirection: 'row',
     marginHorizontal: 20,
@@ -408,10 +412,10 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 13,
     fontWeight: '700',
-    color: colors.textMuted,
+    color: c.textMuted,
   },
   tabTextActive: {
-    color: colors.accentViolet,
+    color: c.accentViolet,
   },
   scroll: { paddingHorizontal: 20 },
   gaugeCard: {
@@ -457,7 +461,7 @@ const styles = StyleSheet.create({
   calibrationFill: {
     height: '100%',
     borderRadius: 4,
-    backgroundColor: colors.accentViolet,
+    backgroundColor: c.accentViolet,
   },
   gaugeLabels: {
     flexDirection: 'row',
@@ -465,7 +469,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   gaugeLbl: {
-    color: colors.textSecondary,
+    color: c.textSecondary,
     fontSize: 10,
     fontWeight: '600',
   },
@@ -493,14 +497,14 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 10,
     fontWeight: '700',
-    color: colors.textMuted,
+    color: c.textMuted,
     letterSpacing: 0.5,
     marginBottom: 4,
   },
   statValue: {
     fontSize: 14,
     fontWeight: '800',
-    color: colors.text,
+    color: c.text,
   },
   statDivider: {
     width: 1,
@@ -508,7 +512,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.1)',
   },
   calibHint: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 12,
     marginTop: 8,
     fontStyle: 'italic',
@@ -533,7 +537,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: colors.text,
+    color: c.text,
     marginBottom: 12,
   },
   tipCard: {
@@ -556,11 +560,11 @@ const styles = StyleSheet.create({
   tipTitle: {
     fontSize: 15,
     fontWeight: '800',
-    color: colors.text,
+    color: c.text,
     marginBottom: 4,
   },
   tipText: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -573,7 +577,7 @@ const styles = StyleSheet.create({
   },
   disclaimerText: {
     flex: 1,
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 12,
     lineHeight: 17,
   },
@@ -602,7 +606,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   cameraPlaceholderText: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -615,7 +619,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(167,139,250,0.3)',
   },
   grantBtnText: {
-    color: colors.accentViolet,
+    color: c.accentViolet,
     fontWeight: '700',
     fontSize: 14,
   },
@@ -631,10 +635,10 @@ const styles = StyleSheet.create({
   irTipTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: colors.text,
+    color: c.text,
   },
   irTipText: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 13,
     lineHeight: 22,
   },

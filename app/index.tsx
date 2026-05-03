@@ -1,14 +1,17 @@
 import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { colors } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { loadLanguage } from '../lib/i18n';
 import { useAuth } from '../providers/AuthProvider';
 import { loadSettings } from '../lib/app-data';
 import { isDemoAuthenticated } from '../lib/demo-auth';
+import { useTheme, type ThemeColors } from '../providers/ThemeProvider';
 
 export default function Index() {
   const { loading, session, profileComplete } = useAuth();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [onboardingDone, setOnboardingDone] = useState(true);
   const [langSelected, setLangSelected] = useState(true);
   const [demoAuth, setDemoAuth] = useState(false);
@@ -36,7 +39,7 @@ export default function Index() {
   if (loading || !ready) {
     return (
       <View style={styles.boot}>
-        <ActivityIndicator size="large" color={colors.accentViolet} />
+        <ActivityIndicator size="large" color={tc.accentViolet} />
       </View>
     );
   }
@@ -50,11 +53,11 @@ export default function Index() {
   return <Redirect href="/(main)" />;
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   boot: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.bgTop,
+    backgroundColor: c.bgTop,
   },
 });

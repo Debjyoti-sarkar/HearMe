@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { GestureTracker } from '../../components/GestureTracker';
-import { colors } from '../../constants/theme';
 import { isDemoAuthenticated } from '../../lib/demo-auth';
 import { AccessibilityProvider } from '../../providers/AccessibilityProvider';
 import { useAuth } from '../../providers/AuthProvider';
@@ -12,11 +11,9 @@ import { ThemeProvider, useTheme } from '../../providers/ThemeProvider';
 import LockScreen from '../lock';
 import DisguiseScreen from '../disguise';
 
-const MODAL_OPTIONS = {
-  presentation: 'modal' as const,
-  animation: 'slide_from_bottom' as const,
-  contentStyle: { backgroundColor: colors.bgTop },
-};
+// Boot-screen fallback color used before ThemeProvider mounts.
+const BOOT_BG = '#0a0118';
+const BOOT_ACCENT = '#a78bfa';
 
 const FULLSCREEN_OPTIONS = {
   presentation: 'fullScreenModal' as const,
@@ -47,33 +44,45 @@ function LockGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function ThemedStack() {
+  const { colors: tc } = useTheme();
+  const modalOptions = {
+    presentation: 'modal' as const,
+    animation: 'slide_from_bottom' as const,
+    contentStyle: { backgroundColor: tc.bgTop },
+  };
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: tc.bgTop },
+        animation: 'fade',
+      }}
+    >
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="helplines" options={modalOptions} />
+      <Stack.Screen name="fake-call" options={FULLSCREEN_OPTIONS} />
+      <Stack.Screen name="camera-detector" options={modalOptions} />
+      <Stack.Screen name="nearby-services" options={modalOptions} />
+      <Stack.Screen name="audio-recorder" options={modalOptions} />
+      <Stack.Screen name="alert-history" options={modalOptions} />
+      <Stack.Screen name="behavior-monitor" options={modalOptions} />
+      <Stack.Screen name="check-in" options={modalOptions} />
+      <Stack.Screen name="journey-monitor" options={modalOptions} />
+      <Stack.Screen name="evidence-locker" options={modalOptions} />
+      <Stack.Screen name="user-profile" options={modalOptions} />
+      <Stack.Screen name="neuroband" options={modalOptions} />
+    </Stack>
+  );
+}
+
 function MainStack() {
   return (
     <HearMeProvider>
       <SettingsBridge>
       <LockGate>
         <GestureTracker>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: colors.bgTop },
-              animation: 'fade',
-            }}
-          >
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="helplines" options={MODAL_OPTIONS} />
-            <Stack.Screen name="fake-call" options={FULLSCREEN_OPTIONS} />
-            <Stack.Screen name="camera-detector" options={MODAL_OPTIONS} />
-            <Stack.Screen name="nearby-services" options={MODAL_OPTIONS} />
-            <Stack.Screen name="audio-recorder" options={MODAL_OPTIONS} />
-            <Stack.Screen name="alert-history" options={MODAL_OPTIONS} />
-            <Stack.Screen name="behavior-monitor" options={MODAL_OPTIONS} />
-            <Stack.Screen name="check-in" options={MODAL_OPTIONS} />
-            <Stack.Screen name="journey-monitor" options={MODAL_OPTIONS} />
-            <Stack.Screen name="evidence-locker" options={MODAL_OPTIONS} />
-            <Stack.Screen name="user-profile" options={MODAL_OPTIONS} />
-            <Stack.Screen name="neuroband" options={MODAL_OPTIONS} />
-          </Stack>
+          <ThemedStack />
         </GestureTracker>
       </LockGate>
       </SettingsBridge>
@@ -102,7 +111,7 @@ export default function MainLayout() {
   if (loading || !demoReady) {
     return (
       <View style={styles.boot}>
-        <ActivityIndicator color={colors.accentViolet} size="large" />
+        <ActivityIndicator color={BOOT_ACCENT} size="large" />
       </View>
     );
   }
@@ -119,6 +128,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.bgTop,
+    backgroundColor: BOOT_BG,
   },
 });

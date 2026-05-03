@@ -20,38 +20,55 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GradientBackground } from '../components/GradientBackground';
 import { GlassCard } from '../components/GlassCard';
 import { PrimaryButton } from '../components/PrimaryButton';
-import { colors, radii } from '../constants/theme';
-import { clearDemoAuth } from '../lib/demo-auth';
+import { radii } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import { clearDemoAuth, enableDemoAuth } from '../lib/demo-auth';
 import { useLanguage } from '../lib/i18n';
 import { saveSettings, loadSettings } from '../lib/app-data';
 import { DEMO_OTP } from '../lib/otp';
 import { normalizeIndiaPhone } from '../lib/phone';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { useAuth } from '../providers/AuthProvider';
+import { useTheme, type ThemeColors } from '../providers/ThemeProvider';
 
 WebBrowser.maybeCompleteAuthSession();
 
 type UserType = 'new' | 'existing' | null;
 
-function extractSessionFromUrl(url: string) {
+/**
+ * Pull the PKCE auth code (and any error) out of a redirect URL, regardless
+ * of whether it lives in the query string or the fragment. PKCE-flow
+ * Supabase puts ?code=... on the redirect, but some browsers preserve only
+ * the fragment across an exp:// hand-off, so we accept both.
+ */
+function extractAuthCodeFromUrl(url: string): {
+  code: string | null;
+  error: string | null;
+} {
   const [base, fragment = ''] = url.split('#');
   const parsed = Linking.parse(base);
-  const params = new URLSearchParams(fragment);
-  const queryAccessToken = parsed.queryParams?.access_token;
-  const queryRefreshToken = parsed.queryParams?.refresh_token;
-  const accessToken =
-    params.get('access_token') ??
-    (typeof queryAccessToken === 'string' ? queryAccessToken : null);
-  const refreshToken =
-    params.get('refresh_token') ??
-    (typeof queryRefreshToken === 'string' ? queryRefreshToken : null);
-  return { accessToken, refreshToken };
+  const fragmentParams = new URLSearchParams(fragment);
+
+  const queryCode = parsed.queryParams?.code;
+  const code =
+    (typeof queryCode === 'string' ? queryCode : null) ??
+    fragmentParams.get('code');
+
+  const queryError = parsed.queryParams?.error_description ?? parsed.queryParams?.error;
+  const error =
+    (typeof queryError === 'string' ? queryError : null) ??
+    fragmentParams.get('error_description') ??
+    fragmentParams.get('error');
+
+  return { code, error };
 }
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const { session, profileComplete } = useAuth();
   const { T } = useLanguage();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [userType, setUserType] = useState<UserType>(null);
   const [phone, setPhone] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
@@ -69,17 +86,23 @@ export default function LoginScreen() {
     })();
   }, []);
 
-  // Handle deep link return from Google OAuth (e.g. when app is cold-started via redirect)
+  // Handle deep link return from Google OAuth (e.g. when app is cold-started
+  // via redirect, or when the in-app browser hands off mid-flow).
   useEffect(() => {
     const handleUrl = async (event: { url: string }) => {
-      const { accessToken, refreshToken } = extractSessionFromUrl(event.url);
-      if (accessToken && refreshToken) {
-        await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
-        await clearDemoAuth();
+      const { code, error: oauthError } = extractAuthCodeFromUrl(event.url);
+      if (oauthError) {
+        if (__DEV__) console.log('[google-oauth] redirect error:', oauthError);
+        return;
       }
+      if (!code) return;
+      if (__DEV__) console.log('[google-oauth] exchanging code…');
+      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+      if (exchangeError) {
+        if (__DEV__) console.log('[google-oauth] exchange failed:', exchangeError.message);
+        return;
+      }
+      await clearDemoAuth();
     };
 
     const subscription = Linking.addEventListener('url', handleUrl);
@@ -153,10 +176,18 @@ export default function LoginScreen() {
     setInfo(null);
     setGoogleLoading(true);
     const redirectTo = makeRedirectUri({ path: 'login' });
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log('[google-oauth] redirectTo =', redirectTo);
+    }
     const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo, skipBrowserRedirect: true },
     });
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log('[google-oauth] supabase auth url =', data?.url);
+    }
     if (oauthError || !data?.url) {
       setGoogleLoading(false);
       setError(oauthError?.message ?? 'Could not start Google login.');
@@ -165,19 +196,26 @@ export default function LoginScreen() {
     try {
       const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
       if (result.type === 'success' && result.url) {
-        const { accessToken, refreshToken } = extractSessionFromUrl(result.url);
-        if (!accessToken || !refreshToken) {
+        if (__DEV__) {
+          // eslint-disable-next-line no-console
+          console.log('[google-oauth] returned url =', result.url);
+        }
+        const { code, error: oauthError } = extractAuthCodeFromUrl(result.url);
+        if (oauthError) {
           setGoogleLoading(false);
-          setError('Google login succeeded but session tokens were missing. Please try again.');
+          setError(`Google: ${oauthError}`);
           return;
         }
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
+        if (!code) {
+          setGoogleLoading(false);
+          setError('Google login succeeded but no auth code was returned. Please try again.');
+          return;
+        }
+        const { error: exchangeError } =
+          await supabase.auth.exchangeCodeForSession(code);
         setGoogleLoading(false);
-        if (sessionError) {
-          setError(sessionError.message);
+        if (exchangeError) {
+          setError(exchangeError.message);
           return;
         }
         await clearDemoAuth();
@@ -231,13 +269,13 @@ export default function LoginScreen() {
                 style={styles.userTypeGradient}
               >
                 <View style={styles.userTypeIcon}>
-                  <MaterialCommunityIcons name="account-plus" size={32} color={colors.accentViolet} />
+                  <MaterialCommunityIcons name="account-plus" size={32} color={tc.accentViolet} />
                 </View>
                 <View style={styles.userTypeInfo}>
                   <Text style={styles.userTypeTitle}>{T('newUser')}</Text>
                   <Text style={styles.userTypeDesc}>{T('newUserDesc')}</Text>
                 </View>
-                <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+                <MaterialCommunityIcons name="chevron-right" size={24} color={tc.textMuted} />
               </LinearGradient>
             </Pressable>
 
@@ -251,13 +289,13 @@ export default function LoginScreen() {
                 style={styles.userTypeGradient}
               >
                 <View style={styles.userTypeIcon}>
-                  <MaterialCommunityIcons name="account-check" size={32} color={colors.accentEmerald} />
+                  <MaterialCommunityIcons name="account-check" size={32} color={tc.accentEmerald} />
                 </View>
                 <View style={styles.userTypeInfo}>
                   <Text style={styles.userTypeTitle}>{T('existingUser')}</Text>
                   <Text style={styles.userTypeDesc}>{T('existingUserDesc')}</Text>
                 </View>
-                <MaterialCommunityIcons name="chevron-right" size={24} color={colors.textMuted} />
+                <MaterialCommunityIcons name="chevron-right" size={24} color={tc.textMuted} />
               </LinearGradient>
             </Pressable>
           </GlassCard>
@@ -267,7 +305,7 @@ export default function LoginScreen() {
             onPress={() => router.push('/language')}
             style={styles.changeLangBtn}
           >
-            <MaterialCommunityIcons name="translate" size={18} color={colors.accentViolet} />
+            <MaterialCommunityIcons name="translate" size={18} color={tc.accentViolet} />
             <Text style={styles.changeLangText}>{T('chooseLanguage')}</Text>
           </Pressable>
         </ScrollView>
@@ -295,7 +333,7 @@ export default function LoginScreen() {
             style={styles.backRow}
             hitSlop={12}
           >
-            <MaterialCommunityIcons name="chevron-left" size={28} color={colors.text} />
+            <MaterialCommunityIcons name="chevron-left" size={28} color={tc.text} />
             <Text style={styles.backText}>{T('back')}</Text>
           </Pressable>
 
@@ -321,20 +359,20 @@ export default function LoginScreen() {
             {/* Demo mode toggle */}
             <View style={styles.toggleRow}>
               <View style={styles.toggleLabel}>
-                <MaterialCommunityIcons name="test-tube" size={16} color={colors.accentViolet} />
+                <MaterialCommunityIcons name="test-tube" size={16} color={tc.accentViolet} />
                 <Text style={styles.toggleText}>{T('demoMode')}</Text>
               </View>
               <Switch
                 value={useDemoOtp}
                 onValueChange={setUseDemoOtp}
                 trackColor={{ false: 'rgba(255,255,255,0.12)', true: 'rgba(167,139,250,0.5)' }}
-                thumbColor={useDemoOtp ? colors.accentPink : '#64748b'}
+                thumbColor={useDemoOtp ? tc.accentPink : '#64748b'}
               />
             </View>
 
             {!isSupabaseConfigured && !useDemoOtp && (
               <View style={styles.warningBox}>
-                <MaterialCommunityIcons name="alert-outline" size={16} color={colors.warning} />
+                <MaterialCommunityIcons name="alert-outline" size={16} color={tc.warning} />
                 <Text style={styles.warningText}>
                   Supabase not configured. Enable demo mode or add environment variables.
                 </Text>
@@ -350,7 +388,7 @@ export default function LoginScreen() {
                 value={phone}
                 onChangeText={(t) => setPhone(t.replace(/\D/g, '').slice(0, 10))}
                 placeholder="98765 43210"
-                placeholderTextColor={colors.textSecondary}
+                placeholderTextColor={tc.textSecondary}
                 keyboardType="phone-pad"
                 style={styles.phoneInput}
               />
@@ -358,13 +396,13 @@ export default function LoginScreen() {
 
             {error && (
               <View style={styles.errorBox}>
-                <MaterialCommunityIcons name="alert-circle" size={16} color={colors.danger} />
+                <MaterialCommunityIcons name="alert-circle" size={16} color={tc.danger} />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             )}
             {info && (
               <View style={styles.infoBox}>
-                <MaterialCommunityIcons name="check-circle" size={16} color={colors.success} />
+                <MaterialCommunityIcons name="check-circle" size={16} color={tc.success} />
                 <Text style={styles.infoText}>{info}</Text>
               </View>
             )}
@@ -388,11 +426,30 @@ export default function LoginScreen() {
               disabled={googleLoading}
               style={({ pressed }) => [styles.googleBtn, pressed && { opacity: 0.8 }]}
             >
-              <MaterialCommunityIcons name="google" size={20} color={colors.text} />
+              <MaterialCommunityIcons name="google" size={20} color={tc.text} />
               <Text style={styles.googleBtnText}>
                 {googleLoading ? 'Opening...' : T('continueWithGoogle')}
               </Text>
             </Pressable>
+
+            {__DEV__ && (
+              <Pressable
+                onPress={() =>
+                  void (async () => {
+                    await enableDemoAuth();
+                    router.replace('/(main)');
+                  })()
+                }
+                style={({ pressed }) => [styles.devSkipBtn, pressed && { opacity: 0.7 }]}
+              >
+                <MaterialCommunityIcons
+                  name="rocket-launch-outline"
+                  size={16}
+                  color={tc.warning}
+                />
+                <Text style={styles.devSkipText}>Skip login (dev)</Text>
+              </Pressable>
+            )}
 
             <Text style={styles.legal}>{T('legalText')}</Text>
           </GlassCard>
@@ -402,7 +459,7 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   flex: { flex: 1 },
   scroll: { paddingHorizontal: 22, flexGrow: 1 },
   hero: { alignItems: 'center', marginBottom: 24 },
@@ -435,18 +492,18 @@ const styles = StyleSheet.create({
   brandName: {
     fontSize: 38,
     fontWeight: '900',
-    color: colors.text,
+    color: c.text,
     letterSpacing: -1,
   },
   brandNameSmall: {
     fontSize: 24,
     fontWeight: '900',
-    color: colors.text,
+    color: c.text,
   },
   tagline: {
     marginTop: 10,
     textAlign: 'center',
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 15,
     lineHeight: 22,
     maxWidth: 300,
@@ -455,11 +512,11 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 22,
     fontWeight: '900',
-    color: colors.text,
+    color: c.text,
     marginBottom: 6,
   },
   cardHint: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 14,
     lineHeight: 20,
     marginBottom: 24,
@@ -491,12 +548,12 @@ const styles = StyleSheet.create({
   userTypeTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: colors.text,
+    color: c.text,
     marginBottom: 3,
   },
   userTypeDesc: {
     fontSize: 13,
-    color: colors.textMuted,
+    color: c.textMuted,
     fontWeight: '500',
   },
   changeLangBtn: {
@@ -508,7 +565,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   changeLangText: {
-    color: colors.accentViolet,
+    color: c.accentViolet,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -519,7 +576,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginLeft: 4,
   },
-  backText: { color: colors.text, fontSize: 16, fontWeight: '600' },
+  backText: { color: c.text, fontSize: 16, fontWeight: '600' },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -534,7 +591,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  toggleText: { color: colors.textMuted, fontSize: 13, fontWeight: '600' },
+  toggleText: { color: c.textMuted, fontSize: 13, fontWeight: '600' },
   warningBox: {
     flexDirection: 'row',
     gap: 8,
@@ -544,9 +601,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     alignItems: 'flex-start',
   },
-  warningText: { flex: 1, color: colors.warning, fontSize: 13, lineHeight: 18 },
+  warningText: { flex: 1, color: c.warning, fontSize: 13, lineHeight: 18 },
   label: {
-    color: colors.textSecondary,
+    color: c.textSecondary,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1,
@@ -556,8 +613,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.inputBorder,
-    backgroundColor: colors.inputBg,
+    borderColor: c.inputBorder,
+    backgroundColor: c.inputBg,
     marginBottom: 12,
     overflow: 'hidden',
   },
@@ -565,10 +622,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     justifyContent: 'center',
     borderRightWidth: 1,
-    borderRightColor: colors.inputBorder,
+    borderRightColor: c.inputBorder,
   },
   prefixText: {
-    color: colors.accentViolet,
+    color: c.accentViolet,
     fontSize: 16,
     fontWeight: '800',
   },
@@ -576,7 +633,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 14,
     paddingVertical: 14,
-    color: colors.text,
+    color: c.text,
     fontSize: 17,
     fontWeight: '600',
     letterSpacing: 1,
@@ -587,14 +644,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     alignItems: 'flex-start',
   },
-  errorText: { flex: 1, color: colors.danger, fontSize: 13, lineHeight: 18 },
+  errorText: { flex: 1, color: c.danger, fontSize: 13, lineHeight: 18 },
   infoBox: {
     flexDirection: 'row',
     gap: 8,
     marginBottom: 8,
     alignItems: 'flex-start',
   },
-  infoText: { flex: 1, color: colors.success, fontSize: 13, lineHeight: 18 },
+  infoText: { flex: 1, color: c.success, fontSize: 13, lineHeight: 18 },
   btn: { marginTop: 8 },
   divider: {
     flexDirection: 'row',
@@ -608,7 +665,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.12)',
   },
   dividerText: {
-    color: colors.textSecondary,
+    color: c.textSecondary,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -618,17 +675,37 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 10,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: c.cardBorder,
     paddingVertical: 14,
     borderRadius: radii.md,
     backgroundColor: 'rgba(255,255,255,0.06)',
   },
-  googleBtnText: { color: colors.text, fontWeight: '700', fontSize: 15 },
+  googleBtnText: { color: c.text, fontWeight: '700', fontSize: 15 },
+  devSkipBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 14,
+    paddingVertical: 10,
+    borderRadius: radii.sm,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(251,191,36,0.4)',
+    backgroundColor: 'rgba(251,191,36,0.06)',
+  },
+  devSkipText: {
+    color: c.warning,
+    fontWeight: '700',
+    fontSize: 12,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
   legal: {
     marginTop: 20,
     fontSize: 11,
     lineHeight: 16,
-    color: colors.textSecondary,
+    color: c.textSecondary,
     textAlign: 'center',
   },
 });

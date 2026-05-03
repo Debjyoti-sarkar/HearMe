@@ -17,14 +17,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GradientBackground } from '../components/GradientBackground';
 import { GlassCard } from '../components/GlassCard';
-import { colors, radii } from '../constants/theme';
+import { radii } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { classifyPin } from '../lib/duress';
 import { useHearMe } from '../providers/HearMeProvider';
+import { useTheme, type ThemeColors } from '../providers/ThemeProvider';
 import * as Session from '../lib/session';
 
 export default function LockScreen() {
   const insets = useSafeAreaInsets();
   const { settings, executeSos, unlock } = useHearMe();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [pin, setPin] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -129,7 +133,7 @@ export default function LockScreen() {
               colors={['rgba(167,139,250,0.4)', 'rgba(236,72,153,0.25)']}
               style={styles.iconRing}
             >
-              <MaterialCommunityIcons name="shield-lock-outline" size={42} color={colors.text} />
+              <MaterialCommunityIcons name="shield-lock-outline" size={42} color={tc.text} />
             </LinearGradient>
             <Text style={styles.title}>HearMe</Text>
             <Text style={styles.sub}>Enter your PIN to unlock</Text>
@@ -158,7 +162,7 @@ export default function LockScreen() {
 
             {bioAvailable && (
               <Pressable onPress={onBio} style={styles.bioBtn}>
-                <MaterialCommunityIcons name="fingerprint" size={28} color={colors.accentEmerald} />
+                <MaterialCommunityIcons name="fingerprint" size={28} color={tc.accentEmerald} />
                 <Text style={styles.bioText}>Use biometric</Text>
               </Pressable>
             )}
@@ -169,7 +173,7 @@ export default function LockScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   flex: { flex: 1 },
   container: { flex: 1, paddingHorizontal: 22 },
   hero: { alignItems: 'center', marginBottom: 28 },
@@ -180,11 +184,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: c.cardBorder,
     marginBottom: 16,
   },
-  title: { fontSize: 28, fontWeight: '900', color: colors.text },
-  sub: { color: colors.textMuted, marginTop: 6, fontSize: 14 },
+  title: { fontSize: 28, fontWeight: '900', color: c.text },
+  sub: { color: c.textMuted, marginTop: 6, fontSize: 14 },
   card: { padding: 28, alignItems: 'center' },
   dotsRow: { flexDirection: 'row', gap: 18, marginVertical: 8 },
   dot: {
@@ -192,12 +196,12 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: colors.cardBorder,
+    borderColor: c.cardBorder,
   },
-  dotFilled: { backgroundColor: colors.accentViolet, borderColor: colors.accentViolet },
-  dotError: { borderColor: colors.danger },
+  dotFilled: { backgroundColor: c.accentViolet, borderColor: c.accentViolet },
+  dotError: { borderColor: c.danger },
   hiddenInput: { position: 'absolute', opacity: 0, height: 0, width: 0 },
-  error: { color: colors.accentRose, marginTop: 14, fontSize: 14 },
+  error: { color: c.accentRose, marginTop: 14, fontSize: 14 },
   bioBtn: {
     marginTop: 22,
     flexDirection: 'row',
@@ -210,5 +214,5 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(52,211,153,0.3)',
     backgroundColor: 'rgba(52,211,153,0.1)',
   },
-  bioText: { color: colors.accentEmerald, fontWeight: '700', fontSize: 14 },
+  bioText: { color: c.accentEmerald, fontWeight: '700', fontSize: 14 },
 });

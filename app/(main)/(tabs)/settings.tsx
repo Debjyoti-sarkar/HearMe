@@ -19,12 +19,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GradientBackground } from '../../../components/GradientBackground';
 import { GlassCard } from '../../../components/GlassCard';
 import { PrimaryButton } from '../../../components/PrimaryButton';
-import { colors, radii } from '../../../constants/theme';
+import { radii } from '../../../constants/theme';
+import { useThemedStyles } from '../../../hooks/useThemedStyles';
 import { clearDemoAuth } from '../../../lib/demo-auth';
 import { isSirenPlaying, stopSiren } from '../../../lib/siren';
 import { useAccessibility } from '../../../providers/AccessibilityProvider';
 import { useAuth } from '../../../providers/AuthProvider';
 import { useHearMe } from '../../../providers/HearMeProvider';
+import { useTheme, type ThemeColors } from '../../../providers/ThemeProvider';
 import * as Session from '../../../lib/session';
 import {
   autoReversePinFor,
@@ -51,6 +53,8 @@ function RowSwitch({
   onValueChange: (v: boolean) => void;
 }) {
   const { bodyText } = useAccessibility();
+  const { colors: tc } = useTheme();
+  const settingStyles = useThemedStyles(makeSettingStyles);
   return (
     <View style={[settingStyles.row, disabled && { opacity: 0.4 }]}>
       <View style={[settingStyles.rowIcon, { backgroundColor: iconColor + '18' }]}>
@@ -65,7 +69,7 @@ function RowSwitch({
         disabled={disabled}
         onValueChange={onValueChange}
         trackColor={{ false: 'rgba(255,255,255,0.12)', true: 'rgba(167,139,250,0.5)' }}
-        thumbColor={value ? colors.accentPink : '#64748b'}
+        thumbColor={value ? tc.accentPink : '#64748b'}
       />
     </View>
   );
@@ -77,6 +81,9 @@ export default function SettingsTab() {
   const { ready, settings, patchSettings } = useHearMe();
   const { signOut: doSignOut } = useAuth();
   const { oneHandedShift, bodyText, headingText } = useAccessibility();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const settingStyles = useThemedStyles(makeSettingStyles);
   const [numDraft, setNumDraft] = useState(settings.emergencyNumber);
   const [safeWordDraft, setSafeWordDraft] = useState(settings.voiceSafeWord);
   const [normalPin, setNormalPin] = useState<string | null>(null);
@@ -200,12 +207,12 @@ export default function SettingsTab() {
               colors={['rgba(239,68,68,0.15)', 'rgba(239,68,68,0.05)']}
               style={styles.sirenBannerGrad}
             >
-              <MaterialCommunityIcons name="bullhorn" size={24} color={colors.danger} />
+              <MaterialCommunityIcons name="bullhorn" size={24} color={tc.danger} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.sirenBannerTitle}>Siren is Active</Text>
                 <Text style={styles.sirenBannerSub}>Tap to stop (PIN required)</Text>
               </View>
-              <MaterialCommunityIcons name="stop-circle" size={28} color={colors.danger} />
+              <MaterialCommunityIcons name="stop-circle" size={28} color={tc.danger} />
             </LinearGradient>
           </Pressable>
         )}
@@ -215,13 +222,13 @@ export default function SettingsTab() {
         <GlassCard style={styles.card}>
           <View style={styles.numRow}>
             <View style={styles.numInputWrap}>
-              <MaterialCommunityIcons name="phone-alert" size={20} color={colors.accentViolet} />
+              <MaterialCommunityIcons name="phone-alert" size={20} color={tc.accentViolet} />
               <TextInput
                 value={numDraft}
                 onChangeText={setNumDraft}
                 keyboardType="phone-pad"
                 placeholder="112"
-                placeholderTextColor={colors.textSecondary}
+                placeholderTextColor={tc.textSecondary}
                 style={styles.numInput}
               />
             </View>
@@ -234,7 +241,7 @@ export default function SettingsTab() {
               }
             >
               <LinearGradient
-                colors={[colors.accentViolet, colors.accentPink]}
+                colors={[tc.accentViolet, tc.accentPink]}
                 style={styles.saveChip}
               >
                 <Text style={styles.saveChipTxt}>Save</Text>
@@ -253,7 +260,7 @@ export default function SettingsTab() {
             title="Skip SOS confirmation"
             subtitle="Instantly send alerts without asking"
             icon="lightning-bolt"
-            iconColor={colors.warning}
+            iconColor={tc.warning}
             value={settings.skipSosConfirm}
             onValueChange={(v) => void patchSettings({ skipSosConfirm: v })}
           />
@@ -261,7 +268,7 @@ export default function SettingsTab() {
             title="Auto-call after SMS"
             subtitle={`Dials ${settings.emergencyNumber} after SMS is sent`}
             icon="phone-forward"
-            iconColor={colors.success}
+            iconColor={tc.success}
             value={settings.autoCallAfterSms}
             onValueChange={(v) => void patchSettings({ autoCallAfterSms: v })}
           />
@@ -269,7 +276,7 @@ export default function SettingsTab() {
             title="Enable siren"
             subtitle="Play loud alarm sound during SOS"
             icon="bullhorn"
-            iconColor={colors.danger}
+            iconColor={tc.danger}
             value={settings.sirenEnabled}
             onValueChange={(v) => void patchSettings({ sirenEnabled: v })}
           />
@@ -282,7 +289,7 @@ export default function SettingsTab() {
             title="Enable shake alerts"
             subtitle="Shake phone to trigger SOS (foreground only)"
             icon="vibrate"
-            iconColor={colors.accentViolet}
+            iconColor={tc.accentViolet}
             value={settings.shakeEnabled}
             onValueChange={(v) => void patchSettings({ shakeEnabled: v })}
           />
@@ -290,7 +297,7 @@ export default function SettingsTab() {
             title="Instant shake sends SMS"
             subtitle="Send immediately without confirmation"
             icon="send-check"
-            iconColor={colors.accentCyan}
+            iconColor={tc.accentCyan}
             value={settings.instantShake}
             disabled={!settings.shakeEnabled}
             onValueChange={(v) => void patchSettings({ instantShake: v })}
@@ -304,13 +311,13 @@ export default function SettingsTab() {
             title="Enable crash detection"
             subtitle="Auto-detect sudden deceleration while driving"
             icon="car-emergency"
-            iconColor={colors.accentPink}
+            iconColor={tc.accentPink}
             value={settings.crashDetection}
             onValueChange={(v) => void patchSettings({ crashDetection: v })}
           />
           <View style={[settingStyles.row, !settings.crashDetection && { opacity: 0.4 }]}>
-            <View style={[settingStyles.rowIcon, { backgroundColor: colors.warning + '18' }]}>
-              <MaterialCommunityIcons name="speedometer-medium" size={20} color={colors.warning} />
+            <View style={[settingStyles.rowIcon, { backgroundColor: tc.warning + '18' }]}>
+              <MaterialCommunityIcons name="speedometer-medium" size={20} color={tc.warning} />
             </View>
             <View style={settingStyles.rowContent}>
               <Text style={settingStyles.rowTitle}>Speed threshold</Text>
@@ -346,7 +353,7 @@ export default function SettingsTab() {
             title="Require PIN on launch"
             subtitle="Lock screen on cold start and after 30s in background"
             icon="shield-lock"
-            iconColor={colors.accentViolet}
+            iconColor={tc.accentViolet}
             value={settings.appLockEnabled}
             disabled={!normalPin}
             onValueChange={(v) => {
@@ -365,7 +372,7 @@ export default function SettingsTab() {
                 : 'Set a normal PIN (non-palindrome) or a custom duress PIN below'
             }
             icon="alert-decagram"
-            iconColor={colors.danger}
+            iconColor={tc.danger}
             value={settings.duressEnabled}
             disabled={!effectiveDuress}
             onValueChange={(v) => void patchSettings({ duressEnabled: v })}
@@ -374,7 +381,7 @@ export default function SettingsTab() {
             title="Disguised UI on launch"
             subtitle="Show a calculator decoy; type your PIN + = to reveal HearMe"
             icon="calculator-variant"
-            iconColor={colors.accentCyan}
+            iconColor={tc.accentCyan}
             value={settings.disguiseEnabled}
             disabled={!normalPin}
             onValueChange={(v) => void patchSettings({ disguiseEnabled: v })}
@@ -390,20 +397,20 @@ export default function SettingsTab() {
             </Text>
             <View style={styles.numRow}>
               <View style={styles.numInputWrap}>
-                <MaterialCommunityIcons name="key-variant" size={20} color={colors.danger} />
+                <MaterialCommunityIcons name="key-variant" size={20} color={tc.danger} />
                 <TextInput
                   value={duressDraft}
                   onChangeText={(t) => setDuressDraft(t.replace(/\D/g, '').slice(0, 4))}
                   keyboardType="number-pad"
                   placeholder="4-digit duress PIN"
-                  placeholderTextColor={colors.textSecondary}
+                  placeholderTextColor={tc.textSecondary}
                   secureTextEntry
                   style={styles.numInput}
                 />
               </View>
               <Pressable onPress={() => void onSaveDuressPin()}>
                 <LinearGradient
-                  colors={[colors.danger, colors.accentRose]}
+                  colors={[tc.danger, tc.accentRose]}
                   style={styles.saveChip}
                 >
                   <Text style={styles.saveChipTxt}>Save</Text>
@@ -428,13 +435,13 @@ export default function SettingsTab() {
             <View
               style={[
                 settingStyles.rowIcon,
-                { backgroundColor: colors.accentViolet + '18' },
+                { backgroundColor: tc.accentViolet + '18' },
               ]}
             >
               <MaterialCommunityIcons
                 name="watch-variant"
                 size={20}
-                color={colors.accentViolet}
+                color={tc.accentViolet}
               />
             </View>
             <View style={settingStyles.rowContent}>
@@ -454,7 +461,7 @@ export default function SettingsTab() {
             <MaterialCommunityIcons
               name="chevron-right"
               size={22}
-              color={colors.textMuted}
+              color={tc.textMuted}
             />
           </Pressable>
         </GlassCard>
@@ -466,7 +473,7 @@ export default function SettingsTab() {
             title="Listen for distress audio"
             subtitle="Mic-on listener fires SOS prompt on sustained loud audio"
             icon="microphone-outline"
-            iconColor={colors.accentEmerald}
+            iconColor={tc.accentEmerald}
             value={settings.voiceTriggerEnabled}
             onValueChange={(v) => void patchSettings({ voiceTriggerEnabled: v })}
           />
@@ -478,19 +485,19 @@ export default function SettingsTab() {
             </Text>
             <View style={styles.numRow}>
               <View style={styles.numInputWrap}>
-                <MaterialCommunityIcons name="text-short" size={20} color={colors.accentEmerald} />
+                <MaterialCommunityIcons name="text-short" size={20} color={tc.accentEmerald} />
                 <TextInput
                   value={safeWordDraft}
                   onChangeText={setSafeWordDraft}
                   placeholder="e.g. mausam kaisa hai"
-                  placeholderTextColor={colors.textSecondary}
+                  placeholderTextColor={tc.textSecondary}
                   style={styles.numInput}
                   maxLength={48}
                 />
               </View>
               <Pressable onPress={() => void patchSettings({ voiceSafeWord: safeWordDraft.trim() })}>
                 <LinearGradient
-                  colors={[colors.accentEmerald, colors.accentCyan]}
+                  colors={[tc.accentEmerald, tc.accentCyan]}
                   style={styles.saveChip}
                 >
                   <Text style={styles.saveChipTxt}>Save</Text>
@@ -507,8 +514,8 @@ export default function SettingsTab() {
             onPress={() => router.push('/(main)/check-in')}
             style={({ pressed }) => [styles.linkRow, pressed && { opacity: 0.85 }]}
           >
-            <View style={[settingStyles.rowIcon, { backgroundColor: colors.accentViolet + '18' }]}>
-              <MaterialCommunityIcons name="timer-sand" size={20} color={colors.accentViolet} />
+            <View style={[settingStyles.rowIcon, { backgroundColor: tc.accentViolet + '18' }]}>
+              <MaterialCommunityIcons name="timer-sand" size={20} color={tc.accentViolet} />
             </View>
             <View style={settingStyles.rowContent}>
               <Text style={settingStyles.rowTitle}>
@@ -520,7 +527,7 @@ export default function SettingsTab() {
                   : 'Auto-SOS if you do not confirm by the deadline'}
               </Text>
             </View>
-            <MaterialCommunityIcons name="chevron-right" size={22} color={colors.textMuted} />
+            <MaterialCommunityIcons name="chevron-right" size={22} color={tc.textMuted} />
           </Pressable>
         </GlassCard>
 
@@ -531,7 +538,7 @@ export default function SettingsTab() {
             title="Cloud sync (hash-chained)"
             subtitle="Auto-upload SOS evidence to your private Supabase bucket"
             icon="cloud-lock-outline"
-            iconColor={colors.accentEmerald}
+            iconColor={tc.accentEmerald}
             value={settings.cloudSyncEvidence}
             onValueChange={(v) => void patchSettings({ cloudSyncEvidence: v })}
           />
@@ -539,8 +546,8 @@ export default function SettingsTab() {
             onPress={() => router.push('/(main)/evidence-locker')}
             style={({ pressed }) => [styles.linkRow, pressed && { opacity: 0.85 }]}
           >
-            <View style={[settingStyles.rowIcon, { backgroundColor: colors.accentCyan + '18' }]}>
-              <MaterialCommunityIcons name="folder-lock-outline" size={20} color={colors.accentCyan} />
+            <View style={[settingStyles.rowIcon, { backgroundColor: tc.accentCyan + '18' }]}>
+              <MaterialCommunityIcons name="folder-lock-outline" size={20} color={tc.accentCyan} />
             </View>
             <View style={settingStyles.rowContent}>
               <Text style={settingStyles.rowTitle}>Open evidence locker</Text>
@@ -548,7 +555,7 @@ export default function SettingsTab() {
                 View, sync, verify chain integrity
               </Text>
             </View>
-            <MaterialCommunityIcons name="chevron-right" size={22} color={colors.textMuted} />
+            <MaterialCommunityIcons name="chevron-right" size={22} color={tc.textMuted} />
           </Pressable>
         </GlassCard>
 
@@ -559,7 +566,7 @@ export default function SettingsTab() {
             title={settings.darkMode ? 'Dark Mode' : 'Light Mode'}
             subtitle={settings.darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
             icon={settings.darkMode ? 'weather-night' : 'white-balance-sunny'}
-            iconColor={settings.darkMode ? colors.accentIndigo : colors.accentAmber}
+            iconColor={settings.darkMode ? tc.accentIndigo : tc.accentAmber}
             value={settings.darkMode}
             onValueChange={(v) => void patchSettings({ darkMode: v })}
           />
@@ -572,7 +579,7 @@ export default function SettingsTab() {
             title="One-handed mode"
             subtitle="Shift the home screen content lower for thumb reach"
             icon="hand-back-right"
-            iconColor={colors.accentIndigo}
+            iconColor={tc.accentIndigo}
             value={settings.oneHandedMode}
             onValueChange={(v) => void patchSettings({ oneHandedMode: v })}
           />
@@ -580,7 +587,7 @@ export default function SettingsTab() {
             title="Dyslexia-friendly font"
             subtitle="Use a heavier, more readable font weight throughout"
             icon="format-letter-case"
-            iconColor={colors.accentAmber}
+            iconColor={tc.accentAmber}
             value={settings.dyslexiaFont}
             onValueChange={(v) => void patchSettings({ dyslexiaFont: v })}
           />
@@ -609,7 +616,7 @@ export default function SettingsTab() {
       <Modal visible={stopPinModal} animationType="fade" transparent>
         <View style={styles.modalBg}>
           <GlassCard variant="elevated" style={styles.stopModal}>
-            <MaterialCommunityIcons name="bullhorn" size={40} color={colors.danger} style={{ alignSelf: 'center' }} />
+            <MaterialCommunityIcons name="bullhorn" size={40} color={tc.danger} style={{ alignSelf: 'center' }} />
             <Text style={styles.stopModalTitle}>Stop Siren</Text>
             <Text style={styles.stopModalSub}>
               {normalPin ? 'Enter your 4-digit PIN to stop the siren' : 'Tap Stop to silence the siren'}
@@ -623,7 +630,7 @@ export default function SettingsTab() {
                 secureTextEntry
                 maxLength={4}
                 placeholder="Enter PIN"
-                placeholderTextColor={colors.textSecondary}
+                placeholderTextColor={tc.textSecondary}
                 style={styles.stopPinInput}
                 autoFocus
               />
@@ -658,7 +665,7 @@ export default function SettingsTab() {
   );
 }
 
-const settingStyles = StyleSheet.create({
+const makeSettingStyles = (c: ThemeColors) => StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -675,16 +682,16 @@ const settingStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   rowContent: { flex: 1 },
-  rowTitle: { color: colors.text, fontWeight: '700', fontSize: 15 },
-  rowSub: { color: colors.textMuted, fontSize: 12, marginTop: 3, lineHeight: 16 },
+  rowTitle: { color: c.text, fontWeight: '700', fontSize: 15 },
+  rowSub: { color: c.textMuted, fontSize: 12, marginTop: 3, lineHeight: 16 },
 });
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   scroll: { paddingHorizontal: 20 },
-  title: { fontSize: 28, fontWeight: '900', color: colors.text, letterSpacing: -0.5 },
-  sub: { marginTop: 6, color: colors.textMuted, fontSize: 14, marginBottom: 18 },
+  title: { fontSize: 28, fontWeight: '900', color: c.text, letterSpacing: -0.5 },
+  sub: { marginTop: 6, color: c.textMuted, fontSize: 14, marginBottom: 18 },
   section: {
-    color: colors.textSecondary,
+    color: c.textSecondary,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1.5,
@@ -706,14 +713,14 @@ const styles = StyleSheet.create({
     gap: 10,
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.inputBorder,
-    backgroundColor: colors.inputBg,
+    borderColor: c.inputBorder,
+    backgroundColor: c.inputBg,
     paddingHorizontal: 14,
   },
   numInput: {
     flex: 1,
     paddingVertical: 12,
-    color: colors.text,
+    color: c.text,
     fontSize: 17,
     fontWeight: '700',
   },
@@ -724,7 +731,7 @@ const styles = StyleSheet.create({
   },
   saveChipTxt: { color: '#fff', fontWeight: '800', fontSize: 14 },
   numHint: {
-    color: colors.textSecondary,
+    color: c.textSecondary,
     fontSize: 12,
     paddingBottom: 8,
     lineHeight: 16,
@@ -742,7 +749,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   threshBtnTxt: {
-    color: colors.text,
+    color: c.text,
     fontSize: 20,
     fontWeight: '700',
   },
@@ -751,12 +758,12 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   subRowLabel: {
-    color: colors.text,
+    color: c.text,
     fontWeight: '700',
     fontSize: 14,
   },
   subRowHint: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 12,
     lineHeight: 16,
   },
@@ -765,7 +772,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   linkText: {
-    color: colors.accentViolet,
+    color: c.accentViolet,
     fontWeight: '700',
     fontSize: 13,
   },
@@ -783,18 +790,18 @@ const styles = StyleSheet.create({
   footerBrand: {
     fontSize: 20,
     fontWeight: '900',
-    color: colors.accentViolet,
+    color: c.accentViolet,
     letterSpacing: -0.5,
   },
   footerVersion: {
-    color: colors.textSecondary,
+    color: c.textSecondary,
     fontSize: 12,
     fontWeight: '700',
     marginTop: 4,
     marginBottom: 8,
   },
   footerText: {
-    color: colors.textSecondary,
+    color: c.textSecondary,
     fontSize: 12,
     lineHeight: 17,
     textAlign: 'center',
@@ -818,11 +825,11 @@ const styles = StyleSheet.create({
   sirenBannerTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: colors.danger,
+    color: c.danger,
   },
   sirenBannerSub: {
     fontSize: 12,
-    color: colors.textMuted,
+    color: c.textMuted,
     marginTop: 2,
   },
   // Stop siren modal
@@ -839,13 +846,13 @@ const styles = StyleSheet.create({
   stopModalTitle: {
     fontSize: 22,
     fontWeight: '900',
-    color: colors.text,
+    color: c.text,
     textAlign: 'center',
     marginTop: 12,
   },
   stopModalSub: {
     fontSize: 14,
-    color: colors.textMuted,
+    color: c.textMuted,
     textAlign: 'center',
     marginTop: 8,
     marginBottom: 20,
@@ -853,11 +860,11 @@ const styles = StyleSheet.create({
   stopPinInput: {
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.inputBorder,
-    backgroundColor: colors.inputBg,
+    borderColor: c.inputBorder,
+    backgroundColor: c.inputBg,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: colors.text,
+    color: c.text,
     fontSize: 24,
     fontWeight: '800',
     textAlign: 'center',
@@ -874,7 +881,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   stopCancelText: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontWeight: '700',
     fontSize: 15,
   },

@@ -16,7 +16,7 @@ import { GradientBackground } from '../components/GradientBackground';
 import { GlassCard } from '../components/GlassCard';
 import { OtpInputRow } from '../components/OtpInputRow';
 import { PrimaryButton } from '../components/PrimaryButton';
-import { colors } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { enableDemoAuth } from '../lib/demo-auth';
 import { useLanguage } from '../lib/i18n';
 import { DEMO_OTP, verifyDemoOtp } from '../lib/otp';
@@ -24,11 +24,14 @@ import { maskPhone } from '../lib/phone';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import * as Session from '../lib/session';
 import { useAuth } from '../providers/AuthProvider';
+import { useTheme, type ThemeColors } from '../providers/ThemeProvider';
 
 export default function VerifyOtpScreen() {
   const insets = useSafeAreaInsets();
   const { session } = useAuth();
   const { T } = useLanguage();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const params = useLocalSearchParams<{ phone?: string; mode?: string; userType?: string }>();
   const phone = useMemo(() => `${params.phone ?? ''}`.trim(), [params.phone]);
   const mode = useMemo(() => `${params.mode ?? 'real'}`.toLowerCase(), [params.mode]);
@@ -111,7 +114,7 @@ export default function VerifyOtpScreen() {
             <MaterialCommunityIcons
               name="chevron-left"
               size={28}
-              color={colors.text}
+              color={tc.text}
             />
             <Text style={styles.backText}>{T('backToLogin')}</Text>
           </Pressable>
@@ -124,7 +127,7 @@ export default function VerifyOtpScreen() {
               <MaterialCommunityIcons
                 name="message-text-lock-outline"
                 size={40}
-                color={colors.text}
+                color={tc.text}
               />
             </LinearGradient>
             <Text style={styles.title}>{T('enterOtp')}</Text>
@@ -156,11 +159,11 @@ export default function VerifyOtpScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   flex: { flex: 1 },
   scroll: { paddingHorizontal: 22, flexGrow: 1 },
   backRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  backText: { color: colors.text, fontSize: 16, fontWeight: '600' },
+  backText: { color: c.text, fontSize: 16, fontWeight: '600' },
   hero: { alignItems: 'center', marginBottom: 22 },
   iconRing: {
     width: 84,
@@ -170,33 +173,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: c.cardBorder,
   },
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: colors.text,
+    color: c.text,
   },
   sub: {
     marginTop: 8,
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 15,
     textAlign: 'center',
   },
-  bold: { color: colors.text, fontWeight: '700' },
+  bold: { color: c.text, fontWeight: '700' },
   card: { padding: 24 },
   label: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 13,
     marginBottom: 12,
     fontWeight: '600',
   },
-  error: { color: colors.accentRose, marginTop: 12, fontSize: 14 },
+  error: { color: c.accentRose, marginTop: 12, fontSize: 14 },
   btn: { marginTop: 20 },
   hint: {
     marginTop: 16,
     fontSize: 12,
     lineHeight: 18,
-    color: colors.textMuted,
+    color: c.textMuted,
   },
 });

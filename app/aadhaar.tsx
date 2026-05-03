@@ -17,14 +17,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GradientBackground } from '../components/GradientBackground';
 import { GlassCard } from '../components/GlassCard';
 import { PrimaryButton } from '../components/PrimaryButton';
-import { colors, radii } from '../constants/theme';
+import { radii } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { digitsOnly, formatAadhaarDigits, isPlausibleAadhaar12 } from '../lib/aadhaar';
 import { useLanguage } from '../lib/i18n';
 import * as Session from '../lib/session';
+import { useTheme, type ThemeColors } from '../providers/ThemeProvider';
 
 export default function AadhaarScreen() {
   const insets = useSafeAreaInsets();
   const { T } = useLanguage();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [raw, setRaw] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +83,7 @@ export default function AadhaarScreen() {
               <MaterialCommunityIcons
                 name="card-account-details-star-outline"
                 size={40}
-                color={colors.text}
+                color={tc.text}
               />
             </LinearGradient>
             <Text style={styles.title}>{T('verifyAadhaar')}</Text>
@@ -92,7 +96,7 @@ export default function AadhaarScreen() {
               value={display}
               onChangeText={onChange}
               placeholder={T('aadhaarPlaceholder')}
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={tc.textMuted}
               keyboardType="number-pad"
               style={styles.input}
               maxLength={14}
@@ -121,15 +125,17 @@ export default function AadhaarScreen() {
 type MciName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
 function Row({ icon, text }: { icon: MciName; text: string }) {
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.row}>
-      <MaterialCommunityIcons name={icon} size={20} color={colors.accentViolet} />
+      <MaterialCommunityIcons name={icon} size={20} color={tc.accentViolet} />
       <Text style={styles.rowText}>{text}</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   flex: { flex: 1 },
   scroll: { paddingHorizontal: 22, flexGrow: 1 },
   hero: { alignItems: 'center', marginBottom: 22 },
@@ -141,16 +147,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: c.cardBorder,
   },
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: colors.text,
+    color: c.text,
   },
   sub: {
     marginTop: 10,
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 14,
     lineHeight: 20,
     textAlign: 'center',
@@ -158,7 +164,7 @@ const styles = StyleSheet.create({
   },
   card: { padding: 24 },
   label: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 13,
     marginBottom: 8,
     fontWeight: '600',
@@ -166,18 +172,18 @@ const styles = StyleSheet.create({
   input: {
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: colors.inputBg,
+    borderColor: c.cardBorder,
+    backgroundColor: c.inputBg,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 20,
     letterSpacing: 2,
-    color: colors.text,
+    color: c.text,
     fontWeight: '600',
   },
-  error: { color: colors.accentRose, marginTop: 10, fontSize: 14 },
+  error: { color: c.accentRose, marginTop: 10, fontSize: 14 },
   bullets: { marginTop: 18, gap: 12 },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  rowText: { flex: 1, color: colors.textMuted, fontSize: 13, lineHeight: 18 },
+  rowText: { flex: 1, color: c.textMuted, fontSize: 13, lineHeight: 18 },
   btn: { marginTop: 22 },
 });

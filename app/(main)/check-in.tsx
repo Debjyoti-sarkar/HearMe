@@ -16,9 +16,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GradientBackground } from '../../components/GradientBackground';
 import { GlassCard } from '../../components/GlassCard';
 import { PrimaryButton } from '../../components/PrimaryButton';
-import { colors, radii } from '../../constants/theme';
+import { radii } from '../../constants/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { describeRemaining } from '../../lib/timer-checkin';
 import { useHearMe } from '../../providers/HearMeProvider';
+import { useTheme, type ThemeColors } from '../../providers/ThemeProvider';
 
 const PRESETS = [
   { label: '15 min', ms: 15 * 60_000 },
@@ -30,6 +32,8 @@ const PRESETS = [
 export default function CheckInScreen() {
   const insets = useSafeAreaInsets();
   const { settings, startCheckIn, cancelCheckIn } = useHearMe();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [labelDraft, setLabelDraft] = useState('');
   const [now, setNow] = useState(Date.now());
 
@@ -67,7 +71,7 @@ export default function CheckInScreen() {
       >
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.closeBtn}>
-            <MaterialCommunityIcons name="close" size={24} color={colors.text} />
+            <MaterialCommunityIcons name="close" size={24} color={tc.text} />
           </Pressable>
           <Text style={styles.title}>Timer Check-in</Text>
           <View style={{ width: 40 }} />
@@ -86,7 +90,7 @@ export default function CheckInScreen() {
               <MaterialCommunityIcons
                 name="timer-sand"
                 size={42}
-                color={colors.accentViolet}
+                color={tc.accentViolet}
               />
               <Text style={styles.activeRemain}>{describeRemaining(remainingMs)}</Text>
               <Text style={styles.activeLabel}>
@@ -112,7 +116,7 @@ export default function CheckInScreen() {
                 value={labelDraft}
                 onChangeText={setLabelDraft}
                 placeholder="e.g. Walking home from station"
-                placeholderTextColor={colors.textSecondary}
+                placeholderTextColor={tc.textSecondary}
                 style={styles.input}
                 maxLength={60}
               />
@@ -130,7 +134,7 @@ export default function CheckInScreen() {
                     colors={['rgba(167,139,250,0.18)', 'rgba(56,189,248,0.12)']}
                     style={styles.presetGrad}
                   >
-                    <MaterialCommunityIcons name="timer-outline" size={22} color={colors.accentViolet} />
+                    <MaterialCommunityIcons name="timer-outline" size={22} color={tc.accentViolet} />
                     <Text style={styles.presetTxt}>{p.label}</Text>
                   </LinearGradient>
                 </Pressable>
@@ -143,7 +147,7 @@ export default function CheckInScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   scroll: { paddingHorizontal: 22 },
   header: {
     flexDirection: 'row',
@@ -159,15 +163,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.06)',
   },
-  title: { fontSize: 22, fontWeight: '900', color: colors.text },
+  title: { fontSize: 22, fontWeight: '900', color: c.text },
   sub: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 14,
     lineHeight: 20,
     marginBottom: 22,
   },
   section: {
-    color: colors.textSecondary,
+    color: c.textSecondary,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1.5,
@@ -177,7 +181,7 @@ const styles = StyleSheet.create({
   },
   card: { padding: 14, marginBottom: 14 },
   input: {
-    color: colors.text,
+    color: c.text,
     fontSize: 15,
     paddingVertical: 6,
   },
@@ -191,7 +195,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: c.cardBorder,
   },
   presetGrad: {
     paddingVertical: 22,
@@ -199,7 +203,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
   },
-  presetTxt: { color: colors.text, fontWeight: '800', fontSize: 16 },
+  presetTxt: { color: c.text, fontWeight: '800', fontSize: 16 },
   activeCard: { padding: 0, marginBottom: 16 },
   activeGradient: {
     padding: 24,
@@ -207,13 +211,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   activeRemain: {
-    color: colors.text,
+    color: c.text,
     fontSize: 38,
     fontWeight: '900',
     letterSpacing: -1,
     marginTop: 6,
   },
-  activeLabel: { color: colors.text, fontWeight: '700', fontSize: 16 },
-  activeSub: { color: colors.textMuted, fontSize: 13 },
+  activeLabel: { color: c.text, fontWeight: '700', fontSize: 16 },
+  activeSub: { color: c.textMuted, fontSize: 13 },
   cancelBtn: { margin: 16, marginTop: 0 },
 });

@@ -21,16 +21,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GradientBackground } from '../../components/GradientBackground';
 import { GlassCard } from '../../components/GlassCard';
 import { PrimaryButton } from '../../components/PrimaryButton';
-import { colors, radii } from '../../constants/theme';
+import { radii } from '../../constants/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { saveLocalAvatar, loadLocalAvatar, clearLocalAvatar } from '../../lib/app-data';
 import { clearDemoAuth } from '../../lib/demo-auth';
 import { isSupabaseConfigured, supabase } from '../../lib/supabase';
 import { useAuth } from '../../providers/AuthProvider';
+import { useTheme, type ThemeColors } from '../../providers/ThemeProvider';
 import * as Session from '../../lib/session';
 
 export default function UserProfileScreen() {
   const insets = useSafeAreaInsets();
   const { user, profile, refreshProfile, signOut } = useAuth();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState('');
@@ -231,12 +235,12 @@ export default function UserProfileScreen() {
           {/* Header */}
           <View style={styles.headerRow}>
             <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
-              <MaterialCommunityIcons name="chevron-left" size={28} color={colors.text} />
+              <MaterialCommunityIcons name="chevron-left" size={28} color={tc.text} />
               <Text style={styles.backText}>Back</Text>
             </Pressable>
             {!editing && (
               <Pressable onPress={() => setEditing(true)} hitSlop={12}>
-                <MaterialCommunityIcons name="pencil-outline" size={22} color={colors.accentViolet} />
+                <MaterialCommunityIcons name="pencil-outline" size={22} color={tc.accentViolet} />
               </Pressable>
             )}
           </View>
@@ -248,7 +252,7 @@ export default function UserProfileScreen() {
                 <Image source={{ uri: avatarUrl }} style={styles.avatarLarge} />
               ) : (
                 <LinearGradient
-                  colors={[colors.accentViolet, colors.accentPink]}
+                  colors={[tc.accentViolet, tc.accentPink]}
                   style={styles.avatarLarge}
                 >
                   <Text style={styles.avatarInitials}>{initials}</Text>
@@ -279,7 +283,7 @@ export default function UserProfileScreen() {
                 onChangeText={setName}
                 placeholder="Full name"
                 style={styles.input}
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={tc.textMuted}
               />
 
               <Text style={styles.fieldLabel}>AGE</Text>
@@ -289,7 +293,7 @@ export default function UserProfileScreen() {
                 placeholder="Age"
                 style={styles.input}
                 keyboardType="number-pad"
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={tc.textMuted}
               />
 
               <Text style={styles.fieldLabel}>DATE OF BIRTH</Text>
@@ -298,7 +302,7 @@ export default function UserProfileScreen() {
                 onChangeText={setDob}
                 placeholder="YYYY-MM-DD"
                 style={styles.input}
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={tc.textMuted}
               />
 
               <Text style={styles.fieldLabel}>PHONE</Text>
@@ -308,7 +312,7 @@ export default function UserProfileScreen() {
                 placeholder="Phone number"
                 style={styles.input}
                 keyboardType="phone-pad"
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={tc.textMuted}
               />
 
               <Text style={styles.fieldLabel}>LOCATION</Text>
@@ -317,11 +321,11 @@ export default function UserProfileScreen() {
                 onChangeText={setLocation}
                 placeholder="City, State"
                 style={styles.input}
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={tc.textMuted}
               />
 
               <Pressable onPress={detectLocation} style={styles.detectBtn}>
-                <MaterialCommunityIcons name="crosshairs-gps" size={16} color={colors.accentViolet} />
+                <MaterialCommunityIcons name="crosshairs-gps" size={16} color={tc.accentViolet} />
                 <Text style={styles.detectText}>Auto-detect location</Text>
               </Pressable>
 
@@ -330,7 +334,7 @@ export default function UserProfileScreen() {
                 <>
                   <Text style={styles.fieldLabel}>AADHAAR NUMBER</Text>
                   <View style={styles.aadhaarRow}>
-                    <MaterialCommunityIcons name="shield-check" size={18} color={colors.accentEmerald} />
+                    <MaterialCommunityIcons name="shield-check" size={18} color={tc.accentEmerald} />
                     <Text style={styles.aadhaarText}>XXXX XXXX {aadhaarLast4}</Text>
                     <View style={styles.verifiedBadge}>
                       <Text style={styles.verifiedText}>Verified</Text>
@@ -429,7 +433,7 @@ export default function UserProfileScreen() {
                 onPress={onSignOut}
                 style={({ pressed }) => [styles.signOutBtn, pressed && { opacity: 0.8 }]}
               >
-                <MaterialCommunityIcons name="logout" size={20} color={colors.danger} />
+                <MaterialCommunityIcons name="logout" size={20} color={tc.danger} />
                 <Text style={styles.signOutText}>Sign Out</Text>
               </Pressable>
             </>
@@ -453,10 +457,12 @@ function ProfileField({
   badge?: string;
   last?: boolean;
 }) {
+  const { colors: tc } = useTheme();
+  const fieldStyles = useThemedStyles(makeFieldStyles);
   return (
     <View style={[fieldStyles.row, !last && fieldStyles.border]}>
       <View style={fieldStyles.iconWrap}>
-        <MaterialCommunityIcons name={icon} size={18} color={colors.accentViolet} />
+        <MaterialCommunityIcons name={icon} size={18} color={tc.accentViolet} />
       </View>
       <View style={fieldStyles.info}>
         <Text style={fieldStyles.label}>{label}</Text>
@@ -464,7 +470,7 @@ function ProfileField({
           <Text style={fieldStyles.value}>{value || 'Not set'}</Text>
           {badge && (
             <View style={fieldStyles.badge}>
-              <MaterialCommunityIcons name="shield-check" size={12} color={colors.accentEmerald} />
+              <MaterialCommunityIcons name="shield-check" size={12} color={tc.accentEmerald} />
               <Text style={fieldStyles.badgeText}>{badge}</Text>
             </View>
           )}
@@ -474,7 +480,7 @@ function ProfileField({
   );
 }
 
-const fieldStyles = StyleSheet.create({
+const makeFieldStyles = (c: ThemeColors) => StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -497,7 +503,7 @@ const fieldStyles = StyleSheet.create({
   label: {
     fontSize: 11,
     fontWeight: '700',
-    color: colors.textMuted,
+    color: c.textMuted,
     letterSpacing: 0.5,
     marginBottom: 2,
   },
@@ -509,7 +515,7 @@ const fieldStyles = StyleSheet.create({
   value: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.text,
+    color: c.text,
   },
   badge: {
     flexDirection: 'row',
@@ -523,11 +529,11 @@ const fieldStyles = StyleSheet.create({
   badgeText: {
     fontSize: 11,
     fontWeight: '700',
-    color: colors.accentEmerald,
+    color: c.accentEmerald,
   },
 });
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   flex: { flex: 1 },
   scroll: { paddingHorizontal: 20 },
   headerRow: {
@@ -541,7 +547,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backText: {
-    color: colors.text,
+    color: c.text,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -570,21 +576,21 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.accentViolet,
+    backgroundColor: c.accentViolet,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: colors.bgTop,
+    borderColor: c.bgTop,
   },
   displayName: {
     fontSize: 24,
     fontWeight: '900',
-    color: colors.text,
+    color: c.text,
     marginTop: 12,
   },
   displayEmail: {
     fontSize: 14,
-    color: colors.textMuted,
+    color: c.textMuted,
     marginTop: 4,
   },
   card: {
@@ -594,13 +600,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: colors.text,
+    color: c.text,
     marginBottom: 8,
   },
   fieldLabel: {
     fontSize: 11,
     fontWeight: '800',
-    color: colors.textSecondary,
+    color: c.textSecondary,
     letterSpacing: 1,
     marginBottom: 6,
     marginTop: 12,
@@ -608,9 +614,9 @@ const styles = StyleSheet.create({
   input: {
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: colors.inputBg,
-    color: colors.text,
+    borderColor: c.cardBorder,
+    backgroundColor: c.inputBg,
+    color: c.text,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
@@ -624,7 +630,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   detectText: {
-    color: colors.accentViolet,
+    color: c.accentViolet,
     fontWeight: '700',
     fontSize: 13,
   },
@@ -643,7 +649,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '700',
-    color: colors.text,
+    color: c.text,
     letterSpacing: 1.5,
   },
   verifiedBadge: {
@@ -655,7 +661,7 @@ const styles = StyleSheet.create({
   verifiedText: {
     fontSize: 11,
     fontWeight: '800',
-    color: colors.accentEmerald,
+    color: c.accentEmerald,
   },
   editActions: {
     flexDirection: 'row',
@@ -668,7 +674,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   cancelText: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontWeight: '700',
     fontSize: 15,
   },
@@ -688,7 +694,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   signOutText: {
-    color: colors.danger,
+    color: c.danger,
     fontWeight: '700',
     fontSize: 15,
   },

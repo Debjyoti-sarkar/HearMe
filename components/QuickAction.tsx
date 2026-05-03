@@ -1,7 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radii } from '../constants/theme';
+import { radii } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
+import type { ThemeColors } from '../providers/ThemeProvider';
 
 type Props = {
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
@@ -12,6 +14,7 @@ type Props = {
 };
 
 export function QuickAction({ icon, label, gradient, onPress, badge }: Props) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <Pressable
       onPress={onPress}
@@ -37,46 +40,47 @@ export function QuickAction({ icon, label, gradient, onPress, badge }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: {
-    alignItems: 'center',
-    width: 76,
-  },
-  pressed: { opacity: 0.8, transform: [{ scale: 0.95 }] },
-  iconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: radii.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  label: {
-    color: colors.textMuted,
-    fontSize: 11,
-    fontWeight: '700',
-    textAlign: 'center',
-    lineHeight: 14,
-  },
-  badge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    backgroundColor: colors.danger,
-    borderRadius: 10,
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    minWidth: 18,
-    alignItems: 'center',
-  },
-  badgeTxt: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: '800',
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    wrap: {
+      alignItems: 'center',
+      width: 76,
+    },
+    pressed: { opacity: 0.8, transform: [{ scale: 0.95 }] },
+    iconWrap: {
+      width: 56,
+      height: 56,
+      borderRadius: radii.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 8,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 6,
+    },
+    label: {
+      color: c.textMuted,
+      fontSize: 11,
+      fontWeight: '700',
+      textAlign: 'center',
+      lineHeight: 14,
+    },
+    badge: {
+      position: 'absolute',
+      top: -4,
+      right: -4,
+      backgroundColor: c.danger,
+      borderRadius: 10,
+      paddingHorizontal: 5,
+      paddingVertical: 1,
+      minWidth: 18,
+      alignItems: 'center',
+    },
+    badgeTxt: {
+      color: '#fff',
+      fontSize: 10,
+      fontWeight: '800',
+    },
+  });

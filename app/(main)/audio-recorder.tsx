@@ -16,7 +16,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GradientBackground } from '../../components/GradientBackground';
 import { GlassCard } from '../../components/GlassCard';
-import { colors, radii } from '../../constants/theme';
+import { radii } from '../../constants/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { useTheme, type ThemeColors } from '../../providers/ThemeProvider';
 import {
   deleteRecording,
   isRecording,
@@ -47,6 +49,8 @@ function formatDate(iso: string): string {
 
 export default function AudioRecorderScreen() {
   const insets = useSafeAreaInsets();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [recording, setRecording] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [recordings, setRecordings] = useState<RecordingEntry[]>([]);
@@ -137,7 +141,7 @@ export default function AudioRecorderScreen() {
     <GradientBackground>
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <MaterialCommunityIcons name="arrow-left" size={28} color={colors.text} />
+          <MaterialCommunityIcons name="arrow-left" size={28} color={tc.text} />
         </Pressable>
         <Text style={styles.headerTitle}>Audio Recorder</Text>
         <View style={{ width: 28 }} />
@@ -193,7 +197,7 @@ export default function AudioRecorderScreen() {
         contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 24 }]}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <MaterialCommunityIcons name="microphone-off" size={40} color={colors.textSecondary} />
+            <MaterialCommunityIcons name="microphone-off" size={40} color={tc.textSecondary} />
             <Text style={styles.emptyText}>No recordings yet</Text>
             <Text style={styles.emptySubtext}>
               Audio recordings can serve as evidence. Start recording in unsafe situations.
@@ -220,7 +224,7 @@ export default function AudioRecorderScreen() {
                 <Text style={styles.recDuration}>{formatDuration(item.duration)}</Text>
               </View>
               <Pressable onPress={() => handleDelete(item)} hitSlop={10}>
-                <MaterialCommunityIcons name="trash-can-outline" size={20} color={colors.accentRose} />
+                <MaterialCommunityIcons name="trash-can-outline" size={20} color={tc.accentRose} />
               </Pressable>
             </View>
           </GlassCard>
@@ -230,7 +234,7 @@ export default function AudioRecorderScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -238,7 +242,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 16,
   },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: colors.text },
+  headerTitle: { fontSize: 20, fontWeight: '800', color: c.text },
   recorderCard: {
     marginHorizontal: 20,
     padding: 28,
@@ -261,13 +265,13 @@ const styles = StyleSheet.create({
   timerText: {
     fontSize: 48,
     fontWeight: '900',
-    color: colors.text,
+    color: c.text,
     letterSpacing: 2,
     fontVariant: ['tabular-nums'],
     marginBottom: 4,
   },
   recStatus: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 14,
     marginBottom: 20,
   },
@@ -294,12 +298,12 @@ const styles = StyleSheet.create({
   listTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: colors.text,
+    color: c.text,
   },
   listCount: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.textMuted,
+    color: c.textMuted,
     backgroundColor: 'rgba(255,255,255,0.08)',
     paddingHorizontal: 10,
     paddingVertical: 3,
@@ -313,12 +317,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   emptyText: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 16,
     fontWeight: '700',
   },
   emptySubtext: {
-    color: colors.textSecondary,
+    color: c.textSecondary,
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 18,
@@ -343,12 +347,12 @@ const styles = StyleSheet.create({
   },
   recMeta: { flex: 1 },
   recDate: {
-    color: colors.text,
+    color: c.text,
     fontSize: 14,
     fontWeight: '700',
   },
   recDuration: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 12,
     marginTop: 2,
   },

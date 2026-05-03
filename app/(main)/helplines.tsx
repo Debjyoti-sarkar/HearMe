@@ -14,7 +14,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GradientBackground } from '../../components/GradientBackground';
 import { GlassCard } from '../../components/GlassCard';
-import { colors } from '../../constants/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { useTheme, type ThemeColors } from '../../providers/ThemeProvider';
 import { INDIA_HELPLINES, type Helpline } from '../../constants/helplines';
 
 const GRADIENTS: Record<string, [string, string]> = {
@@ -28,6 +29,8 @@ const GRADIENTS: Record<string, [string, string]> = {
 
 export default function HelplinesScreen() {
   const insets = useSafeAreaInsets();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   const dial = (n: string) => {
     void Linking.openURL(`tel:${n.replace(/\D/g, '')}`);
@@ -52,7 +55,7 @@ export default function HelplinesScreen() {
             <Text style={styles.num}>{item.number}</Text>
           </View>
           <View style={styles.callBtn}>
-            <MaterialCommunityIcons name="phone" size={20} color={colors.success} />
+            <MaterialCommunityIcons name="phone" size={20} color={tc.success} />
           </View>
         </View>
       </GlassCard>
@@ -63,7 +66,7 @@ export default function HelplinesScreen() {
     <GradientBackground>
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <Pressable onPress={() => router.back()} style={styles.back} hitSlop={12}>
-          <MaterialCommunityIcons name="close" size={28} color={colors.text} />
+          <MaterialCommunityIcons name="close" size={28} color={tc.text} />
         </Pressable>
         <Text style={styles.headTitle}>Emergency Helplines</Text>
         <View style={{ width: 36 }} />
@@ -85,7 +88,7 @@ export default function HelplinesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -94,9 +97,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   back: { padding: 4 },
-  headTitle: { fontSize: 20, fontWeight: '800', color: colors.text },
+  headTitle: { fontSize: 20, fontWeight: '800', color: c.text },
   intro: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 14,
     lineHeight: 20,
     paddingHorizontal: 20,
@@ -118,9 +121,9 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   meta: { flex: 1, marginLeft: 16 },
-  title: { fontSize: 16, fontWeight: '800', color: colors.text },
-  sub: { marginTop: 3, color: colors.textMuted, fontSize: 12, lineHeight: 17 },
-  num: { marginTop: 6, fontSize: 20, fontWeight: '900', color: colors.accentViolet },
+  title: { fontSize: 16, fontWeight: '800', color: c.text },
+  sub: { marginTop: 3, color: c.textMuted, fontSize: 12, lineHeight: 17 },
+  num: { marginTop: 6, fontSize: 20, fontWeight: '900', color: c.accentViolet },
   callBtn: {
     width: 40,
     height: 40,

@@ -14,7 +14,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GradientBackground } from '../../components/GradientBackground';
 import { GlassCard } from '../../components/GlassCard';
-import { colors } from '../../constants/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { useTheme, type ThemeColors } from '../../providers/ThemeProvider';
 import { clearAlertHistory, loadAlertHistory, type AlertRecord } from '../../lib/alert-history';
 
 function formatDate(iso: string): string {
@@ -35,15 +36,17 @@ const TYPE_META: Record<AlertRecord['type'], { icon: keyof typeof MaterialCommun
   manual: { icon: 'hand-pointing-right', label: 'Manual Alert', color: '#8b5cf6', gradient: ['#8b5cf6', '#7c3aed'] },
 };
 
-const STATUS_COLORS: Record<AlertRecord['status'], string> = {
-  sent: colors.success,
-  failed: colors.danger,
-  cancelled: colors.warning,
-};
-
 export default function AlertHistoryScreen() {
   const insets = useSafeAreaInsets();
+  const { colors: tc } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [alerts, setAlerts] = useState<AlertRecord[]>([]);
+
+  const STATUS_COLORS: Record<AlertRecord['status'], string> = {
+    sent: tc.success,
+    failed: tc.danger,
+    cancelled: tc.warning,
+  };
 
   useEffect(() => {
     void loadAlertHistory().then(setAlerts);
@@ -67,12 +70,12 @@ export default function AlertHistoryScreen() {
     <GradientBackground>
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <MaterialCommunityIcons name="arrow-left" size={28} color={colors.text} />
+          <MaterialCommunityIcons name="arrow-left" size={28} color={tc.text} />
         </Pressable>
         <Text style={styles.headerTitle}>Alert History</Text>
         {alerts.length > 0 ? (
           <Pressable onPress={handleClear} hitSlop={12}>
-            <MaterialCommunityIcons name="delete-sweep-outline" size={24} color={colors.textMuted} />
+            <MaterialCommunityIcons name="delete-sweep-outline" size={24} color={tc.textMuted} />
           </Pressable>
         ) : (
           <View style={{ width: 24 }} />
@@ -86,13 +89,13 @@ export default function AlertHistoryScreen() {
             <Text style={styles.statLabel}>Total Alerts</Text>
           </GlassCard>
           <GlassCard style={styles.statCard}>
-            <Text style={[styles.statValue, { color: colors.success }]}>
+            <Text style={[styles.statValue, { color: tc.success }]}>
               {alerts.filter((a) => a.status === 'sent').length}
             </Text>
             <Text style={styles.statLabel}>Sent</Text>
           </GlassCard>
           <GlassCard style={styles.statCard}>
-            <Text style={[styles.statValue, { color: colors.danger }]}>
+            <Text style={[styles.statValue, { color: tc.danger }]}>
               {alerts.filter((a) => a.status === 'failed').length}
             </Text>
             <Text style={styles.statLabel}>Failed</Text>
@@ -106,7 +109,7 @@ export default function AlertHistoryScreen() {
         contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 24 }]}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <MaterialCommunityIcons name="history" size={56} color={colors.textSecondary} />
+            <MaterialCommunityIcons name="history" size={56} color={tc.textSecondary} />
             <Text style={styles.emptyTitle}>No alerts yet</Text>
             <Text style={styles.emptyText}>
               When you trigger an SOS, shake alert, or crash detection, it will appear here with
@@ -153,7 +156,7 @@ export default function AlertHistoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -161,7 +164,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 16,
   },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: colors.text },
+  headerTitle: { fontSize: 20, fontWeight: '800', color: c.text },
   statsRow: {
     flexDirection: 'row',
     gap: 10,
@@ -176,12 +179,12 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: '900',
-    color: colors.text,
+    color: c.text,
   },
   statLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: colors.textMuted,
+    color: c.textMuted,
     marginTop: 4,
   },
   list: { paddingHorizontal: 20 },
@@ -194,10 +197,10 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: colors.text,
+    color: c.text,
   },
   emptyText: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
@@ -227,7 +230,7 @@ const styles = StyleSheet.create({
   alertType: {
     fontSize: 15,
     fontWeight: '800',
-    color: colors.text,
+    color: c.text,
   },
   statusBadge: {
     paddingHorizontal: 8,
@@ -240,12 +243,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   alertDate: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 12,
     marginBottom: 6,
   },
   alertLocation: {
-    color: colors.textSecondary,
+    color: c.textSecondary,
     fontSize: 11,
     marginBottom: 6,
   },
@@ -254,12 +257,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   alertCode: {
-    color: colors.accentViolet,
+    color: c.accentViolet,
     fontSize: 12,
     fontWeight: '700',
   },
   alertContacts: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 12,
   },
 });
