@@ -140,13 +140,13 @@ export default function SpeedTab() {
           }
           setStatus(loc.coords.speed != null ? 'GPS active' : 'GPS active (no speed data)');
 
-          // Crash detection — check using refs for latest settings
+          // Crash detection — check using refs for latest settings.
+          // Hard floor of 20 km/h so a corrupt/zero threshold can't fire on any motion.
           const s = settingsRef.current;
-          if (s.crashDetection && prevSpeed.current > s.crashSpeedThreshold) {
+          const threshold = Math.max(20, s.crashSpeedThreshold);
+          if (s.crashDetection && prevSpeed.current > threshold) {
             const decel = prevSpeed.current - currentKmh;
-            // Require deceleration > 80% of previous speed (e.g. 80→10 = sudden stop)
-            // AND the decel must be at least the threshold value
-            if (decel >= s.crashSpeedThreshold && decel > prevSpeed.current * 0.6) {
+            if (decel >= threshold && decel > prevSpeed.current * 0.6) {
               startCrashCountdown();
             }
           }

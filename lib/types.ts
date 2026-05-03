@@ -40,6 +40,18 @@ export type HearMeSettings = {
   // Cloud-synced evidence locker
   cloudSyncEvidence: boolean;       // auto-upload sessions to Supabase
   darkMode: boolean;                // true = dark, false = light
+  // NeuroBand — Bio-Signal & Silent Trigger
+  neuroBandEnabled: boolean;
+  neuroBandSerial: string | null;
+  neuroBandWorkoutModeUntil: number | null;
+  neuroBandCalibratedAt: number | null;
+  neuroBandSensitivity: 'low' | 'normal' | 'high';
+  /**
+   * Mock mode generates a synthetic BioFrame stream so the UI + fusion engine
+   * can be tested without a paired band. Auto-enabled if BLE module isn't built
+   * into the running app (Expo Go).
+   */
+  neuroBandMockMode: boolean;
 };
 
 export const DEFAULT_SETTINGS: HearMeSettings = {
@@ -63,4 +75,10 @@ export const DEFAULT_SETTINGS: HearMeSettings = {
   activeCheckInLabel: null,
   cloudSyncEvidence: false,
   darkMode: true,
+  neuroBandEnabled: false,
+  neuroBandSerial: null,
+  neuroBandWorkoutModeUntil: null,
+  neuroBandCalibratedAt: null,
+  neuroBandSensitivity: 'normal',
+  neuroBandMockMode: false,
 };

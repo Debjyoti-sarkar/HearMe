@@ -15,11 +15,23 @@
     },
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.hearme.app",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "HearMe uses your location for emergency SMS links and live speed."
+        "NSLocationWhenInUseUsageDescription": "HearMe uses your location for emergency SMS links and live speed.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "HearMe uses your location to share it with trusted contacts during an emergency, even when the app is in the background.",
+        "NSCameraUsageDescription": "HearMe uses your camera to detect hidden camera IR LEDs and capture evidence.",
+        "NSMicrophoneUsageDescription": "HearMe records audio as evidence and listens for distress sounds when voice trigger is enabled.",
+        "NSContactsUsageDescription": "HearMe imports contacts so you can quickly add trusted emergency contacts.",
+        "NSFaceIDUsageDescription": "HearMe uses Face ID as a quick alternative to your PIN to unlock the app.",
+        "NSPhotoLibraryUsageDescription": "HearMe needs access to your photo library so you can set a profile picture.",
+        "NSPhotoLibraryAddUsageDescription": "HearMe saves captured evidence photos to your photo library when you ask it to.",
+        "NSBluetoothAlwaysUsageDescription": "HearMe pairs with your NeuroBand to detect distress signals.",
+        "NSBluetoothPeripheralUsageDescription": "HearMe pairs with your NeuroBand to detect distress signals.",
+        "UIBackgroundModes": ["bluetooth-central"]
       }
     },
     "android": {
+      "package": "com.hearme.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -33,7 +45,16 @@
         "ACCESS_COARSE_LOCATION",
         "VIBRATE",
         "CAMERA",
-        "READ_CONTACTS"
+        "READ_CONTACTS",
+        "RECORD_AUDIO",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "BLUETOOTH",
+        "BLUETOOTH_ADMIN",
+        "BLUETOOTH_SCAN",
+        "BLUETOOTH_CONNECT",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_CONNECTED_DEVICE"
       ]
     },
     "web": {
@@ -53,6 +74,39 @@
         "expo-camera",
         {
           "cameraPermission": "HearMe uses your camera to detect hidden camera IR LEDs."
+        }
+      ],
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "HearMe imports contacts so you can quickly add trusted emergency contacts."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "HearMe needs access to your photo library so you can set a profile picture.",
+          "cameraPermission": "HearMe uses your camera to take a profile picture."
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "HearMe uses Face ID as a quick alternative to your PIN to unlock the app."
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "HearMe records audio as evidence and listens for distress sounds when voice trigger is enabled."
+        }
+      ],
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": true,
+          "modes": ["central"],
+          "bluetoothAlwaysPermission": "HearMe pairs with your NeuroBand to detect distress signals."
         }
       ]
     ]

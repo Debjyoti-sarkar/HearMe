@@ -133,8 +133,21 @@ export default function ContactsTab() {
   const save = async () => {
     const nm = name.trim();
     const ph = phone.trim().replace(/\s/g, '');
-    if (nm.length < 1 || ph.replace(/\D/g, '').length < 8) {
+    const phDigits = ph.replace(/\D/g, '');
+    if (nm.length < 1 || phDigits.length < 8) {
       Alert.alert('Check fields', 'Enter a name and a valid phone number with country code.');
+      return;
+    }
+    // Reject duplicates by normalized digit-only phone (excluding the contact
+    // currently being edited).
+    const dup = contacts.find(
+      (c) => c.phone.replace(/\D/g, '') === phDigits && c.id !== editing?.id,
+    );
+    if (dup) {
+      Alert.alert(
+        'Duplicate number',
+        `This number is already saved as "${dup.name}". Edit or remove the existing contact instead.`,
+      );
       return;
     }
     const id = editing?.id ?? `c-${Date.now()}`;

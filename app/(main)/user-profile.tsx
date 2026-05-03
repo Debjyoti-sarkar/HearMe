@@ -23,6 +23,7 @@ import { GlassCard } from '../../components/GlassCard';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { colors, radii } from '../../constants/theme';
 import { saveLocalAvatar, loadLocalAvatar, clearLocalAvatar } from '../../lib/app-data';
+import { clearDemoAuth } from '../../lib/demo-auth';
 import { isSupabaseConfigured, supabase } from '../../lib/supabase';
 import { useAuth } from '../../providers/AuthProvider';
 import * as Session from '../../lib/session';
@@ -201,6 +202,7 @@ export default function UserProfileScreen() {
         style: 'destructive',
         onPress: async () => {
           await clearLocalAvatar();
+          await clearDemoAuth();
           await signOut();
           router.replace('/login');
         },

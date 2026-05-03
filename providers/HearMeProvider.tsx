@@ -29,11 +29,51 @@ import {
 import { syncSessionAsync } from '../lib/evidence-cloud';
 import type { EmergencyContact, HearMeSettings } from '../lib/types';
 import { DEFAULT_SETTINGS } from '../lib/types';
+import {
+  connectAndSubscribe,
+  isBleNativeAvailable,
+  startMockStream,
+  type BioFrame,
+  type BioSubscription,
+  type ConnectionState,
+} from '../lib/neuroband-ble';
+import {
+  bitmapToString,
+  emptySustained,
+  fuse,
+  instantMarkers,
+  updateSustained,
+  type FusionConfig,
+  type Marker,
+} from '../lib/neuroband-fusion';
+import {
+  appendEvent,
+  EMPTY_BASELINES,
+  loadBaselines,
+  loadPairRecord,
+  saveBaselines,
+  updateBaselines,
+  type NeuroBandBaselines,
+} from '../lib/neuroband-storage';
 
 const SHAKE_DELTA_G = 1.55;
 const SHAKE_DEBOUNCE_MS = 4500;
 // Re-lock if app has been backgrounded for this long.
 const RELOCK_AFTER_BG_MS = 30_000;
+
+export type NeuroBandLiveState = {
+  connection: ConnectionState;
+  /** Most recent BioFrame, or null if not yet streaming. */
+  lastFrame: BioFrame | null;
+  /** Per-marker fired-this-frame view, useful for the live signal panel. */
+  instant: Record<Marker, boolean>;
+  /** Sustained-window counts (0..10). */
+  sustained: Record<Marker, number>;
+  /** Calibration progress 0..1. */
+  calibrationProgress: number;
+  /** Currently in workout-mode lockout? */
+  workoutModeActive: boolean;
+};
 
 type HearMeContextValue = {
   ready: boolean;
@@ -52,9 +92,22 @@ type HearMeContextValue = {
   // Timer check-in helpers
   startCheckIn: (durationMs: number, label: string | null) => Promise<void>;
   cancelCheckIn: () => Promise<void>;
+  // NeuroBand
+  neuroBand: NeuroBandLiveState;
+  /** Force-fire a silent SOS from the NeuroBand path (used by cap-touch). */
+  triggerNeuroBandSos: (reason: string) => Promise<void>;
 };
 
 const HearMeContext = createContext<HearMeContextValue | null>(null);
+
+const FALLBACK_NEUROBAND_STATE: NeuroBandLiveState = {
+  connection: 'disabled',
+  lastFrame: null,
+  instant: { hr: false, gsr: false, temp: false, spo2: false, semg: false },
+  sustained: { hr: 0, gsr: 0, temp: 0, spo2: 0, semg: 0 },
+  calibrationProgress: 0,
+  workoutModeActive: false,
+};
 
 export function useHearMe() {
   const v = useContext(HearMeContext);
@@ -73,7 +126,9 @@ export function useHearMe() {
       unlock: () => {},
       startCheckIn: async () => {},
       cancelCheckIn: async () => {},
-    };
+      neuroBand: FALLBACK_NEUROBAND_STATE,
+      triggerNeuroBandSos: async () => {},
+    } satisfies HearMeContextValue;
   }
   return v;
 }
@@ -132,6 +187,146 @@ function ShakeBridge({
   return null;
 }
 
+/**
+ * NeuroBand BLE bridge. Mirrors ShakeBridge:
+ *   - Subscribes when enabled, unsubscribes on disable.
+ *   - Pure side-effect component, returns null.
+ *   - Callbacks reach into provider state via stable handler refs.
+ */
+type NeuroBandBridgeProps = {
+  enabled: boolean;
+  mockMode: boolean;
+  fusionConfig: FusionConfig;
+  onFrame: (frame: BioFrame) => void;
+  onDuress: (markerBitmap: number, frame: BioFrame) => void;
+  onSilentTap: () => void;
+  onState: (state: ConnectionState, info?: string) => void;
+};
+
+function NeuroBandBridge({
+  enabled,
+  mockMode,
+  fusionConfig,
+  onFrame,
+  onDuress,
+  onSilentTap,
+  onState,
+}: NeuroBandBridgeProps) {
+  const sustainedRef = useRef(emptySustained());
+  const baselinesRef = useRef<NeuroBandBaselines>({ ...EMPTY_BASELINES });
+  const lastFireAt = useRef(0);
+  const baselinesPersistAt = useRef(0);
+
+  // Latest config — read inside the BLE callback, which is created once.
+  const cfgRef = useRef(fusionConfig);
+  useEffect(() => {
+    cfgRef.current = fusionConfig;
+  }, [fusionConfig]);
+
+  // Hydrate baselines once when this bridge mounts.
+  useEffect(() => {
+    let alive = true;
+    void loadBaselines().then((b) => {
+      if (alive) baselinesRef.current = b;
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!enabled) {
+      onState('disabled');
+      return;
+    }
+
+    let cancelled = false;
+    let sub: BioSubscription | null = null;
+
+    const handleFrame = (frame: BioFrame) => {
+      if (cancelled) return;
+
+      // Update baselines (Welford / EMA).
+      const newBaselines = updateBaselines(baselinesRef.current, frame);
+      baselinesRef.current = newBaselines;
+      // Persist at most once every 30 s — disk thrash is real on cheap phones.
+      if (Date.now() - baselinesPersistAt.current > 30_000) {
+        baselinesPersistAt.current = Date.now();
+        void saveBaselines(newBaselines);
+      }
+
+      // Compute markers + sustained counters.
+      const fired = instantMarkers(frame, newBaselines, cfgRef.current.sensitivity);
+      sustainedRef.current = updateSustained(sustainedRef.current, fired);
+
+      // Surface the frame to the provider for live UI.
+      onFrame(frame);
+
+      // Run the fusion check.
+      const verdict = fuse({
+        frame,
+        baselines: newBaselines,
+        config: cfgRef.current,
+        now: Date.now(),
+        sustained: sustainedRef.current,
+      });
+
+      // Debounce: at most one duress fire per 60 s.
+      if (verdict.fire && Date.now() - lastFireAt.current > 60_000) {
+        lastFireAt.current = Date.now();
+        onDuress(verdict.markerBitmap, frame);
+      }
+    };
+
+    const handleTrigger = () => {
+      if (cancelled) return;
+      onSilentTap();
+    };
+
+    const handleState = (state: ConnectionState, info?: string) => {
+      if (cancelled) return;
+      onState(state, info);
+    };
+
+    void (async () => {
+      try {
+        if (mockMode || !isBleNativeAvailable()) {
+          sub = startMockStream({
+            onFrame: handleFrame,
+            onTrigger: handleTrigger,
+            onState: handleState,
+          });
+          return;
+        }
+        const pair = await loadPairRecord();
+        if (!pair) {
+          handleState('idle', 'no-pair');
+          return;
+        }
+        const result = await connectAndSubscribe(pair.peripheralId, {
+          onFrame: handleFrame,
+          onTrigger: handleTrigger,
+          onState: handleState,
+        });
+        if (cancelled) {
+          result.subscription.remove();
+        } else {
+          sub = result.subscription;
+        }
+      } catch (e) {
+        handleState('error', e instanceof Error ? e.message : 'connect failed');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      if (sub) sub.remove();
+    };
+  }, [enabled, mockMode, onFrame, onDuress, onSilentTap, onState]);
+
+  return null;
+}
+
 export function HearMeProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [contacts, setContacts] = useState<EmergencyContact[]>([]);
@@ -141,6 +336,17 @@ export function HearMeProvider({ children }: { children: ReactNode }) {
   const grace = useRef<number | null>(null);
   const lastBackgroundedAt = useRef<number | null>(null);
 
+  // NeuroBand live state — re-rendered on every frame, so kept light.
+  const [neuroBandState, setNeuroBandState] = useState<NeuroBandLiveState>(
+    FALLBACK_NEUROBAND_STATE,
+  );
+  const neuroBandBaselinesRef = useRef<NeuroBandBaselines>({ ...EMPTY_BASELINES });
+  // Latest bio frame for evidence attachment, read at SOS time.
+  const lastBioFrameRef = useRef<BioFrame | null>(null);
+  const lastBioMarkersRef = useRef<{ bitmap: number; markers: Marker[] } | null>(
+    null,
+  );
+
   useEffect(() => {
     grace.current = graceUntil;
   }, [graceUntil]);
@@ -148,14 +354,16 @@ export function HearMeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let alive = true;
     (async () => {
-      const [c, s, hasPin] = await Promise.all([
+      const [c, s, hasPin, baselines] = await Promise.all([
         loadContacts(),
         loadSettings(),
         Session.getPin(),
+        loadBaselines(),
       ]);
       if (!alive) return;
       setContacts(c);
       setSettings(s);
+      neuroBandBaselinesRef.current = baselines;
       // Cold start: lock if app-lock is enabled AND a PIN exists.
       setLocked(s.appLockEnabled && !!hasPin);
       setReady(true);
@@ -201,40 +409,79 @@ export function HearMeProvider({ children }: { children: ReactNode }) {
     [settings, persistSettings],
   );
 
-  const captureSosEvidence = useCallback(async () => {
-    let session = createEvidenceSession('sos');
-    // Try to attach a location stamp. Fail silently — evidence is best-effort.
-    try {
-      const { status } = await Location.getForegroundPermissionsAsync();
-      if (status === Location.PermissionStatus.GRANTED) {
-        const pos = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        });
+  const captureSosEvidence = useCallback(
+    async (trigger: string = 'sos') => {
+      let session = createEvidenceSession(trigger);
+      let lat: number | null = null;
+      let lon: number | null = null;
+      // Try to attach a location stamp. Fail silently — evidence is best-effort.
+      try {
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (status === Location.PermissionStatus.GRANTED) {
+          const pos = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
+          lat = pos.coords.latitude;
+          lon = pos.coords.longitude;
+          session = addEvidenceItem(session, {
+            type: 'location',
+            uri: null,
+            text: `SOS triggered at ${new Date().toISOString()}`,
+            lat,
+            lon,
+            alertId: null,
+            tags: [trigger, 'auto'],
+          });
+        }
+      } catch {
+        /* ignore */
+      }
+
+      // Attach a bio frame if NeuroBand is involved in this SOS.
+      const bio = lastBioFrameRef.current;
+      const markers = lastBioMarkersRef.current;
+      if (
+        bio &&
+        (trigger === 'neuroband' ||
+          trigger === 'neuroband-cap' ||
+          trigger === 'neuroband-tamper')
+      ) {
+        const bitmap = markers?.bitmap ?? 0;
+        const tag =
+          markers?.markers && markers.markers.length > 0
+            ? `markers:${bitmapToString(bitmap)}`
+            : 'markers:00000';
         session = addEvidenceItem(session, {
-          type: 'location',
+          type: 'bio',
           uri: null,
-          text: `SOS triggered at ${new Date().toISOString()}`,
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude,
+          text:
+            `NeuroBand duress: HR=${bio.hr} bpm, ` +
+            `GSR=${bio.gsrUs.toFixed(2)} µS, ` +
+            `temp=${bio.skinTempC.toFixed(1)} °C, ` +
+            `motion=${bio.motion}, sEMG=${bio.semg}`,
+          lat,
+          lon,
           alertId: null,
-          tags: ['sos', 'auto'],
+          tags: [trigger, 'neuroband', tag],
         });
       }
-    } catch {
-      /* ignore */
-    }
-    session = completeEvidenceSession(session);
-    await saveEvidenceSession(session);
-    if (settings.cloudSyncEvidence) {
-      // Background — never blocks the SOS toast.
-      void syncSessionAsync(session);
-    }
-  }, [settings.cloudSyncEvidence]);
+
+      session = completeEvidenceSession(session);
+      await saveEvidenceSession(session);
+      if (settings.cloudSyncEvidence) {
+        // Background — never blocks the SOS toast.
+        void syncSessionAsync(session);
+      }
+    },
+    [settings.cloudSyncEvidence],
+  );
 
   const executeSos = useCallback(async () => {
     // Start siren immediately if enabled — don't wait for SMS
     if (settings.sirenEnabled) {
-      void startSiren();
+      startSiren().catch((err) => {
+        console.warn('[sos] siren failed to start:', err);
+      });
     }
 
     const r = await sendSosSms(contacts, settings);
@@ -252,9 +499,40 @@ export function HearMeProvider({ children }: { children: ReactNode }) {
 
     // Capture an evidence session regardless of SMS outcome — the location
     // stamp is still useful if the user dials emergency manually.
-    void captureSosEvidence();
+    void captureSosEvidence('sos');
     return r;
   }, [contacts, settings, captureSosEvidence]);
+
+  /**
+   * Silent SOS path used by NeuroBand. Skips siren + alerts, sends SMS,
+   * captures bio-attached evidence, auto-calls if configured. Single haptic
+   * confirmation only — felt, not seen.
+   */
+  const triggerNeuroBandSos = useCallback(
+    async (reason: string) => {
+      try {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      } catch {
+        /* ignore */
+      }
+      const r = await sendSosSms(contacts, settings);
+      if (r.ok && settings.autoCallAfterSms) {
+        await dialEmergency(settings.emergencyNumber);
+      }
+      void captureSosEvidence(reason);
+      void appendEvent({
+        ts: Date.now(),
+        kind: 'fire',
+        markers: lastBioMarkersRef.current?.bitmap ?? 0,
+        hr: lastBioFrameRef.current?.hr,
+        gsrUs: lastBioFrameRef.current?.gsrUs,
+        skinTempC: lastBioFrameRef.current?.skinTempC,
+        motion: lastBioFrameRef.current?.motion,
+        note: r.ok ? r.message : `SMS failed: ${r.message}`,
+      });
+    },
+    [contacts, settings, captureSosEvidence],
+  );
 
   const shareLocation = useCallback(async () => {
     return shareLocationSms(contacts);
@@ -381,6 +659,10 @@ export function HearMeProvider({ children }: { children: ReactNode }) {
       // Past expiry — open grace window, prompt user.
       if (grace.current === null) {
         const newGrace = expiresAt + GRACE_MS;
+        // Set both the ref AND the state synchronously. The ref prevents
+        // this branch from re-firing on the next tick before React has had
+        // a chance to flush the state update through useEffect.
+        grace.current = newGrace;
         setGraceUntil(newGrace);
         Alert.alert(
           'Check-in due',
@@ -401,7 +683,9 @@ export function HearMeProvider({ children }: { children: ReactNode }) {
           ],
         );
       } else if (now >= grace.current) {
-        // Grace expired — auto-fire and clear.
+        // Grace expired — auto-fire and clear. Clear the ref synchronously
+        // so a subsequent tick (before React flushes) can't re-fire SOS.
+        grace.current = null;
         void executeSos().then((r) => {
           Alert.alert(r.ok ? 'Check-in SOS sent' : 'SOS failed', r.message);
         });
@@ -416,6 +700,71 @@ export function HearMeProvider({ children }: { children: ReactNode }) {
     cancelCheckIn,
     executeSos,
   ]);
+
+  // ---- NeuroBand handlers ----
+  const fusionConfig = useMemo<FusionConfig>(
+    () => ({
+      sensitivity: settings.neuroBandSensitivity,
+      calibrationWindowMs: 24 * 60 * 60 * 1000,
+      workoutModeUntil: settings.neuroBandWorkoutModeUntil,
+    }),
+    [settings.neuroBandSensitivity, settings.neuroBandWorkoutModeUntil],
+  );
+
+  const onNeuroFrame = useCallback((frame: BioFrame) => {
+    lastBioFrameRef.current = frame;
+    const fired = instantMarkers(
+      frame,
+      neuroBandBaselinesRef.current,
+      'normal', // sensitivity for live UI; fusion engine uses settings value
+    );
+    setNeuroBandState((prev) => ({
+      ...prev,
+      lastFrame: frame,
+      instant: fired,
+      sustained: prev.sustained, // sustained is updated in the bridge; mirror here on next frame
+      calibrationProgress: Math.min(
+        1,
+        neuroBandBaselinesRef.current.hrRestN / 3600,
+      ),
+      workoutModeActive:
+        !!settings.neuroBandWorkoutModeUntil &&
+        Date.now() < settings.neuroBandWorkoutModeUntil,
+    }));
+  }, [settings.neuroBandWorkoutModeUntil]);
+
+  const onNeuroDuress = useCallback(
+    (markerBitmap: number, frame: BioFrame) => {
+      lastBioFrameRef.current = frame;
+      const markers: Marker[] = [];
+      const all: Marker[] = ['hr', 'gsr', 'temp', 'spo2', 'semg'];
+      all.forEach((m, i) => {
+        if ((markerBitmap >> i) & 1) markers.push(m);
+      });
+      lastBioMarkersRef.current = { bitmap: markerBitmap, markers };
+      void triggerNeuroBandSos('neuroband');
+    },
+    [triggerNeuroBandSos],
+  );
+
+  const onNeuroSilentTap = useCallback(() => {
+    // Capacitive override always fires SOS, even during workout-mode or
+    // calibration — it's the user's manual fallback.
+    void appendEvent({ ts: Date.now(), kind: 'cap-tap' });
+    lastBioMarkersRef.current = null;
+    void triggerNeuroBandSos('neuroband-cap');
+  }, [triggerNeuroBandSos]);
+
+  const onNeuroState = useCallback((state: ConnectionState) => {
+    setNeuroBandState((prev) => ({ ...prev, connection: state }));
+  }, []);
+
+  const externalTriggerNeuroBandSos = useCallback(
+    async (reason: string) => {
+      await triggerNeuroBandSos(reason);
+    },
+    [triggerNeuroBandSos],
+  );
 
   const value = useMemo<HearMeContextValue>(
     () => ({
@@ -432,6 +781,8 @@ export function HearMeProvider({ children }: { children: ReactNode }) {
       unlock,
       startCheckIn,
       cancelCheckIn,
+      neuroBand: neuroBandState,
+      triggerNeuroBandSos: externalTriggerNeuroBandSos,
     }),
     [
       ready,
@@ -447,6 +798,8 @@ export function HearMeProvider({ children }: { children: ReactNode }) {
       unlock,
       startCheckIn,
       cancelCheckIn,
+      neuroBandState,
+      externalTriggerNeuroBandSos,
     ],
   );
 
@@ -456,6 +809,15 @@ export function HearMeProvider({ children }: { children: ReactNode }) {
         enabled={ready && settings.shakeEnabled}
         instantShake={settings.instantShake}
         onShakeDetected={onShakeDetected}
+      />
+      <NeuroBandBridge
+        enabled={ready && settings.neuroBandEnabled}
+        mockMode={settings.neuroBandMockMode}
+        fusionConfig={fusionConfig}
+        onFrame={onNeuroFrame}
+        onDuress={onNeuroDuress}
+        onSilentTap={onNeuroSilentTap}
+        onState={onNeuroState}
       />
       {children}
     </HearMeContext.Provider>

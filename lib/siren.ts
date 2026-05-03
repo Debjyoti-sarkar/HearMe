@@ -10,12 +10,12 @@ let sound: Audio.Sound | null = null;
  * Starts a loud siren alarm with haptic feedback.
  * Uses expo-av to play a continuous alarm tone at max volume.
  */
-export async function startSiren(): Promise<void> {
-  if (isPlaying) return;
+export async function startSiren(): Promise<{ ok: boolean; audio: boolean }> {
+  if (isPlaying) return { ok: true, audio: !!sound };
   isPlaying = true;
 
+  let audioOk = false;
   try {
-    // Configure audio for alarm — play even in silent mode, mix with others
     await Audio.setAudioModeAsync({
       allowsRecordingIOS: false,
       playsInSilentModeIOS: true,
@@ -23,21 +23,22 @@ export async function startSiren(): Promise<void> {
       shouldDuckAndroid: false,
     });
 
-    // Generate a WAV siren tone in memory
     const wavData = generateSirenWav();
     const { sound: s } = await Audio.Sound.createAsync(
       { uri: wavData },
       { isLooping: true, volume: 1.0, shouldPlay: true },
     );
     sound = s;
-  } catch {
-    // Fallback: if audio fails, at least do haptics
+    audioOk = true;
+  } catch (err) {
+    console.warn('[siren] audio failed, falling back to haptics:', err);
   }
 
-  // Continuous haptic pulses alongside audio
   hapticInterval = setInterval(() => {
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
   }, 600);
+
+  return { ok: true, audio: audioOk };
 }
 
 export async function stopSiren(): Promise<void> {

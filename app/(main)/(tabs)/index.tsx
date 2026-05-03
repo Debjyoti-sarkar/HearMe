@@ -121,36 +121,53 @@ export default function HomeTab() {
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
     const code = generateSafetyCode();
-    const result = await executeSos();
+    try {
+      const result = await executeSos();
 
-    await saveAlertRecord({
-      id: `alert-${Date.now()}`,
-      type: 'sos',
-      timestamp: new Date().toISOString(),
-      location: null,
-      safetyCode: code,
-      contactsNotified: contacts.length,
-      status: result.ok ? 'sent' : 'failed',
-    });
+      await saveAlertRecord({
+        id: `alert-${Date.now()}`,
+        type: 'sos',
+        timestamp: new Date().toISOString(),
+        location: null,
+        safetyCode: code,
+        contactsNotified: contacts.length,
+        status: result.ok ? 'sent' : 'failed',
+      });
 
-    setSosActive(false);
-
-    Alert.alert(
-      result.ok ? 'SOS Sent' : 'SOS Failed',
-      result.ok
-        ? `Safety Code: ${code}\nShare this code with responders to verify your identity.`
-        : result.message,
-      [
-        {
-          text: 'Stop Siren',
-          onPress: () => void stopSiren(),
-        },
-        {
-          text: 'OK',
-          onPress: () => void stopSiren(),
-        },
-      ],
-    );
+      Alert.alert(
+        result.ok ? 'SOS Sent' : 'SOS Failed',
+        result.ok
+          ? `Safety Code: ${code}\nShare this code with responders to verify your identity.`
+          : result.message,
+        [
+          {
+            text: 'Stop Siren',
+            onPress: () => void stopSiren(),
+          },
+          {
+            text: 'OK',
+            onPress: () => void stopSiren(),
+          },
+        ],
+      );
+    } catch (err) {
+      await saveAlertRecord({
+        id: `alert-${Date.now()}`,
+        type: 'sos',
+        timestamp: new Date().toISOString(),
+        location: null,
+        safetyCode: code,
+        contactsNotified: contacts.length,
+        status: 'failed',
+      });
+      Alert.alert(
+        'SOS Failed',
+        err instanceof Error ? err.message : 'Unexpected error sending SOS.',
+        [{ text: 'Stop Siren', onPress: () => void stopSiren() }],
+      );
+    } finally {
+      setSosActive(false);
+    }
   };
 
   const getGreeting = () => {
@@ -385,6 +402,22 @@ export default function HomeTab() {
               </LinearGradient>
               <Text style={styles.featureTitle}>Behavior{'\n'}Monitor</Text>
               <Text style={styles.featureSub}>PhishSafe distress detection</Text>
+            </GlassCard>
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.push('/(main)/journey-monitor')}
+            style={styles.featureHalf}
+          >
+            <GlassCard variant="accent" style={styles.featureCard}>
+              <LinearGradient
+                colors={['#a78bfa', '#7c3aed']}
+                style={styles.featureIcon}
+              >
+                <MaterialCommunityIcons name="map-marker-path" size={24} color="#fff" />
+              </LinearGradient>
+              <Text style={styles.featureTitle}>Journey{'\n'}Monitor</Text>
+              <Text style={styles.featureSub}>Track trips with auto-SOS</Text>
             </GlassCard>
           </Pressable>
         </View>

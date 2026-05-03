@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type EvidenceType = 'photo' | 'audio' | 'location' | 'text';
+export type EvidenceType = 'photo' | 'audio' | 'location' | 'text' | 'bio';
 
 export type EvidenceSyncStatus = 'local' | 'pending' | 'synced' | 'failed';
 
@@ -153,9 +153,11 @@ export function formatEvidenceCount(session: EvidenceSession): string {
   const photos = session.items.filter((i) => i.type === 'photo').length;
   const audio = session.items.filter((i) => i.type === 'audio').length;
   const locations = session.items.filter((i) => i.type === 'location').length;
+  const bio = session.items.filter((i) => i.type === 'bio').length;
   const parts: string[] = [];
   if (photos > 0) parts.push(`${photos} photo${photos !== 1 ? 's' : ''}`);
   if (audio > 0) parts.push(`${audio} audio`);
   if (locations > 0) parts.push(`${locations} location${locations !== 1 ? 's' : ''}`);
+  if (bio > 0) parts.push(`${bio} bio`);
   return parts.join(', ') || 'No evidence';
 }

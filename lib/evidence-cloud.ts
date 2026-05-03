@@ -181,6 +181,18 @@ export async function syncSessionAsync(
     return { ok: false, reason: 'Not signed in', session: failed };
   }
 
+  // Fast path: session is already synced and every uploadable item has a
+  // cloudPath. Don't re-hash files / re-hit the DB just because the user
+  // tapped the button again.
+  if (session.syncStatus === 'synced' && session.chainHash) {
+    const everythingUploaded = session.items.every(
+      (it) => !it.uri || !!it.cloudPath,
+    );
+    if (everythingUploaded) {
+      return { ok: true, session };
+    }
+  }
+
   const pending = markSession(session, 'pending', null);
   await saveEvidenceSession(pending);
 

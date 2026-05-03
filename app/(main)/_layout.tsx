@@ -69,8 +69,10 @@ function MainStack() {
             <Stack.Screen name="alert-history" options={MODAL_OPTIONS} />
             <Stack.Screen name="behavior-monitor" options={MODAL_OPTIONS} />
             <Stack.Screen name="check-in" options={MODAL_OPTIONS} />
+            <Stack.Screen name="journey-monitor" options={MODAL_OPTIONS} />
             <Stack.Screen name="evidence-locker" options={MODAL_OPTIONS} />
             <Stack.Screen name="user-profile" options={MODAL_OPTIONS} />
+            <Stack.Screen name="neuroband" options={MODAL_OPTIONS} />
           </Stack>
         </GestureTracker>
       </LockGate>

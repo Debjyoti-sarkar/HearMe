@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HearMe — NeuroBand Bio-Signal &amp; Silent Trigger Integration</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  :root {
+    --ink: #1a1a2e;
+    --muted: #4a4a5e;
+    --accent: #5b21b6;
+    --accent-2: #c2185b;
+    --accent-soft: #ede9fe;
+    --rule: #e3e3ea;
+    --chip-bg: #f3f4f8;
+    --ok: #1b7a47;
+    --warn: #b85900;
+    --code-bg: #0f172a;
+    --code-ink: #e2e8f0;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    font-size: 10.5pt;
+    line-height: 1.45;
+  }
+  .cover {
+    page-break-after: always;
+    padding: 40mm 0 0 0;
+    text-align: center;
+  }
+  .cover .badge {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    font-size: 9pt;
+    text-transform: uppercase;
+  }
+  .cover h1 {
+    font-size: 34pt;
+    margin: 18px 0 6px 0;
+    letter-spacing: -0.02em;
+  }
+  .cover .sub {
+    font-size: 14pt;
+    color: var(--muted);
+    margin-bottom: 40px;
+  }
+  .cover .vol {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 12px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 4px;
+    font-size: 9.5pt;
+    letter-spacing: 0.1em;
+  }
+  .cover .meta {
+    margin-top: 60mm;
+    color: var(--muted);
+    font-size: 10pt;
+  }
+  .cover .meta strong { color: var(--ink); }
+  h1, h2, h3, h4 { color: var(--ink); letter-spacing: -0.01em; }
+  h2 {
+    font-size: 16pt;
+    margin: 22px 0 8px 0;
+    padding-bottom: 4px;
+    border-bottom: 2px solid var(--accent);
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 12pt;
+    margin: 16px 0 6px 0;
+    page-break-after: avoid;
+    color: var(--accent);
+  }
+  h4 {
+    font-size: 10.5pt;
+    margin: 10px 0 4px 0;
+    page-break-after: avoid;
+  }
+  p { margin: 6px 0; }
+  ul, ol { margin: 6px 0 10px 22px; padding: 0; }
+  li { margin: 3px 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 12px 0;
+    font-size: 9.6pt;
+    page-break-inside: avoid;
+  }
+  thead th {
+    background: var(--accent);
+    color: #fff;
+    text-align: left;
+    padding: 7px 9px;
+    font-weight: 600;
+  }
+  tbody td {
+    border-bottom: 1px solid var(--rule);
+    padding: 7px 9px;
+    vertical-align: top;
+  }
+  tbody tr:nth-child(even) td { background: #fafbfd; }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  td.center, th.center { text-align: center; }
+  .chip {
+    display: inline-block;
+    background: var(--chip-bg);
+    color: var(--muted);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 8.5pt;
+    margin-right: 4px;
+  }
+  .chip.tier1 { background: #dbeafe; color: #1e40af; }
+  .chip.tier2 { background: var(--accent-soft); color: var(--accent); }
+  .chip.tier3 { background: #fde2e7; color: var(--accent-2); }
+  .chip.b2b { background: #e4f3ea; color: var(--ok); }
+  .chip.partner { background: #fdecd8; color: var(--warn); }
+  .callout {
+    background: var(--accent-soft);
+    border-left: 4px solid var(--accent);
+    padding: 10px 14px;
+    border-radius: 4px;
+    margin: 10px 0;
+    page-break-inside: avoid;
+  }
+  .callout.pink {
+    background: #fce7f3;
+    border-left-color: var(--accent-2);
+  }
+  .callout.warn {
+    background: #fff4e5;
+    border-left-color: var(--warn);
+  }
+  .device {
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--accent);
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin: 8px 0;
+    page-break-inside: avoid;
+  }
+  .device .title { font-weight: 700; color: var(--accent); font-size: 10.8pt; }
+  .device .price {
+    float: right;
+    background: var(--accent);
+    color: #fff;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 8.8pt;
+    font-weight: 600;
+  }
+  .device .meta-line {
+    color: var(--muted);
+    font-size: 9pt;
+    margin: 3px 0 6px 0;
+  }
+  .grid-2 {
+    display: table;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 8px 0;
+  }
+  .grid-2 > div {
+    display: table-cell;
+    width: 50%;
+    vertical-align: top;
+  }
+  .arch {
+    background: var(--code-bg);
+    color: var(--code-ink);
+    padding: 14px 16px;
+    border-radius: 6px;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 9pt;
+    line-height: 1.5;
+    white-space: pre;
+    overflow: hidden;
+    page-break-inside: avoid;
+  }
+  code.inl {
+    background: var(--chip-bg);
+    color: var(--accent);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 9.5pt;
+  }
+  .ship-pick {
+    background: linear-gradient(135deg, #fce7f3 0%, var(--accent-soft) 100%);
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 12px 0;
+    page-break-inside: avoid;
+  }
+  .ship-pick h3 {
+    margin-top: 0;
+    color: var(--accent-2);
+  }
+  footer {
+    position: fixed;
+    bottom: 8mm;
+    left: 16mm;
+    right: 16mm;
+    font-size: 8.5pt;
+    color: var(--muted);
+    border-top: 1px solid var(--rule);
+    padding-top: 4px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .page-break { page-break-before: always; }
+  .toc {
+    margin-top: 14px;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 12px 18px;
+    background: #fafbfd;
+  }
+  .toc ol { margin-left: 18px; }
+  .toc li { margin: 4px 0; }
+  .kpi-row { display: table; width: 100%; border-spacing: 8px 0; margin: 8px 0; }
+  .kpi-row > div {
+    display: table-cell; width: 25%;
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--accent);
+    padding: 10px;
+    border-radius: 4px;
+    text-align: center;
+  }
+  .kpi-row .v { font-size: 16pt; font-weight: 700; color: var(--accent); }
+  .kpi-row .l { font-size: 8.5pt; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+</style>
+</head>
+<body>
+
+<footer>
+  <span>HearMe &middot; NeuroBand Integration &mdash; Volume IV</span>
+  <span>04 May 2026 &middot; v1.0 &middot; Confidential</span>
+</footer>
+
+<!-- ========== COVER ========== -->
+<section class="cover">
+  <span class="badge">Hardware Integration &middot; Confidential</span>
+  <h1>HearMe</h1>
+  <div class="sub">NeuroBand &mdash; Bio-Signal &amp; Silent Trigger Safety System</div>
+  <div class="vol">VOLUME IV</div>
+  <div class="meta">
+    <p><strong>Prepared for:</strong> Debjyoti Sarkar</p>
+    <p><strong>Product:</strong> HearMe &mdash; Women's Personal Safety App</p>
+    <p><strong>Scope:</strong> Wearable BLE band &middot; Bio-signal fusion &middot; Silent SOS</p>
+    <p><strong>Date:</strong> 04 May 2026</p>
+    <p><strong>Version:</strong> 1.0</p>
+  </div>
+</section>
+
+<!-- ========== TOC ========== -->
+<h2>Contents</h2>
+<div class="toc">
+  <ol>
+    <li>Concept &mdash; What NeuroBand Is, and Why Now</li>
+    <li>System Architecture at a Glance</li>
+    <li>Hardware Bill of Materials</li>
+    <li>Reference Schematic &amp; Power Domains</li>
+    <li>Firmware Architecture (Zephyr + NimBLE)</li>
+    <li>BLE GATT &mdash; HearMe Bio Service</li>
+    <li>Pairing, Crypto &amp; Replay Protection</li>
+    <li>Signal Fusion &mdash; The 2-of-5 Duress Rule</li>
+    <li>Phone-Side Integration into the HearMe App</li>
+    <li>Evidence Trail &amp; Cloud Sync</li>
+    <li>Calibration, Workout Mode &amp; False-Positive Control</li>
+    <li>Privacy, Security &amp; Regulatory Posture</li>
+    <li>Build, Test &amp; Validation Order</li>
+    <li>Cost Sheet &amp; Order List</li>
+    <li>12-Week Delivery Roadmap</li>
+  </ol>
+</div>
+
+<!-- ========== 1 ========== -->
+<h2>1. Concept &mdash; What NeuroBand Is, and Why Now</h2>
+<p>
+  The HearMe stack already ships an active-trigger surface area: shake, voice safe-word, duress PIN,
+  timer check-in, in-app SOS button. Every one of them assumes the user can <em>act</em>. The
+  <strong>NeuroBand</strong> closes the last gap &mdash; the woman who is held still, gagged, or
+  whose phone is just out of reach. Her body still leaks distress: heart rate spikes, skin sweats,
+  skin cools, fingers clench. NeuroBand is a wrist-worn BLE band that captures those signals and
+  hands them to the HearMe phone, which alone decides whether to fire SOS.
+</p>
+<p>
+  This implements <strong>&sect;8 Biometric Wearable Layer</strong> of <em>HearMe Hardware &amp;
+  IoT Strategy &mdash; Volume III</em>. The strategy doc commits to the &ldquo;physiological duress
+  signature: any two of the five physiological signals firing together&rdquo; rule. Volume IV is
+  how it ships.
+</p>
+
+<div class="callout pink">
+  <strong>Architectural rule, unchanged from Volume III:</strong> the band is dumb. It samples,
+  filters, and ships features. The phone owns all decision logic. A leaked GATT packet must reveal
+  nothing; a stolen band must trigger nothing.
+</div>
+
+<div class="kpi-row">
+  <div><div class="v">5</div><div class="l">Bio Sensors</div></div>
+  <div><div class="v">2 of 5</div><div class="l">Fusion Threshold</div></div>
+  <div><div class="v">~3 days</div><div class="l">Battery (1 Hz)</div></div>
+  <div><div class="v">&lt; 800 ms</div><div class="l">Trigger &rarr; SOS</div></div>
+</div>
+
+<!-- ========== 2 ========== -->
+<h2>2. System Architecture at a Glance</h2>
+<div class="arch">
+[ NeuroBand wrist module ]            [ HearMe app on phone ]            [ HearMe cloud ]
+
+  PPG    ──┐                          ┌── BLE central                    ┌── Supabase
+  GSR    ──┤  edge filter             │    react-native-ble-plx          │    evidence rows
+  Skin T ──┼──► 1 Hz BioFrame  ──BLE──► fusion engine (lib/neuroband-*) ──► hash-chain anchor
+  IMU    ──┤    (20-byte AES-CCM)     │    executeSos()  (existing)      │    bio-signature audit
+  sEMG   ──┘                          └── evidence-locker.ts append      └── court-admissible
+
+  Capacitive pad ──► silent_trigger char ──► immediate SOS path
+</div>
+
+<p>
+  Every box on the right already exists in the repository today. <code class="inl">executeSos()</code>
+  in <code class="inl">providers/HearMeProvider.tsx</code>, the evidence locker, the Supabase sync,
+  the haptic ack pipeline &mdash; all reused. The new code is a single BLE bridge plus a fusion
+  module. NeuroBand is additive, not architectural.
+</p>
+
+<!-- ========== 3 ========== -->
+<div class="page-break"></div>
+<h2>3. Hardware Bill of Materials</h2>
+<p>One band, with rationale. Pricing in INR at qty-100 sourcing (Robu, SiliconCraft, DigiKey IN).</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:5%">#</th>
+      <th>Function</th>
+      <th>Part</th>
+      <th>Why this part</th>
+      <th class="num">Qty</th>
+      <th class="num">&#8377; / unit</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>MCU + BLE 5.0 radio</td>
+      <td>Nordic <strong>nRF52840</strong> (MDBT50Q-1MV2 module)</td>
+      <td>Cortex-M4F + crypto coprocessor + USB DFU. Same family as your Tier-1 BLE Clip &mdash; identical pairing protocol, shared firmware infra.</td>
+      <td class="num">1</td>
+      <td class="num">350</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>PPG &mdash; HR &amp; SpO<sub>2</sub></td>
+      <td><strong>MAX30102</strong> (or MAX86141 for clinical grade)</td>
+      <td>Integrated red+IR LEDs and photodiode, I&sup2;C, AGC. Dominant DIY+OEM choice for wrist-worn HR.</td>
+      <td class="num">1</td>
+      <td class="num">180</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>GSR / EDA</td>
+      <td><strong>Grove GSR v1.2</strong> + 2&times; Ag/AgCl dry pads</td>
+      <td>Skin conductance is the cleanest panic biomarker. Reads in &micro;S; survives mild perspiration.</td>
+      <td class="num">1</td>
+      <td class="num">220</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>Skin temperature</td>
+      <td><strong>MAX30205</strong> contact (or MLX90615 IR)</td>
+      <td>&plusmn;0.1 &deg;C accuracy. Detects shock / freezing / circulatory shutdown.</td>
+      <td class="num">1</td>
+      <td class="num">160</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>IMU (motion / fall)</td>
+      <td><strong>BMI270</strong> or <strong>LSM6DSOX</strong></td>
+      <td>Distinguishes &ldquo;HR spike while running&rdquo; from &ldquo;HR spike while still.&rdquo; The whole rule depends on this gate.</td>
+      <td class="num">1</td>
+      <td class="num">140</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>sEMG (fight-or-flight)</td>
+      <td><strong>MyoWare 2.0</strong> + 3 dry pads</td>
+      <td>Wrist-tension arousal &mdash; clenched fist sustained &gt; 4 s. Optional in v1; high BOM impact.</td>
+      <td class="num">1</td>
+      <td class="num">600</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>Haptic feedback</td>
+      <td><strong>DRV2605L</strong> + 10&times;3 mm LRA coin</td>
+      <td>Confirms &ldquo;SOS sent&rdquo; and &ldquo;contact ack&rdquo; silently. Felt, not seen.</td>
+      <td class="num">1</td>
+      <td class="num">90</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>Capacitive override pad</td>
+      <td><strong>TTP223</strong> + copper pad under strap</td>
+      <td>Triple-tap silent SOS even if biosignals miss. Backup path when fusion is in workout mode.</td>
+      <td class="num">1</td>
+      <td class="num">25</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>Battery</td>
+      <td>3.7 V <strong>110 mAh</strong> LiPo + JST-PH</td>
+      <td>~3 days at 1 Hz BLE notify, 4 Hz GSR poll. Keeps band thin enough to disappear under a sleeve.</td>
+      <td class="num">1</td>
+      <td class="num">90</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>Charging</td>
+      <td><strong>TP4056</strong> + USB-C breakout</td>
+      <td>Standard Li-ion charge IC; replace with Qi-Rx coil if you target IP67 with no ports.</td>
+      <td class="num">1</td>
+      <td class="num">60</td>
+    </tr>
+    <tr>
+      <td>11</td>
+      <td>Power management</td>
+      <td><strong>TPS62740</strong> buck + <strong>MCP1700</strong> LDO (analog rail)</td>
+      <td>Separate clean rail for GSR / PPG analog front-end. Shared rail = noise = false positives.</td>
+      <td class="num">1</td>
+      <td class="num">70</td>
+    </tr>
+    <tr>
+      <td>12</td>
+      <td>Enclosure</td>
+      <td>TPU shell + silicone strap, IP67 gasket</td>
+      <td>Hides electrodes flush with skin. Resin-printed prototype, injection-mold for production.</td>
+      <td class="num">1</td>
+      <td class="num">200</td>
+    </tr>
+    <tr>
+      <td>13</td>
+      <td>Status LED</td>
+      <td>Single RGB indicator</td>
+      <td>Charge / paired / fault. No loud LEDs &mdash; the band must look like a fitness tracker.</td>
+      <td class="num">1</td>
+      <td class="num">15</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <strong>BOM totals.</strong> ~&#8377;2,200 / unit at qty-100, ~&#8377;1,400 at qty-5,000.
+  Sells at Tier-3 &#8377;3,500&ndash;&#8377;5,000 in your existing pricing ladder, with healthy
+  D2C margin and headroom for retail markup.
+</div>
+
+<h3>3.1 One-time prototyping tools</h3>
+<table>
+  <thead><tr><th>Tool</th><th>Purpose</th><th class="num">Approx &#8377;</th></tr></thead>
+  <tbody>
+    <tr><td>Nordic <strong>nRF52840-DK</strong></td><td>Primary dev board with onboard J-Link</td><td class="num">4,500</td></tr>
+    <tr><td>J-Link EDU mini (spare)</td><td>SWD programmer + RTT logging</td><td class="num">2,200</td></tr>
+    <tr><td>Saleae Logic 8 clone</td><td>I&sup2;C / SPI / BLE timing debug</td><td class="num">1,800</td></tr>
+    <tr><td>nRF52840 USB Dongle (Wireshark)</td><td>BLE air-trace sniffer</td><td class="num">1,800</td></tr>
+    <tr><td>Polar H10 chest strap</td><td>Ground-truth HR for PPG calibration</td><td class="num">6,500</td></tr>
+    <tr><td>BIOPAC GSR / Empatica E4 (loaner)</td><td>Ground-truth electrodermal activity</td><td class="num">15,000</td></tr>
+  </tbody>
+</table>
+
+<h3>3.2 Phone-side prerequisite</h3>
+<p>
+  No new hardware on the phone. BLE 5.0 is universal on every Android since 2018 and every iPhone
+  since 6s. The HearMe app must run on a <strong>custom Expo dev client</strong> &mdash; Expo Go
+  cannot load <code class="inl">react-native-ble-plx</code>. This is a one-time
+  <code class="inl">eas build --profile development</code>.
+</p>
+
+<!-- ========== 4 ========== -->
+<div class="page-break"></div>
+<h2>4. Reference Schematic &amp; Power Domains</h2>
+
+<div class="arch">
+                       ┌────────── 3.7 V LiPo (110 mAh) ──────────┐
+                       │                                          │
+                       ▼                                          ▼
+                 TP4056 (USB-C)                          TPS62740 buck → 3.0 V digital rail
+                       │                                          │
+                       │                          ┌───────────────┼──────────────────┐
+                       │                          ▼               ▼                  ▼
+                       │                     nRF52840         BMI270 IMU       MAX30205 Skin T
+                       │                     (BLE / MCU)     (I²C addr 0x68)   (I²C addr 0x48)
+                       │
+                       │                  MCP1700 LDO → 3.0 V  *clean*  analog rail
+                       │                          │
+                       │                          ├──► MAX30102 (PPG)   I²C 0x57
+                       │                          ├──► Grove GSR        ADC pin P0.04
+                       │                          └──► MyoWare 2.0      ADC pin P0.05
+                       │
+                       └──► DRV2605L (haptic, I²C 0x5A) ──► LRA
+                                                                 TTP223 cap-touch ──► P0.06 (IRQ)
+</div>
+
+<p>
+  Two separate 3.0 V rails are non-negotiable. The PPG and GSR analog front-ends are easy to
+  poison with switching noise from the BLE radio. Buck for digital, LDO for analog, star-ground
+  at the LiPo &ndash; node. Skipping this is the #1 reason DIY bio-bands false-trigger.
+</p>
+
+<!-- ========== 5 ========== -->
+<h2>5. Firmware Architecture (Zephyr + NimBLE)</h2>
+<p>
+  Zephyr RTOS with the NimBLE host. Nordic SDK is being deprecated; do not start a new project on it.
+</p>
+
+<div class="arch">
+┌─────────────────────────────────────────────────┐
+│  Sensor task                  10 Hz             │
+│   ├─ MAX30102  → HR, HRV-RMSSD, IBI, SpO2        │
+│   ├─ Grove GSR → tonic + phasic split (µS)       │
+│   ├─ MAX30205  → skin °C                         │
+│   ├─ BMI270    → accel, gyro, motion class       │
+│   └─ MyoWare   → sEMG envelope                   │
+├─────────────────────────────────────────────────┤
+│  Edge filter (rolling 30-s window)              │
+│   ├─ HR baseline (Welford online mean+var)       │
+│   ├─ GSR phasic-tonic decomposition              │
+│   ├─ Skin-temp drift vs 5-min average            │
+│   └─ Motion classifier { still | walk | run }    │
+├─────────────────────────────────────────────────┤
+│  GATT publisher              1 Hz notify        │
+│   └─ packs into the 20-byte HearMe BioFrame      │
+├─────────────────────────────────────────────────┤
+│  Capacitive override task    50 Hz poll         │
+│   └─ writes silent_trigger char on triple-tap    │
+├─────────────────────────────────────────────────┤
+│  Crypto + counter            per-frame          │
+│   └─ AES-CCM, monotonic 32-bit counter           │
+└─────────────────────────────────────────────────┘
+</div>
+
+<div class="callout">
+  <strong>The band ships features, not raw waveforms.</strong> That keeps BLE bandwidth low,
+  battery healthy, and means a captured GATT packet contains a single byte of HR, not a 250 Hz
+  PPG trace that could fingerprint the wearer.
+</div>
+
+<!-- ========== 6 ========== -->
+<h2>6. BLE GATT &mdash; HearMe Bio Service</h2>
+<p>
+  Custom 128-bit UUID base, four characteristics. All notify-and-write traffic is AES-CCM
+  encrypted using a per-session key derived during pairing.
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Characteristic</th>
+      <th>UUID suffix</th>
+      <th>Direction</th>
+      <th>Payload</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="inl">bio_frame</code></td>
+      <td><code class="inl">…8001</code></td>
+      <td>Notify, 1 Hz</td>
+      <td>20 B: <code class="inl">[seq u16][hr u8][hrv_rmssd u8][spo2 u8][gsr_us u16][temp_c10 i16][motion u8][semg u8][battery u8][flags u8][counter u32]</code></td>
+    </tr>
+    <tr>
+      <td><code class="inl">silent_trigger</code></td>
+      <td><code class="inl">…8002</code></td>
+      <td>Notify</td>
+      <td>1 B: <code class="inl">bit0=triple-tap, bit1=auto-fired, bit2=tamper</code></td>
+    </tr>
+    <tr>
+      <td><code class="inl">command</code></td>
+      <td><code class="inl">…8003</code></td>
+      <td>Write</td>
+      <td>Calibrate / haptic-buzz / OTA-handoff / sleep</td>
+    </tr>
+    <tr>
+      <td><code class="inl">device_info</code></td>
+      <td><code class="inl">…8004</code></td>
+      <td>Read</td>
+      <td>Firmware version + serial (no PII)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+  Field encoding rationale: HR fits in <code class="inl">u8</code> up to 255 bpm; skin temp is
+  stored as &deg;C&times;10 in <code class="inl">i16</code> for &plusmn;0.1 &deg;C resolution;
+  GSR in &micro;S&times;100 as <code class="inl">u16</code> covers 0&ndash;655 &micro;S which spans
+  every realistic skin response. The trailing <code class="inl">u32 counter</code> is the
+  monotonic value Volume III mandates for replay protection on every GATT write.
+</p>
+
+<!-- ========== 7 ========== -->
+<div class="page-break"></div>
+<h2>7. Pairing, Crypto &amp; Replay Protection</h2>
+<ol>
+  <li>Each band ships with a unique 12-character <strong>PSK printed on a sticker</strong> on the inside of the strap.</li>
+  <li>HearMe app scans, finds the band, prompts for the PSK.</li>
+  <li>App and band perform <strong>ECDH key exchange</strong> over BLE, mixing the PSK as a salt to defeat MITM.</li>
+  <li>The derived 128-bit session key feeds <strong>AES-CCM</strong> on every frame thereafter.</li>
+  <li>The 32-bit counter increments per frame; the phone rejects any frame whose counter is &le; the last accepted value.</li>
+  <li>Re-pair clears the counter and rotates keys.</li>
+</ol>
+
+<div class="callout warn">
+  <strong>No &ldquo;0000&rdquo;-class PINs.</strong> Volume III explicitly forbids weak pairing.
+  PSK + ECDH is the only acceptable scheme; reuse the implementation you ship for the Tier-1 BLE Clip
+  so a single audit covers both products.
+</div>
+
+<!-- ========== 8 ========== -->
+<h2>8. Signal Fusion &mdash; The 2-of-5 Duress Rule</h2>
+<p>
+  This is the only piece of intelligence on the phone. It must live in the app, not in firmware,
+  so you can A/B-test thresholds across the user base without re-flashing every band.
+</p>
+
+<div class="arch">
+markers per 30-s window (each is 0 or 1):
+
+  M_hr     = HR > baseline + 25 bpm   AND   motion ∈ { still, walk }
+  M_gsr    = GSR phasic peak > 1.5 × tonic-baseline
+  M_temp   = skin-temp drop > 0.4 °C from 5-minute average
+  M_spo2   = SpO2 < 92 %                 (crash / unconsciousness fallback)
+  M_semg   = sEMG envelope > 2 σ above resting   (clenched fist sustained > 4 s)
+
+if   popcount(markers) >= 2
+ AND not in_workout_mode
+ AND time_since_calibration > 24 h:
+       fire silent SOS
+</div>
+
+<table>
+  <thead><tr><th>Marker</th><th>Sensor</th><th>Why it fires during distress</th></tr></thead>
+  <tbody>
+    <tr><td><code class="inl">M_hr</code></td><td>PPG</td><td>Sympathetic surge &mdash; fear response spikes HR even when the person is held still.</td></tr>
+    <tr><td><code class="inl">M_gsr</code></td><td>GSR</td><td>Sweat-gland activation is the most reliable panic biomarker; can&rsquo;t be voluntarily suppressed.</td></tr>
+    <tr><td><code class="inl">M_temp</code></td><td>Thermopile</td><td>Peripheral vasoconstriction during shock drops skin temp before core temp moves.</td></tr>
+    <tr><td><code class="inl">M_spo2</code></td><td>PPG (red+IR)</td><td>Falls when restraint compromises breathing or after physical assault.</td></tr>
+    <tr><td><code class="inl">M_semg</code></td><td>sEMG</td><td>Clenched-fist tension &mdash; the involuntary fight-or-flight muscle response.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout pink">
+  <strong>The motion gate is what makes this safe to ship.</strong> Without it, two markers will
+  fire constantly during a run. The Volume III rule explicitly says &ldquo;heart-rate spike
+  <em>with no motion</em>.&rdquo; Honour it.
+</div>
+
+<!-- ========== 9 ========== -->
+<h2>9. Phone-Side Integration into the HearMe App</h2>
+<p>
+  Your repo already has every adjacent piece. The integration is one BLE bridge plus one fusion
+  module wired into the existing <code class="inl">executeSos()</code> path.
+</p>
+
+<h3>9.1 Dependencies (custom dev client only)</h3>
+<div class="arch">
+npx expo install react-native-ble-plx
+npx expo install expo-dev-client
+npx expo prebuild
+eas build --profile development     # one-time per platform
+</div>
+
+<p>Add to <code class="inl">app.json</code>:</p>
+
+<div class="arch">
+"plugins": [
+  ["react-native-ble-plx", {
+    "isBackgroundEnabled": true,
+    "modes": ["central"],
+    "bluetoothAlwaysPermission":
+      "HearMe pairs with your NeuroBand to detect distress."
+  }]
+]
+</div>
+
+<h3>9.2 New files (matching your existing <code class="inl">lib/*</code> style)</h3>
+<table>
+  <thead><tr><th>Path</th><th>Responsibility</th></tr></thead>
+  <tbody>
+    <tr><td><code class="inl">lib/neuroband-ble.ts</code></td><td>Connect, subscribe, decode BioFrame, expose a typed stream.</td></tr>
+    <tr><td><code class="inl">lib/neuroband-fusion.ts</code></td><td>Compute markers, run the 2-of-5 rule, emit a <code class="inl">'duress' | 'idle'</code> verdict.</td></tr>
+    <tr><td><code class="inl">lib/neuroband-pairing.ts</code></td><td>PSK + ECDH using <code class="inl">expo-crypto</code>; persists session key in <code class="inl">expo-secure-store</code>.</td></tr>
+    <tr><td><code class="inl">lib/neuroband-storage.ts</code></td><td>Serial number, baselines, calibration state, last-seen timestamp.</td></tr>
+  </tbody>
+</table>
+
+<h3>9.3 Provider wiring</h3>
+<p>
+  Mirror the existing <code class="inl">ShakeBridge</code> pattern in
+  <code class="inl">providers/HearMeProvider.tsx</code>:
+</p>
+
+<div class="arch">
+function NeuroBandBridge({ enabled, onDuress, onSilentTrigger }: Props) {
+  useEffect(() =&gt; {
+    if (!enabled) return;
+    const sub = NeuroBand.subscribe((frame) =&gt; {
+      const verdict = fuse(frame);              // 2-of-5 rule
+      if (verdict === 'duress')  onDuress();
+      if (frame.flags.tripleTap) onSilentTrigger();
+    });
+    return () =&gt; sub.remove();
+  }, [enabled, onDuress, onSilentTrigger]);
+  return null;
+}
+</div>
+
+<p>
+  Both handlers route into the existing <code class="inl">executeSos()</code> &mdash; but with
+  <code class="inl">skipSosConfirm = true</code> and <code class="inl">sirenEnabled = false</code>
+  for genuinely silent operation. <strong>Do not open an Alert dialog</strong> on duress &mdash;
+  that defeats the entire point.
+</p>
+
+<h3>9.4 Settings additions (<code class="inl">lib/types.ts</code>)</h3>
+<div class="arch">
+export type HearMeSettings = {
+  // …existing fields
+  neuroBandEnabled: boolean;
+  neuroBandSerial: string | null;
+  neuroBandWorkoutModeUntil: number | null;
+  neuroBandCalibratedAt: number | null;
+  neuroBandSensitivity: 'low' | 'normal' | 'high';
+};
+</div>
+
+<p>
+  PSK and session key live in <code class="inl">expo-secure-store</code> (same pattern as
+  <code class="inl">lib/duress.ts</code> uses for the duress PIN). Never put them in
+  <code class="inl">HearMeSettings</code>.
+</p>
+
+<h3>9.5 New screen</h3>
+<p>
+  <code class="inl">app/(main)/neuroband.tsx</code> &mdash; pair / unpair, live signal dashboard,
+  calibration progress, workout-mode toggle. Match the visual language of
+  <code class="inl">behavior-monitor.tsx</code> and <code class="inl">journey-monitor.tsx</code>.
+  Surface it from <code class="inl">app/(main)/(tabs)/safety.tsx</code> as a card next to Voice
+  Trigger.
+</p>
+
+<h3>9.6 Background operation</h3>
+<ul>
+  <li><strong>Android:</strong> declare <code class="inl">FOREGROUND_SERVICE_CONNECTED_DEVICE</code> and show a persistent &ldquo;NeuroBand monitoring&rdquo; notification.</li>
+  <li><strong>iOS:</strong> add <code class="inl">bluetooth-central</code> to <code class="inl">UIBackgroundModes</code>; iOS will keep the app suspended-but-resumable on BLE notify.</li>
+</ul>
+
+<!-- ========== 10 ========== -->
+<div class="page-break"></div>
+<h2>10. Evidence Trail &amp; Cloud Sync</h2>
+<p>
+  When NeuroBand fires SOS, append a <code class="inl">'bio'</code> evidence item alongside the
+  existing location stamp. Extend <code class="inl">lib/evidence-locker.ts</code>:
+</p>
+
+<div class="arch">
+session = addEvidenceItem(session, {
+  type: 'bio',
+  uri: null,
+  text: `NeuroBand duress: HR=${hr} bpm, GSR=${gsr} µS, ` +
+        `temp=${temp.toFixed(1)} °C, motion=${motion}`,
+  lat, lon,
+  alertId: null,
+  tags: ['sos', 'neuroband', `markers:${marker_bitmap}`],
+});
+</div>
+
+<p>
+  This gives you the legal chain &mdash; physiological signature &rarr; timestamp &rarr; location
+  &rarr; cloud sync &rarr; hash-chain anchor &mdash; already documented as court-admissible in
+  Volume III &sect;11. The marker bitmap (e.g. <code class="inl">markers:01101</code>) is what
+  forensics will care about: it explains <em>why</em> the system fired, not just that it fired.
+</p>
+
+<!-- ========== 11 ========== -->
+<h2>11. Calibration, Workout Mode &amp; False-Positive Control</h2>
+<table>
+  <thead><tr><th>Mechanism</th><th>What it does</th><th>How it&rsquo;s exposed</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>24-hour calibration window</td>
+      <td>For the first 24 h after pairing the band streams data but cannot fire SOS. Establishes per-user HR / GSR / temp baselines.</td>
+      <td>&ldquo;Learning your body&rdquo; onboarding card on the NeuroBand screen.</td>
+    </tr>
+    <tr>
+      <td>Workout mode</td>
+      <td>Disables the fusion engine for a user-set duration (default 1 h). Cap-touch override still works.</td>
+      <td>One-tap toggle; auto-prompts when IMU detects sustained run pattern for &gt; 5 min.</td>
+    </tr>
+    <tr>
+      <td>Sensitivity dial</td>
+      <td>Switches threshold from 2-of-5 (normal) to 3-of-5 (low) or HR&plusmn;15 bpm (high).</td>
+      <td><code class="inl">neuroBandSensitivity</code> in Settings.</td>
+    </tr>
+    <tr>
+      <td>Confirm-window for borderline events</td>
+      <td>If exactly 2 markers fire but motion class is ambiguous, the band buzzes once and waits 10 s for the user to swipe-cancel.</td>
+      <td>Haptic; auto-fires if no input. Volume III calls this &ldquo;reassurance loop &mdash; felt, not seen.&rdquo;</td>
+    </tr>
+    <tr>
+      <td>Adverse-event log</td>
+      <td>Every fire / cancel / mis-fire records a row to a local debug log. Used to retune thresholds.</td>
+      <td>Hidden behind a long-press on the NeuroBand screen header.</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ========== 12 ========== -->
+<h2>12. Privacy, Security &amp; Regulatory Posture</h2>
+<ul>
+  <li>PSK + ECDH pairing, AES-CCM on every frame, monotonic 32-bit counter &mdash; <em>not</em> a fixed PIN.</li>
+  <li>The band stores <strong>no PII</strong>. Serial number only. A confiscated band reveals nothing about its wearer.</li>
+  <li>Firmware OTA images are signed with the HearMe <strong>ed25519</strong> key &mdash; same key already mandated for the BLE Clip.</li>
+  <li>Raw waveforms <strong>never leave the band</strong>. Only computed features. A subpoena to the cloud cannot return PPG traces because they were never uploaded.</li>
+  <li>The HearMe app shows a persistent &ldquo;NeuroBand is monitoring&rdquo; status whenever the engine is armed. Hidden surveillance is a liability, not a feature.</li>
+  <li>Bio-data classification: under India&rsquo;s DPDP Act 2023 this is sensitive personal data. Store in Supabase with row-level security keyed to the user&rsquo;s auth ID, encrypted at rest.</li>
+  <li>Medical-device positioning: the band is a <strong>safety wearable, not a medical device</strong>. The app must not advertise diagnostic claims (e.g. &ldquo;detects atrial fibrillation&rdquo;) without CDSCO clearance.</li>
+</ul>
+
+<!-- ========== 13 ========== -->
+<div class="page-break"></div>
+<h2>13. Build, Test &amp; Validation Order</h2>
+<ol>
+  <li><strong>Wire the breadboard.</strong> nRF52840-DK + MAX30102 + Grove GSR + BMI270 on jumpers. Skip the enclosure entirely until step 7.</li>
+  <li><strong>Stream BioFrame to nRF Connect mobile.</strong> Verify the 20-byte struct decodes cleanly. Walk around, check counter increments, check no dropped notifies.</li>
+  <li><strong>Add <code class="inl">lib/neuroband-ble.ts</code></strong> with a debug screen that just plots live HR / GSR. Ignore fusion; this is plumbing only.</li>
+  <li><strong>Wear the breadboard for 24 h yourself.</strong> Capture HR baselines (rest, walk, run) and GSR baselines (cool, warm, sweaty). This is the dataset that tunes the thresholds.</li>
+  <li><strong>Tune the fusion thresholds</strong> with the captured data. The values printed in &sect;8 are starting points, not gospel. Expect to move them &plusmn;20%.</li>
+  <li><strong>Stage the duress trigger</strong> with a benign side-effect first: haptic buzz + console log. <em>Do not</em> wire <code class="inl">executeSos()</code> yet.</li>
+  <li><strong>Wire the real SOS path.</strong> Run the pre-flight: workout-mode lockout, calibration check, motion gate, sensitivity dial. Test with a tame contact list.</li>
+  <li><strong>Add the capacitive override</strong> last. It&rsquo;s the easiest path; if it&rsquo;s present in step 1 you&rsquo;ll lean on it and never validate fusion.</li>
+  <li><strong>PCB spin</strong> only after fusion accuracy is stable on breadboard. EasyEDA + JLCPCB ~&#8377;6,000 for 5 prototypes.</li>
+  <li><strong>Field pilot</strong> with 10 users for 2 weeks. Collect adverse-event log. Re-tune. Then ship.</li>
+</ol>
+
+<!-- ========== 14 ========== -->
+<h2>14. Cost Sheet &amp; Order List</h2>
+
+<h3>14.1 Per-band BOM (qty 100)</h3>
+<table>
+  <thead><tr><th>Category</th><th>Subtotal &#8377;</th></tr></thead>
+  <tbody>
+    <tr><td>MCU + radio (nRF52840 module)</td><td class="num">350</td></tr>
+    <tr><td>Bio-sensor stack (PPG + GSR + temp + IMU + sEMG)</td><td class="num">1,300</td></tr>
+    <tr><td>Haptic + cap-touch</td><td class="num">115</td></tr>
+    <tr><td>Power (battery + charger + buck + LDO)</td><td class="num">220</td></tr>
+    <tr><td>Enclosure + strap + LED</td><td class="num">215</td></tr>
+    <tr><td><strong>Total per band</strong></td><td class="num"><strong>~ 2,200</strong></td></tr>
+  </tbody>
+</table>
+
+<h3>14.2 Smallest viable starter cart</h3>
+<p>One-time outlay to get a working prototype on the bench this week:</p>
+<table>
+  <thead><tr><th>Item</th><th class="num">&#8377;</th></tr></thead>
+  <tbody>
+    <tr><td>nRF52840-DK</td><td class="num">4,500</td></tr>
+    <tr><td>J-Link EDU mini (spare)</td><td class="num">2,200</td></tr>
+    <tr><td>MAX30102 breakout</td><td class="num">180</td></tr>
+    <tr><td>Grove GSR v1.2 + Ag/AgCl pad pack (50)</td><td class="num">220</td></tr>
+    <tr><td>MAX30205 breakout</td><td class="num">160</td></tr>
+    <tr><td>BMI270 breakout</td><td class="num">140</td></tr>
+    <tr><td>DRV2605L + 10&times;3 mm LRA</td><td class="num">90</td></tr>
+    <tr><td>2&times; 3.7 V 110 mAh LiPo</td><td class="num">180</td></tr>
+    <tr><td>TP4056 USB-C charger module</td><td class="num">60</td></tr>
+    <tr><td>Jumper wires, 0.1&Prime; headers, breadboard</td><td class="num">300</td></tr>
+    <tr><td><strong>Starter total</strong></td><td class="num"><strong>~ 8,030</strong></td></tr>
+  </tbody>
+</table>
+
+<p>
+  Vendors: <strong>Robu.in</strong>, <strong>SiliconCraft</strong>, <strong>QuartzComponents</strong>
+  for India stock; <strong>DigiKey IN</strong> for the nRF52840 module if local supply is dry.
+</p>
+
+<!-- ========== 15 ========== -->
+<h2>15. 12-Week Delivery Roadmap</h2>
+<table>
+  <thead><tr><th>Week</th><th>Deliverable</th><th>Outcome</th></tr></thead>
+  <tbody>
+    <tr><td>1&ndash;2</td><td>Breadboard build, BioFrame streaming to nRF Connect</td><td>End-to-end BLE link proven</td></tr>
+    <tr><td>3</td><td><code class="inl">lib/neuroband-ble.ts</code> + debug plot screen in HearMe</td><td>App reads live HR / GSR; 24 h self-wear baselines captured</td></tr>
+    <tr><td>4</td><td>Fusion module + threshold tuning</td><td>2-of-5 rule firing on demand against staged scenarios</td></tr>
+    <tr><td>5</td><td>PSK + ECDH pairing flow + secure-store wiring</td><td>Production-grade crypto, parity with Tier-1 BLE Clip</td></tr>
+    <tr><td>6</td><td>Provider integration + new screen + Settings additions</td><td>Feature-complete on the phone side</td></tr>
+    <tr><td>7</td><td>Capacitive override + workout mode + sensitivity dial</td><td>False-positive controls all in place</td></tr>
+    <tr><td>8</td><td>Evidence-locker <code class="inl">'bio'</code> type + cloud sync</td><td>Court-admissible chain extends to bio-signature</td></tr>
+    <tr><td>9</td><td>PCB v1 layout, JLCPCB order, 5 prototype boards</td><td>Form factor moves from breadboard to wrist</td></tr>
+    <tr><td>10</td><td>Enclosure print + battery integration + IP67 gasket</td><td>Wearable prototype in hand</td></tr>
+    <tr><td>11</td><td>10-user closed pilot, adverse-event collection</td><td>Real-world false-positive rate measured</td></tr>
+    <tr><td>12</td><td>Threshold re-tune + firmware OTA pipeline + soft launch</td><td>NeuroBand v1 ready for D2C / NGO partnership ship</td></tr>
+  </tbody>
+</table>
+
+<div class="ship-pick">
+  <h3>What to do today</h3>
+  <p>
+    Place the &#8377;8,030 starter-cart order. While it&rsquo;s in transit, scaffold
+    <code class="inl">lib/neuroband-ble.ts</code> and the new screen so the moment the parts land
+    you can flash, pair, and see live HR on the phone the same evening. NeuroBand is the wearable
+    that finally lets HearMe protect the user when she cannot reach for her phone &mdash; ship it.
+  </p>
+</div>
+
+</body>
+</html>

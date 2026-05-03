@@ -29,7 +29,14 @@
       "Bash(node -e \"try { require.resolve\\('expo-auth-session'\\); console.log\\('installed'\\); } catch\\(e\\) { console.log\\('not installed'\\); }\")",
       "Bash(node -e ':*)",
       "Bash(node -e \"try { require.resolve\\('expo-contacts'\\); console.log\\('installed'\\); } catch\\(e\\) { console.log\\('not installed'\\); }\")",
-      "Bash(node -e \"try { require.resolve\\('expo-av'\\); console.log\\('installed'\\); } catch\\(e\\) { console.log\\('not installed'\\); }\")"
+      "Bash(node -e \"try { require.resolve\\('expo-av'\\); console.log\\('installed'\\); } catch\\(e\\) { console.log\\('not installed'\\); }\")",
+      "Bash(Select-Object Name)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\DebSarkar\\\\Desktop\\\\HearMe\" -Recurse -Directory)",
+      "Bash(Select-Object FullName)",
+      "Bash(xargs -I {} basename {})",
+      "Bash(npx tsc *)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(npm run *)"
     ]
   }
 }

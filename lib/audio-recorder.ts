@@ -34,36 +34,59 @@ export async function startRecording(): Promise<boolean> {
 }
 
 export async function stopRecording(): Promise<RecordingEntry | null> {
-  if (!currentRecording) return null;
+  const recording = currentRecording;
+  if (!recording) return null;
+  currentRecording = null;
+
+  // Snapshot duration BEFORE stop+unload — getStatusAsync after unload throws
+  // on some Android builds because the native object is already disposed.
+  let durationMs = 0;
   try {
-    await currentRecording.stopAndUnloadAsync();
-    const uri = currentRecording.getURI();
-    const status = await currentRecording.getStatusAsync();
-    currentRecording = null;
+    const status = await recording.getStatusAsync();
+    durationMs = status.durationMillis ?? 0;
+  } catch {
+    /* ignore — we'll save with duration 0 */
+  }
 
-    if (!uri) return null;
+  let uri: string | null = null;
+  try {
+    await recording.stopAndUnloadAsync();
+    uri = recording.getURI();
+  } catch (err) {
+    console.warn('[audio-recorder] stopAndUnload failed:', err);
+    // Try to recover the URI even if unload threw
+    try {
+      uri = recording.getURI();
+    } catch {
+      /* ignore */
+    }
+  }
 
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-    });
+  try {
+    await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
+  } catch {
+    /* ignore */
+  }
 
-    const entry: RecordingEntry = {
-      id: `rec-${Date.now()}`,
-      uri,
-      duration: status.durationMillis ?? 0,
-      timestamp: new Date().toISOString(),
-      label: `Recording ${new Date().toLocaleString()}`,
-    };
+  if (!uri) return null;
 
+  const entry: RecordingEntry = {
+    id: `rec-${Date.now()}`,
+    uri,
+    duration: durationMs,
+    timestamp: new Date().toISOString(),
+    label: `Recording ${new Date().toLocaleString()}`,
+  };
+
+  try {
     const history = await loadRecordings();
     history.unshift(entry);
     await AsyncStorage.setItem(KEY, JSON.stringify(history.slice(0, 30)));
-
-    return entry;
-  } catch {
-    currentRecording = null;
-    return null;
+  } catch (err) {
+    console.warn('[audio-recorder] failed to persist recording entry:', err);
   }
+
+  return entry;
 }
 
 export function isRecording(): boolean {

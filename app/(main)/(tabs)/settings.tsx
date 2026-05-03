@@ -418,6 +418,47 @@ export default function SettingsTab() {
           </View>
         </GlassCard>
 
+        {/* NeuroBand */}
+        <Text style={styles.section}>NeuroBand</Text>
+        <GlassCard style={styles.card}>
+          <Pressable
+            onPress={() => router.push('/neuroband')}
+            style={settingStyles.row}
+          >
+            <View
+              style={[
+                settingStyles.rowIcon,
+                { backgroundColor: colors.accentViolet + '18' },
+              ]}
+            >
+              <MaterialCommunityIcons
+                name="watch-variant"
+                size={20}
+                color={colors.accentViolet}
+              />
+            </View>
+            <View style={settingStyles.rowContent}>
+              <Text style={[settingStyles.rowTitle, bodyText]}>
+                Bio-signal silent trigger
+              </Text>
+              <Text style={[settingStyles.rowSub, bodyText]}>
+                {settings.neuroBandEnabled
+                  ? settings.neuroBandSerial
+                    ? `Armed · ${settings.neuroBandSerial}`
+                    : settings.neuroBandMockMode
+                      ? 'Armed · mock mode'
+                      : 'Armed · no band paired'
+                  : 'Pair a band, tune sensitivity, test mock mode'}
+              </Text>
+            </View>
+            <MaterialCommunityIcons
+              name="chevron-right"
+              size={22}
+              color={colors.textMuted}
+            />
+          </Pressable>
+        </GlassCard>
+
         {/* Voice Trigger */}
         <Text style={styles.section}>Voice Trigger</Text>
         <GlassCard style={styles.card}>

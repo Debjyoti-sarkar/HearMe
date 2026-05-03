@@ -131,40 +131,65 @@ export default function JourneyMonitorScreen() {
       return;
     }
     setLoading(true);
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Location is required for journey monitoring.');
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Location is required for journey monitoring.');
+        return;
+      }
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      const arrivalTime = new Date(Date.now() + duration * 60000).toISOString();
+
+      const newJourney: Journey = {
+        id: `j-${Date.now()}`,
+        destination: destination.trim(),
+        expectedArrivalTime: arrivalTime,
+        startTime: new Date().toISOString(),
+        startLat: loc.coords.latitude,
+        startLon: loc.coords.longitude,
+        checkIns: [],
+        status: 'active',
+        notifiedContacts: false,
+      };
+
+      await saveActiveJourney(newJourney);
+      setJourney(newJourney);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (err) {
+      Alert.alert(
+        'Could not start journey',
+        err instanceof Error
+          ? `Location lookup failed: ${err.message}`
+          : 'Could not get your current location. Try again outdoors or with a stronger GPS signal.',
+      );
+    } finally {
       setLoading(false);
-      return;
     }
-    const loc = await Location.getCurrentPositionAsync({});
-    const arrivalTime = new Date(Date.now() + duration * 60000).toISOString();
-
-    const newJourney: Journey = {
-      id: `j-${Date.now()}`,
-      destination: destination.trim(),
-      expectedArrivalTime: arrivalTime,
-      startTime: new Date().toISOString(),
-      startLat: loc.coords.latitude,
-      startLon: loc.coords.longitude,
-      checkIns: [],
-      status: 'active',
-      notifiedContacts: false,
-    };
-
-    await saveActiveJourney(newJourney);
-    setJourney(newJourney);
-    setLoading(false);
-    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   };
 
   const handleCheckIn = async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') return;
-    const loc = await Location.getCurrentPositionAsync({});
-    const updated = await addCheckIn(loc.coords.latitude, loc.coords.longitude);
-    if (updated) setJourney(updated);
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Location is required to check in.');
+        return;
+      }
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      const updated = await addCheckIn(loc.coords.latitude, loc.coords.longitude);
+      if (updated) setJourney(updated);
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch (err) {
+      Alert.alert(
+        'Check-in failed',
+        err instanceof Error
+          ? err.message
+          : 'Could not get your current location. Try again in a moment.',
+      );
+    }
   };
 
   const endJourney = async () => {
