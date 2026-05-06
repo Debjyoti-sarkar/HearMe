@@ -20,13 +20,17 @@ import { GradientBackground } from '../../../components/GradientBackground';
 import { GlassCard } from '../../../components/GlassCard';
 import { PrimaryButton } from '../../../components/PrimaryButton';
 import { radii } from '../../../constants/theme';
+import { useScreenAnnounce } from '../../../hooks/useScreenAnnounce';
 import { useThemedStyles } from '../../../hooks/useThemedStyles';
 import { clearDemoAuth } from '../../../lib/demo-auth';
+import { useLanguage } from '../../../lib/i18n';
 import { isSirenPlaying, stopSiren } from '../../../lib/siren';
+import { vt } from '../../../lib/voice-guide';
 import { useAccessibility } from '../../../providers/AccessibilityProvider';
 import { useAuth } from '../../../providers/AuthProvider';
 import { useHearMe } from '../../../providers/HearMeProvider';
 import { useTheme, type ThemeColors } from '../../../providers/ThemeProvider';
+import { useVoiceGuide } from '../../../providers/VoiceGuideProvider';
 import * as Session from '../../../lib/session';
 import {
   autoReversePinFor,
@@ -76,11 +80,19 @@ function RowSwitch({
 }
 
 export default function SettingsTab() {
+  useScreenAnnounce('screenSettings', 'hintSettings');
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const { ready, settings, patchSettings } = useHearMe();
   const { signOut: doSignOut } = useAuth();
   const { oneHandedShift, bodyText, headingText } = useAccessibility();
+  const { lang } = useLanguage();
+  const {
+    settings: voiceSettings,
+    patchSettings: patchVoiceSettings,
+    speakKey,
+    speechAvailable,
+  } = useVoiceGuide();
   const { colors: tc } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const settingStyles = useThemedStyles(makeSettingStyles);
@@ -593,6 +605,139 @@ export default function SettingsTab() {
           />
         </GlassCard>
 
+        {/* Voice Guide */}
+        <Text style={styles.section}>{vt(lang, 'voiceGuide')}</Text>
+        <GlassCard style={styles.card}>
+          <RowSwitch
+            title={vt(lang, 'voiceGuide')}
+            subtitle={vt(lang, 'voiceGuideDesc')}
+            icon="microphone-message"
+            iconColor={tc.accentViolet}
+            value={voiceSettings.enabled}
+            onValueChange={(v) => {
+              patchVoiceSettings({ enabled: v });
+              if (v) {
+                // Speak the intro on the next tick so the new setting is live.
+                setTimeout(() => speakKey('introHint'), 80);
+              }
+            }}
+          />
+          <RowSwitch
+            title={vt(lang, 'announceScreens')}
+            subtitle={vt(lang, 'announceScreensDesc')}
+            icon="bullhorn-variant"
+            iconColor={tc.accentPink}
+            value={voiceSettings.announceScreens}
+            disabled={!voiceSettings.enabled}
+            onValueChange={(v) => patchVoiceSettings({ announceScreens: v })}
+          />
+          <RowSwitch
+            title={vt(lang, 'announceButtons')}
+            subtitle={vt(lang, 'announceButtonsDesc')}
+            icon="gesture-tap-button"
+            iconColor={tc.accentCyan}
+            value={voiceSettings.announceButtons}
+            disabled={!voiceSettings.enabled}
+            onValueChange={(v) => patchVoiceSettings({ announceButtons: v })}
+          />
+          <RowSwitch
+            title={vt(lang, 'speakIntro')}
+            subtitle={vt(lang, 'commandPaletteHint')}
+            icon="message-text-outline"
+            iconColor={tc.accentIndigo}
+            value={voiceSettings.speakIntro}
+            disabled={!voiceSettings.enabled}
+            onValueChange={(v) => patchVoiceSettings({ speakIntro: v })}
+          />
+          <View style={settingStyles.row}>
+            <View style={[settingStyles.rowIcon, { backgroundColor: tc.accentEmerald + '18' }]}>
+              <MaterialCommunityIcons name="speedometer" size={20} color={tc.accentEmerald} />
+            </View>
+            <View style={settingStyles.rowContent}>
+              <Text style={[settingStyles.rowTitle, bodyText]}>{vt(lang, 'speakRate')}</Text>
+              <Text style={[settingStyles.rowSub, bodyText]}>
+                {voiceSettings.rate.toFixed(2)}×
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => patchVoiceSettings({ rate: voiceSettings.rate - 0.1 })}
+              disabled={!voiceSettings.enabled || voiceSettings.rate <= 0.5}
+              style={({ pressed }) => [
+                styles.stepBtn,
+                pressed && { opacity: 0.7 },
+                (!voiceSettings.enabled || voiceSettings.rate <= 0.5) && { opacity: 0.4 },
+              ]}
+            >
+              <MaterialCommunityIcons name="minus" size={16} color={tc.text} />
+            </Pressable>
+            <Pressable
+              onPress={() => patchVoiceSettings({ rate: voiceSettings.rate + 0.1 })}
+              disabled={!voiceSettings.enabled || voiceSettings.rate >= 1.5}
+              style={({ pressed }) => [
+                styles.stepBtn,
+                pressed && { opacity: 0.7 },
+                (!voiceSettings.enabled || voiceSettings.rate >= 1.5) && { opacity: 0.4 },
+              ]}
+            >
+              <MaterialCommunityIcons name="plus" size={16} color={tc.text} />
+            </Pressable>
+          </View>
+          <View style={settingStyles.row}>
+            <View style={[settingStyles.rowIcon, { backgroundColor: tc.accentAmber + '18' }]}>
+              <MaterialCommunityIcons name="tune-vertical" size={20} color={tc.accentAmber} />
+            </View>
+            <View style={settingStyles.rowContent}>
+              <Text style={[settingStyles.rowTitle, bodyText]}>{vt(lang, 'speakPitch')}</Text>
+              <Text style={[settingStyles.rowSub, bodyText]}>
+                {voiceSettings.pitch.toFixed(2)}×
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => patchVoiceSettings({ pitch: voiceSettings.pitch - 0.1 })}
+              disabled={!voiceSettings.enabled || voiceSettings.pitch <= 0.5}
+              style={({ pressed }) => [
+                styles.stepBtn,
+                pressed && { opacity: 0.7 },
+                (!voiceSettings.enabled || voiceSettings.pitch <= 0.5) && { opacity: 0.4 },
+              ]}
+            >
+              <MaterialCommunityIcons name="minus" size={16} color={tc.text} />
+            </Pressable>
+            <Pressable
+              onPress={() => patchVoiceSettings({ pitch: voiceSettings.pitch + 0.1 })}
+              disabled={!voiceSettings.enabled || voiceSettings.pitch >= 1.5}
+              style={({ pressed }) => [
+                styles.stepBtn,
+                pressed && { opacity: 0.7 },
+                (!voiceSettings.enabled || voiceSettings.pitch >= 1.5) && { opacity: 0.4 },
+              ]}
+            >
+              <MaterialCommunityIcons name="plus" size={16} color={tc.text} />
+            </Pressable>
+          </View>
+          <Pressable
+            onPress={() => speakKey('introHint')}
+            disabled={!voiceSettings.enabled}
+            style={({ pressed }) => [
+              styles.previewBtn,
+              pressed && { opacity: 0.85 },
+              !voiceSettings.enabled && { opacity: 0.4 },
+            ]}
+          >
+            <LinearGradient
+              colors={['#a78bfa', '#ec4899']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.previewGrad}
+            >
+              <MaterialCommunityIcons name="play-circle" size={18} color="#fff" />
+              <Text style={styles.previewText}>
+                {speechAvailable ? vt(lang, 'speakIntro') : vt(lang, 'noSpeechEngine')}
+              </Text>
+            </LinearGradient>
+          </Pressable>
+        </GlassCard>
+
         {/* Account */}
         <Text style={styles.section}>Account</Text>
         <PrimaryButton
@@ -752,6 +897,33 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     color: c.text,
     fontSize: 20,
     fontWeight: '700',
+  },
+  stepBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 6,
+  },
+  previewBtn: {
+    marginVertical: 10,
+    borderRadius: 14,
+    overflow: 'hidden',
+    alignSelf: 'flex-start',
+  },
+  previewGrad: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  previewText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 13,
   },
   subRow: {
     paddingVertical: 14,

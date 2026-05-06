@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GradientBackground } from '../../components/GradientBackground';
 import { GlassCard } from '../../components/GlassCard';
+import { useScreenAnnounce } from '../../hooks/useScreenAnnounce';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { useTheme, type ThemeColors } from '../../providers/ThemeProvider';
 import { INDIA_HELPLINES, type Helpline } from '../../constants/helplines';
@@ -28,6 +29,7 @@ const GRADIENTS: Record<string, [string, string]> = {
 };
 
 export default function HelplinesScreen() {
+  useScreenAnnounce('screenHelplines', 'hintHelplines');
   const insets = useSafeAreaInsets();
   const { colors: tc } = useTheme();
   const styles = useThemedStyles(makeStyles);

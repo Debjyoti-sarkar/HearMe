@@ -20,7 +20,9 @@ import { GlassCard } from '../../../components/GlassCard';
 import { SOSButton } from '../../../components/SOSButton';
 import { QuickAction } from '../../../components/QuickAction';
 import { StatusBadge } from '../../../components/StatusBadge';
+import { useScreenAnnounce } from '../../../hooks/useScreenAnnounce';
 import { useThemedStyles } from '../../../hooks/useThemedStyles';
+import { useVoiceGuide } from '../../../providers/VoiceGuideProvider';
 import { loadLocalAvatar } from '../../../lib/app-data';
 import { shareLocationWhatsApp } from '../../../lib/emergency-sms';
 import { useAccessibility } from '../../../providers/AccessibilityProvider';
@@ -94,6 +96,7 @@ function NbKpi({
 }
 
 export default function HomeTab() {
+  useScreenAnnounce('screenHome', 'hintHome');
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const {
@@ -106,6 +109,7 @@ export default function HomeTab() {
     neuroBand,
   } = useHearMe();
   const { profile, refreshProfile } = useAuth();
+  const { announceAction } = useVoiceGuide();
   const { oneHandedShift, dyslexiaFont, bodyText, headingText } = useAccessibility();
   const { colors: tc } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -189,6 +193,7 @@ export default function HomeTab() {
 
   const doSos = async () => {
     setSosActive(true);
+    announceAction('sosTriggered');
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
     const code = generateSafetyCode();
@@ -410,13 +415,17 @@ export default function HomeTab() {
             icon="phone-alert"
             label="Emergency Call"
             gradient={['#ef4444', '#dc2626']}
-            onPress={() => void callEmergencyLine()}
+            onPress={() => {
+              announceAction('callingEmergency');
+              void callEmergencyLine();
+            }}
           />
           <QuickAction
             icon="map-marker-radius"
             label="Share Location"
             gradient={['#3b82f6', '#2563eb']}
             onPress={() => {
+              announceAction('sharingLocation');
               Alert.alert('Share Location', 'Choose how to share your location', [
                 {
                   text: 'SMS',

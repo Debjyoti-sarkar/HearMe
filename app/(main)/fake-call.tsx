@@ -6,9 +6,12 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useScreenAnnounce } from '../../hooks/useScreenAnnounce';
+
 const COUNTDOWN_SEC = 8;
 
 export default function FakeCallScreen() {
+  useScreenAnnounce('screenFakeCall', 'hintFakeCall');
   const insets = useSafeAreaInsets();
   const [phase, setPhase] = useState<'count' | 'ringing' | 'done'>('count');
   const [sec, setSec] = useState(COUNTDOWN_SEC);

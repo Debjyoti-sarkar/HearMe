@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GradientBackground } from '../../components/GradientBackground';
 import { GlassCard } from '../../components/GlassCard';
 import { radii } from '../../constants/theme';
+import { useScreenAnnounce } from '../../hooks/useScreenAnnounce';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { useTheme, type ThemeColors } from '../../providers/ThemeProvider';
 import {
@@ -55,6 +56,7 @@ function shortHash(h: string | null): string {
 }
 
 export default function EvidenceLockerScreen() {
+  useScreenAnnounce('screenEvidenceLocker', 'hintEvidenceLocker');
   const insets = useSafeAreaInsets();
   const { colors: tc } = useTheme();
   const styles = useThemedStyles(makeStyles);

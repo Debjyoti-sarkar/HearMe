@@ -17,6 +17,7 @@ import { GradientBackground } from '../../components/GradientBackground';
 import { GlassCard } from '../../components/GlassCard';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { radii } from '../../constants/theme';
+import { useScreenAnnounce } from '../../hooks/useScreenAnnounce';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { describeRemaining } from '../../lib/timer-checkin';
 import { useHearMe } from '../../providers/HearMeProvider';
@@ -30,6 +31,7 @@ const PRESETS = [
 ];
 
 export default function CheckInScreen() {
+  useScreenAnnounce('screenCheckIn', 'hintCheckIn');
   const insets = useSafeAreaInsets();
   const { settings, startCheckIn, cancelCheckIn } = useHearMe();
   const { colors: tc } = useTheme();

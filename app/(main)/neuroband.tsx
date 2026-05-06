@@ -22,6 +22,7 @@ import { GlassCard } from '../../components/GlassCard';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { OutlineButton } from '../../components/OutlineButton';
 import { radii } from '../../constants/theme';
+import { useScreenAnnounce } from '../../hooks/useScreenAnnounce';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { useTheme, type ThemeColors } from '../../providers/ThemeProvider';
 import { useHearMe } from '../../providers/HearMeProvider';
@@ -78,6 +79,7 @@ function getMarkerLabels(c: ThemeColors): Record<Marker, MarkerLabel> {
 }
 
 export default function NeuroBandScreen() {
+  useScreenAnnounce('screenNeuroband', 'hintNeuroband');
   const insets = useSafeAreaInsets();
   const { settings, patchSettings, neuroBand, triggerNeuroBandSos } = useHearMe();
   const { colors: tc } = useTheme();

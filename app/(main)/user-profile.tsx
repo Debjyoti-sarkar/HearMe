@@ -22,6 +22,7 @@ import { GradientBackground } from '../../components/GradientBackground';
 import { GlassCard } from '../../components/GlassCard';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { radii } from '../../constants/theme';
+import { useScreenAnnounce } from '../../hooks/useScreenAnnounce';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { saveLocalAvatar, loadLocalAvatar, clearLocalAvatar } from '../../lib/app-data';
 import { clearDemoAuth } from '../../lib/demo-auth';
@@ -31,6 +32,7 @@ import { useTheme, type ThemeColors } from '../../providers/ThemeProvider';
 import * as Session from '../../lib/session';
 
 export default function UserProfileScreen() {
+  useScreenAnnounce('screenUserProfile', 'hintUserProfile');
   const insets = useSafeAreaInsets();
   const { user, profile, refreshProfile, signOut } = useAuth();
   const { colors: tc } = useTheme();

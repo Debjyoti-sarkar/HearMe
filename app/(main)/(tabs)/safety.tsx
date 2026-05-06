@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GradientBackground } from '../../../components/GradientBackground';
 import { GlassCard } from '../../../components/GlassCard';
+import { useScreenAnnounce } from '../../../hooks/useScreenAnnounce';
 import { useThemedStyles } from '../../../hooks/useThemedStyles';
 import { useAccessibility } from '../../../providers/AccessibilityProvider';
 import { useTheme, type ThemeColors } from '../../../providers/ThemeProvider';
@@ -140,6 +141,7 @@ const TOPICS: Topic[] = [
 ];
 
 export default function SafetyTab() {
+  useScreenAnnounce('screenSafety', 'hintSafety');
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const { oneHandedShift, bodyText, headingText } = useAccessibility();

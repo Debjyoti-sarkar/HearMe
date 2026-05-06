@@ -11,6 +11,7 @@ import { GradientBackground } from '../../../components/GradientBackground';
 import { GlassCard } from '../../../components/GlassCard';
 import { StatusBadge } from '../../../components/StatusBadge';
 import { radii } from '../../../constants/theme';
+import { useScreenAnnounce } from '../../../hooks/useScreenAnnounce';
 import { useThemedStyles } from '../../../hooks/useThemedStyles';
 import { useAccessibility } from '../../../providers/AccessibilityProvider';
 import { useHearMe } from '../../../providers/HearMeProvider';
@@ -21,6 +22,7 @@ import { generateSafetyCode } from '../../../lib/siren';
 const COUNTDOWN_SECONDS = 15;
 
 export default function SpeedTab() {
+  useScreenAnnounce('screenSpeed', 'hintSpeed');
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const { settings, contacts, executeSos } = useHearMe();

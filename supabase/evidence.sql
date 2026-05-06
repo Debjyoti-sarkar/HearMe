@@ -35,7 +35,7 @@ create table if not exists public.evidence_items (
   session_id uuid not null references public.evidence_sessions(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
   seq int not null,
-  type text not null check (type in ('photo','audio','location','text')),
+  type text not null check (type in ('photo','audio','location','text','bio')),
   text text,
   lat double precision,
   lon double precision,

@@ -20,6 +20,7 @@ import { GradientBackground } from '../../components/GradientBackground';
 import { GlassCard } from '../../components/GlassCard';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { radii } from '../../constants/theme';
+import { useScreenAnnounce } from '../../hooks/useScreenAnnounce';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { useTheme, type ThemeColors } from '../../providers/ThemeProvider';
 import { useHearMe } from '../../providers/HearMeProvider';
@@ -40,6 +41,7 @@ import {
 const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
 
 export default function JourneyMonitorScreen() {
+  useScreenAnnounce('screenJourneyMonitor', 'hintJourneyMonitor');
   const insets = useSafeAreaInsets();
   const { contacts, executeSos } = useHearMe();
   const { colors: tc } = useTheme();

@@ -3,11 +3,13 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { GestureTracker } from '../../components/GestureTracker';
+import { VoiceGuideOverlay } from '../../components/VoiceGuideOverlay';
 import { isDemoAuthenticated } from '../../lib/demo-auth';
 import { AccessibilityProvider } from '../../providers/AccessibilityProvider';
 import { useAuth } from '../../providers/AuthProvider';
 import { HearMeProvider, useHearMe } from '../../providers/HearMeProvider';
 import { ThemeProvider, useTheme } from '../../providers/ThemeProvider';
+import { VoiceGuideProvider } from '../../providers/VoiceGuideProvider';
 import LockScreen from '../lock';
 import DisguiseScreen from '../disguise';
 
@@ -81,9 +83,12 @@ function MainStack() {
     <HearMeProvider>
       <SettingsBridge>
       <LockGate>
-        <GestureTracker>
-          <ThemedStack />
-        </GestureTracker>
+        <VoiceGuideProvider>
+          <GestureTracker>
+            <ThemedStack />
+          </GestureTracker>
+          <VoiceGuideOverlay />
+        </VoiceGuideProvider>
       </LockGate>
       </SettingsBridge>
     </HearMeProvider>

@@ -20,6 +20,7 @@ import { GradientBackground } from '../../../components/GradientBackground';
 import { GlassCard } from '../../../components/GlassCard';
 import { PrimaryButton } from '../../../components/PrimaryButton';
 import { radii } from '../../../constants/theme';
+import { useScreenAnnounce } from '../../../hooks/useScreenAnnounce';
 import { useThemedStyles } from '../../../hooks/useThemedStyles';
 import type { EmergencyContact } from '../../../lib/types';
 import { useAccessibility } from '../../../providers/AccessibilityProvider';
@@ -36,6 +37,7 @@ const AVATAR_COLORS: [string, string][] = [
 ];
 
 export default function ContactsTab() {
+  useScreenAnnounce('screenContacts', 'hintContacts');
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const { ready, contacts, upsertContact, removeContact } = useHearMe();
