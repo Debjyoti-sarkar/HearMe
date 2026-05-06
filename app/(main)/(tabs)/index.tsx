@@ -3,7 +3,7 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Image,
@@ -17,11 +17,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GradientBackground } from '../../../components/GradientBackground';
 import { GlassCard } from '../../../components/GlassCard';
+import { NavigationGuide, type NavigationGuideHandle } from '../../../components/NavigationGuide';
 import { SOSButton } from '../../../components/SOSButton';
 import { QuickAction } from '../../../components/QuickAction';
 import { StatusBadge } from '../../../components/StatusBadge';
 import { useScreenAnnounce } from '../../../hooks/useScreenAnnounce';
 import { useThemedStyles } from '../../../hooks/useThemedStyles';
+import { setNavGuideRef } from '../../../lib/nav-guide-ref';
 import { useVoiceGuide } from '../../../providers/VoiceGuideProvider';
 import { loadLocalAvatar } from '../../../lib/app-data';
 import { shareLocationWhatsApp } from '../../../lib/emergency-sms';
@@ -113,6 +115,11 @@ export default function HomeTab() {
   const { oneHandedShift, dyslexiaFont, bodyText, headingText } = useAccessibility();
   const { colors: tc } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const navGuideRef = useRef<NavigationGuideHandle | null>(null);
+  useEffect(() => {
+    setNavGuideRef(navGuideRef.current);
+    return () => setNavGuideRef(null);
+  }, []);
   const [sosActive, setSosActive] = useState(false);
   const [localAvatar, setLocalAvatar] = useState<string | null>(null);
   const [sirenActive, setSirenActive] = useState(false);
@@ -258,6 +265,7 @@ export default function HomeTab() {
   }
 
   return (
+    <>
     <GradientBackground>
       <ScrollView
         contentContainerStyle={[
@@ -600,6 +608,8 @@ export default function HomeTab() {
         </GlassCard>
       </ScrollView>
     </GradientBackground>
+    <NavigationGuide ref={navGuideRef} />
+    </>
   );
 }
 

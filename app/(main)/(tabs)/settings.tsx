@@ -24,6 +24,8 @@ import { useScreenAnnounce } from '../../../hooks/useScreenAnnounce';
 import { useThemedStyles } from '../../../hooks/useThemedStyles';
 import { clearDemoAuth } from '../../../lib/demo-auth';
 import { useLanguage } from '../../../lib/i18n';
+import { navUiText } from '../../../lib/nav-guide';
+import { openNavGuide } from '../../../lib/nav-guide-ref';
 import { isSirenPlaying, stopSiren } from '../../../lib/siren';
 import { vt } from '../../../lib/voice-guide';
 import { useAccessibility } from '../../../providers/AccessibilityProvider';
@@ -735,6 +737,40 @@ export default function SettingsTab() {
                 {speechAvailable ? vt(lang, 'speakIntro') : vt(lang, 'noSpeechEngine')}
               </Text>
             </LinearGradient>
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              // Modal renders system-level so the home tab doesn't need
+              // to be focused, but it does need to be mounted so the
+              // imperative ref is registered. Tabs navigator keeps the
+              // home tab mounted from first launch, so this is safe —
+              // openNavGuide() is a no-op only on the very first paint.
+              const opened = openNavGuide();
+              if (!opened) {
+                // Fallback: navigate to home so the ref gets registered
+                // by useEffect, then open shortly after.
+                router.push('/(main)/(tabs)');
+                setTimeout(() => openNavGuide(), 250);
+              }
+            }}
+            style={settingStyles.row}
+          >
+            <View style={[settingStyles.rowIcon, { backgroundColor: tc.accentPink + '18' }]}>
+              <MaterialCommunityIcons name="map-legend" size={20} color={tc.accentPink} />
+            </View>
+            <View style={settingStyles.rowContent}>
+              <Text style={[settingStyles.rowTitle, bodyText]}>
+                {navUiText(lang, 'replayTour')}
+              </Text>
+              <Text style={[settingStyles.rowSub, bodyText]}>
+                {navUiText(lang, 'replayTourDesc')}
+              </Text>
+            </View>
+            <MaterialCommunityIcons
+              name="chevron-right"
+              size={20}
+              color={tc.textMuted}
+            />
           </Pressable>
         </GlassCard>
 
