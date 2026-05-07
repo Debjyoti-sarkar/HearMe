@@ -25,6 +25,7 @@ import { GlassCard } from '../../components/GlassCard';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { useScreenAnnounce } from '../../hooks/useScreenAnnounce';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { useHearMe } from '../../providers/HearMeProvider';
 import { useTheme, type ThemeColors } from '../../providers/ThemeProvider';
 
 import {
@@ -51,16 +52,23 @@ import {
   type DetectionResult,
   getPrimaryDetection,
 } from '../../lib/behavior-detector';
+import {
+  type BbaPrediction,
+  hasEnoughSignal,
+  predict as bbaPredict,
+} from '../../lib/bba-model';
 
 export default function BehaviorMonitorScreen() {
   useScreenAnnounce('screenBehaviorMonitor', 'hintBehaviorMonitor');
   const insets = useSafeAreaInsets();
   const { colors: tc } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { forceReauthChallenge } = useHearMe();
   const [session, setSession] = useState<BehaviorSession | null>(null);
   const [baseline, setBaseline] = useState<BehaviorBaseline | null>(null);
   const [trustResult, setTrustResult] = useState<TrustResult | null>(null);
   const [detection, setDetection] = useState<DetectionResult | null>(null);
+  const [bba, setBba] = useState<BbaPrediction | null>(null);
   const [isTracking, setIsTracking] = useState(false);
   const [sessionCount, setSessionCount] = useState(0);
 
@@ -120,6 +128,9 @@ export default function BehaviorMonitorScreen() {
       setTrustResult(trust);
       const det = getPrimaryDetection(sess, bl);
       setDetection(det);
+      // Run the BBA model when there's enough signal — otherwise the score
+      // is dominated by zero-padding and not meaningful.
+      setBba(hasEnoughSignal(sess) ? bbaPredict(sess) : null);
 
       // Haptic on concerning detection
       if (trust.level === 'alert' || trust.level === 'suspect') {
@@ -315,6 +326,65 @@ export default function BehaviorMonitorScreen() {
           </GlassCard>
         )}
 
+        {/* BBA model live score */}
+        {isTracking && (
+          <GlassCard variant="elevated" style={styles.bbaCard}>
+            <View style={styles.bbaHeader}>
+              <MaterialCommunityIcons
+                name="brain"
+                size={18}
+                color={tc.accentViolet}
+              />
+              <Text style={styles.bbaTitle}>BBA fraud model</Text>
+              {bba?.unusual && (
+                <View style={styles.bbaBadge}>
+                  <Text style={styles.bbaBadgeText}>UNUSUAL</Text>
+                </View>
+              )}
+            </View>
+            {bba ? (
+              <>
+                <View style={styles.bbaRow}>
+                  <Text style={styles.bbaLabel}>Risk score</Text>
+                  <Text
+                    style={[
+                      styles.bbaValue,
+                      { color: bba.unusual ? tc.danger : tc.success },
+                    ]}
+                  >
+                    {(bba.probability * 100).toFixed(1)}%
+                  </Text>
+                </View>
+                <View style={styles.bbaBarTrack}>
+                  <View
+                    style={[
+                      styles.bbaBarFill,
+                      {
+                        width: `${Math.min(100, bba.probability * 100)}%`,
+                        backgroundColor: bba.unusual ? tc.danger : tc.success,
+                      },
+                    ]}
+                  />
+                  <View
+                    style={[
+                      styles.bbaThreshMark,
+                      { left: `${bba.threshold * 100}%` },
+                    ]}
+                  />
+                </View>
+                <Text style={styles.bbaFootnote}>
+                  Re-auth fires when score &gt; {(bba.threshold * 100).toFixed(0)}%
+                  · 19 features · on-device
+                </Text>
+              </>
+            ) : (
+              <Text style={styles.bbaIdle}>
+                Need at least 8 s and 6 taps to score this session.
+              </Text>
+            )}
+          </GlassCard>
+        )}
+
         {/* Start/Stop Button */}
         <View style={styles.actionRow}>
           {!isTracking ? (
@@ -330,6 +400,24 @@ export default function BehaviorMonitorScreen() {
             />
           )}
         </View>
+
+        {/* Manual re-auth test — verifies the gate UI without needing
+            real unusual behaviour to occur. */}
+        <Pressable
+          onPress={() =>
+            forceReauthChallenge(
+              'Manual test of the re-auth gate from Behavior Monitor.',
+            )
+          }
+          style={styles.testReauthBtn}
+        >
+          <MaterialCommunityIcons
+            name="shield-key-outline"
+            size={16}
+            color={tc.warning}
+          />
+          <Text style={styles.testReauthText}>Test re-auth gate</Text>
+        </Pressable>
 
         {/* Session Stats */}
         {stats && (
@@ -587,8 +675,78 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   normalRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   normalText: { fontSize: 14, fontWeight: '700', color: c.success },
 
+  // BBA card
+  bbaCard: { padding: 16, marginBottom: 16 },
+  bbaHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  bbaTitle: { fontSize: 14, fontWeight: '800', color: c.text, flex: 1 },
+  bbaBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    backgroundColor: 'rgba(239,68,68,0.18)',
+  },
+  bbaBadgeText: {
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 1.2,
+    color: c.danger,
+  },
+  bbaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 8,
+  },
+  bbaLabel: { fontSize: 12, color: c.textMuted, fontWeight: '600' },
+  bbaValue: { fontSize: 22, fontWeight: '900', letterSpacing: -0.5 },
+  bbaBarTrack: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    overflow: 'hidden',
+    position: 'relative',
+    marginBottom: 8,
+  },
+  bbaBarFill: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    borderRadius: 4,
+  },
+  bbaThreshMark: {
+    position: 'absolute',
+    top: -2,
+    bottom: -2,
+    width: 2,
+    backgroundColor: c.warning,
+    opacity: 0.7,
+  },
+  bbaFootnote: { fontSize: 11, color: c.textSecondary, lineHeight: 15 },
+  bbaIdle: { fontSize: 12, color: c.textMuted, lineHeight: 18 },
+
   // Action
-  actionRow: { marginBottom: 24 },
+  actionRow: { marginBottom: 12 },
+  testReauthBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(251,191,36,0.3)',
+    backgroundColor: 'rgba(251,191,36,0.08)',
+    alignSelf: 'center',
+    marginBottom: 24,
+  },
+  testReauthText: { fontSize: 12, color: c.warning, fontWeight: '700' },
 
   // Section
   sectionLabel: {

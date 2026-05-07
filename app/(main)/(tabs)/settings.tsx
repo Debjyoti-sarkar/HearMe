@@ -439,6 +439,21 @@ export default function SettingsTab() {
           </View>
         </GlassCard>
 
+        {/* BBA — Behavioural Biometric Authentication */}
+        <Text style={styles.section}>Unusual-activity re-auth</Text>
+        <GlassCard style={styles.card}>
+          <RowSwitch
+            title="On-device BBA model"
+            subtitle="Re-prompt for PIN or fingerprint when interaction patterns look unusual"
+            icon="brain"
+            iconColor={tc.accentViolet}
+            value={settings.bbaMonitoringEnabled}
+            onValueChange={(v) =>
+              void patchSettings({ bbaMonitoringEnabled: v })
+            }
+          />
+        </GlassCard>
+
         {/* NeuroBand */}
         <Text style={styles.section}>NeuroBand</Text>
         <GlassCard style={styles.card}>

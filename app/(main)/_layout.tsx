@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { GestureTracker } from '../../components/GestureTracker';
+import { ReauthGate } from '../../components/ReauthGate';
 import { VoiceGuideOverlay } from '../../components/VoiceGuideOverlay';
 import { isDemoAuthenticated } from '../../lib/demo-auth';
 import { AccessibilityProvider } from '../../providers/AccessibilityProvider';
@@ -38,10 +39,20 @@ function SettingsBridge({ children }: { children: React.ReactNode }) {
 }
 
 function LockGate({ children }: { children: React.ReactNode }) {
-  const { ready, locked, settings } = useHearMe();
+  const { ready, locked, settings, reauthChallenge, clearReauthChallenge } =
+    useHearMe();
   if (!ready) return null;
   if (locked) {
     return settings.disguiseEnabled ? <DisguiseScreen /> : <LockScreen />;
+  }
+  if (reauthChallenge) {
+    return (
+      <ReauthGate
+        reason={reauthChallenge.reason}
+        probability={reauthChallenge.probability}
+        onPassed={() => void clearReauthChallenge()}
+      />
+    );
   }
   return <>{children}</>;
 }

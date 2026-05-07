@@ -52,6 +52,17 @@ export type HearMeSettings = {
    * into the running app (Expo Go).
    */
   neuroBandMockMode: boolean;
+  /**
+   * BBA — Behavioural Biometric Authentication. When enabled, the on-device
+   * fraud model continuously scores the active session and prompts for PIN /
+   * biometric re-verification when interaction patterns look unusual.
+   */
+  bbaMonitoringEnabled: boolean;
+  /**
+   * Override the BBA fraud-probability threshold. 0 uses the value packaged
+   * with the model (0.45 from the original BBA paper).
+   */
+  bbaThresholdOverride: number;
 };
 
 export const DEFAULT_SETTINGS: HearMeSettings = {
@@ -81,4 +92,6 @@ export const DEFAULT_SETTINGS: HearMeSettings = {
   neuroBandCalibratedAt: null,
   neuroBandSensitivity: 'normal',
   neuroBandMockMode: false,
+  bbaMonitoringEnabled: true,
+  bbaThresholdOverride: 0,
 };

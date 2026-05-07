@@ -40,7 +40,10 @@
       "Bash(where supabase *)",
       "Bash(supabase --version)",
       "Bash(awk -F'[\\(]' '{print $1}')",
-      "Bash(awk 'NR<755 && /[^a-zA-Z_]c\\\\./' \"app/\\(main\\)/neuroband.tsx\")"
+      "Bash(awk 'NR<755 && /[^a-zA-Z_]c\\\\./' \"app/\\(main\\)/neuroband.tsx\")",
+      "Read(//c/Users/DEBSAR~1/AppData/Local/Temp/claude/C--Users-DebSarkar-Desktop-HearMe/0b83f4df-5064-4c19-9d9e-e283c6f514d3/tasks/**)",
+      "Bash(python -m pip install --user h5py numpy joblib)",
+      "Bash(python *)"
     ]
   }
 }

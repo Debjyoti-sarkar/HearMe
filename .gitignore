@@ -38,3 +38,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# extracted BBA source archive (model weights live in assets/bba-model.json)
+/.bba_temp

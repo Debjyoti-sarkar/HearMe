@@ -55,11 +55,37 @@ import {
   updateBaselines,
   type NeuroBandBaselines,
 } from '../lib/neuroband-storage';
+import { hasEnoughSignal, predict as bbaPredict } from '../lib/bba-model';
+import {
+  clearActiveSession,
+  createSession,
+  getActiveSession,
+  saveActiveSession,
+} from '../lib/behavior-tracker';
+import { getPrimaryDetection } from '../lib/behavior-detector';
+import { calculateTrust } from '../lib/trust-engine';
 
 const SHAKE_DELTA_G = 1.55;
 const SHAKE_DEBOUNCE_MS = 4500;
 // Re-lock if app has been backgrounded for this long.
 const RELOCK_AFTER_BG_MS = 30_000;
+// How often to score the active behaviour session against the BBA model.
+const BBA_TICK_MS = 4_000;
+// Don't re-prompt for re-auth more often than this — gives the user a chance
+// to interact normally after passing the gate before we score them again.
+const BBA_REAUTH_COOLDOWN_MS = 90_000;
+// The BBA model was trained for banking sessions where five features
+// (fd_broken, loan_taken, time_from_login_to_*) carry signal. In a personal-
+// safety app those are zero-padded, which compresses the model's output
+// range. The paper's 0.45 threshold was tuned for that bank context — for
+// HearMe we tighten it so behaviour-only deviations still trigger the gate.
+const HEARME_BBA_THRESHOLD = 0.15;
+// Fast-typing trigger: fire the gate when at least N taps land inside a
+// W-millisecond window anywhere in the session. The shared rule engine's
+// TAP_BURST is 10 taps / 2000 ms (5 taps/s); this is a more sensitive
+// BBA-only threshold so re-auth fires on moderate fast typing too.
+const BBA_FAST_TYPING_TAPS = 6;
+const BBA_FAST_TYPING_WINDOW_MS = 2000;
 
 export type NeuroBandLiveState = {
   connection: ConnectionState;
@@ -73,6 +99,17 @@ export type NeuroBandLiveState = {
   calibrationProgress: number;
   /** Currently in workout-mode lockout? */
   workoutModeActive: boolean;
+};
+
+/**
+ * BBA re-auth challenge: the on-device behavioural model has flagged the
+ * active session as unusual and the user must re-verify before continuing.
+ */
+export type BbaReauthChallenge = {
+  probability: number;
+  threshold: number;
+  reason: string;
+  raisedAt: number;
 };
 
 type HearMeContextValue = {
@@ -89,6 +126,12 @@ type HearMeContextValue = {
   // Lock state (Duress-PIN feature)
   locked: boolean;
   unlock: () => void;
+  // BBA re-auth challenge — non-null = block the UI behind a re-auth gate.
+  reauthChallenge: BbaReauthChallenge | null;
+  /** Called by the re-auth gate after the user passes PIN/biometric. */
+  clearReauthChallenge: () => Promise<void>;
+  /** Manually raise the re-auth gate. Used by debug controls and tests. */
+  forceReauthChallenge: (reason: string) => void;
   // Timer check-in helpers
   startCheckIn: (durationMs: number, label: string | null) => Promise<void>;
   cancelCheckIn: () => Promise<void>;
@@ -124,6 +167,9 @@ export function useHearMe() {
       callEmergencyLine: async () => {},
       locked: false,
       unlock: () => {},
+      reauthChallenge: null,
+      clearReauthChallenge: async () => {},
+      forceReauthChallenge: () => {},
       startCheckIn: async () => {},
       cancelCheckIn: async () => {},
       neuroBand: FALLBACK_NEUROBAND_STATE,
@@ -336,6 +382,12 @@ export function HearMeProvider({ children }: { children: ReactNode }) {
   const grace = useRef<number | null>(null);
   const lastBackgroundedAt = useRef<number | null>(null);
 
+  // BBA monitor — non-null = full-screen re-auth gate is shown.
+  const [reauthChallenge, setReauthChallenge] =
+    useState<BbaReauthChallenge | null>(null);
+  // Cooldown so we don't re-prompt immediately after the user clears the gate.
+  const lastReauthClearedAt = useRef(0);
+
   // NeuroBand live state — re-rendered on every frame, so kept light.
   const [neuroBandState, setNeuroBandState] = useState<NeuroBandLiveState>(
     FALLBACK_NEUROBAND_STATE,
@@ -544,6 +596,35 @@ export function HearMeProvider({ children }: { children: ReactNode }) {
 
   const unlock = useCallback(() => setLocked(false), []);
 
+  /**
+   * Called by the re-auth gate after the user clears it. Resets the active
+   * behaviour session so the freshly-passed user starts with a clean slate
+   * (no carry-over of the suspect taps that triggered the gate) and keeps a
+   * cooldown so the gate won't immediately re-fire.
+   */
+  const clearReauthChallenge = useCallback(async () => {
+    lastReauthClearedAt.current = Date.now();
+    setReauthChallenge(null);
+    // Drop the active session and start a fresh one — the previous session's
+    // events were the ones that tripped the model, so keeping them would
+    // risk an instant re-trigger.
+    try {
+      await clearActiveSession();
+      await saveActiveSession(createSession());
+    } catch {
+      /* best-effort */
+    }
+  }, []);
+
+  const forceReauthChallenge = useCallback((reason: string) => {
+    setReauthChallenge({
+      probability: 1,
+      threshold: HEARME_BBA_THRESHOLD,
+      reason: reason || 'Manual re-auth requested.',
+      raisedAt: Date.now(),
+    });
+  }, []);
+
   const startCheckIn = useCallback(
     async (durationMs: number, label: string | null) => {
       const expiresAt = Date.now() + durationMs;
@@ -591,6 +672,119 @@ export function HearMeProvider({ children }: { children: ReactNode }) {
     },
     [executeSos],
   );
+
+  // ---- BBA monitor: auto-track behaviour & re-auth on unusual activity ----
+  useEffect(() => {
+    if (!ready) return;
+    if (!settings.bbaMonitoringEnabled) return;
+    // Only run when the user is past the lock screen and not already gated.
+    if (locked || reauthChallenge) return;
+
+    let cancelled = false;
+
+    // Make sure there's an active behaviour session for GestureTracker to
+    // append into. If one is already active, we keep it.
+    void (async () => {
+      const existing = await getActiveSession();
+      if (cancelled) return;
+      if (!existing) {
+        await saveActiveSession(createSession());
+      }
+    })();
+
+    const tick = setInterval(() => {
+      void (async () => {
+        if (cancelled) return;
+        const session = await getActiveSession();
+        if (!session) return;
+        if (!hasEnoughSignal(session)) return;
+        // Cooldown after a recent re-auth pass.
+        if (
+          Date.now() - lastReauthClearedAt.current <
+          BBA_REAUTH_COOLDOWN_MS
+        ) {
+          return;
+        }
+
+        // Effective threshold: caller override wins, otherwise the
+        // HearMe-tuned default (the paper's 0.45 was bank-context only).
+        const overrideRaw = settings.bbaThresholdOverride;
+        const effectiveThreshold =
+          overrideRaw && overrideRaw > 0 && overrideRaw < 1
+            ? overrideRaw
+            : HEARME_BBA_THRESHOLD;
+        const result = bbaPredict(session, effectiveThreshold);
+
+        // Run the rule-based engine alongside the model. The bank-trained
+        // network is conservative on safety-app data, so the rule layer is
+        // the primary trigger for real distress patterns (panic taps,
+        // tap bursts, handoff mismatches) while the model corroborates.
+        const trust = calculateTrust(session, null);
+        const detection = getPrimaryDetection(session, null);
+        const severeFlag = trust.flags.find((f) => f.penalty <= -10);
+
+        // Fast-typing trigger: a sliding window over the session's taps —
+        // fires as soon as BBA_FAST_TYPING_TAPS taps fit inside
+        // BBA_FAST_TYPING_WINDOW_MS, which is gentler than the rule
+        // engine's TAP_BURST.
+        let fastTyping = false;
+        const taps = session.tapEvents;
+        if (taps.length >= BBA_FAST_TYPING_TAPS) {
+          for (let i = 0; i <= taps.length - BBA_FAST_TYPING_TAPS; i++) {
+            const span =
+              taps[i + BBA_FAST_TYPING_TAPS - 1].timestamp -
+              taps[i].timestamp;
+            if (span < BBA_FAST_TYPING_WINDOW_MS) {
+              fastTyping = true;
+              break;
+            }
+          }
+        }
+
+        const ruleTrigger =
+          (trust.level === 'alert' && !!severeFlag) ||
+          (trust.level === 'suspect' && trust.flags.length >= 2 && !!severeFlag) ||
+          (detection.type === 'panic' && detection.confidence >= 65) ||
+          (detection.type === 'handoff' && detection.confidence >= 65) ||
+          fastTyping;
+
+        if (!result.unusual && !ruleTrigger) return;
+
+        let reason: string;
+        if (detection.type !== 'normal') {
+          reason = detection.description;
+        } else if (severeFlag) {
+          reason = `${severeFlag.label}: ${severeFlag.detail}`;
+        } else if (fastTyping) {
+          reason =
+            `Detected ${BBA_FAST_TYPING_TAPS} taps in under ` +
+            `${BBA_FAST_TYPING_WINDOW_MS / 1000}s — unusually fast input.`;
+        } else {
+          reason =
+            'Interaction patterns differ sharply from your baseline.';
+        }
+
+        if (cancelled) return;
+        setReauthChallenge({
+          probability: result.probability,
+          threshold: effectiveThreshold,
+          reason,
+          raisedAt: Date.now(),
+        });
+      })();
+    }, BBA_TICK_MS);
+
+    return () => {
+      cancelled = true;
+      clearInterval(tick);
+    };
+  }, [
+    ready,
+    locked,
+    reauthChallenge,
+    settings.bbaMonitoringEnabled,
+    settings.bbaThresholdOverride,
+  ]);
 
   // ---- App-state driven re-lock ----
   useEffect(() => {
@@ -779,6 +973,9 @@ export function HearMeProvider({ children }: { children: ReactNode }) {
       callEmergencyLine,
       locked,
       unlock,
+      reauthChallenge,
+      clearReauthChallenge,
+      forceReauthChallenge,
       startCheckIn,
       cancelCheckIn,
       neuroBand: neuroBandState,
@@ -796,6 +993,9 @@ export function HearMeProvider({ children }: { children: ReactNode }) {
       callEmergencyLine,
       locked,
       unlock,
+      reauthChallenge,
+      clearReauthChallenge,
+      forceReauthChallenge,
       startCheckIn,
       cancelCheckIn,
       neuroBandState,
