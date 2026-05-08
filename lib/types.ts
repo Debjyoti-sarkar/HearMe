@@ -2,6 +2,13 @@ export type EmergencyContact = {
   id: string;
   name: string;
   phone: string;
+  /**
+   * Guardian-relay priority. Lower = sooner. The relay starts with the lowest
+   * priority and walks up until someone acks. Default 1 if unset (treated as
+   * primary). Older saved contacts without this field still work — they're
+   * normalised to priority 1 on load.
+   */
+  priority?: number;
 };
 
 export type UserProfile = {

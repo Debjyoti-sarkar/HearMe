@@ -1,0 +1,1083 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>HearMe — Complete App Guide</title>
+  <style>
+    @page { size: A4; margin: 18mm 16mm 20mm 16mm; }
+
+    :root {
+      --ink: #1a1a1a;
+      --muted: #555;
+      --hair: #d8d8d8;
+      --hair-strong: #888;
+      --accent: #b91c1c;
+      --accent-soft: #fdf2f2;
+      --good: #117a3d;
+      --warn: #b45a00;
+      --code-bg: #f5f5f5;
+      --section-bg: #fafafa;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, 'Segoe UI', sans-serif;
+      color: var(--ink);
+      font-size: 10.5pt;
+      line-height: 1.45;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1, h2, h3, h4 { color: var(--ink); margin: 0; }
+    h1 { font-size: 22pt; letter-spacing: -0.4pt; }
+    h2 { font-size: 16pt; margin-top: 24pt; padding-bottom: 4pt; border-bottom: 1.5pt solid var(--accent); page-break-after: avoid; }
+    h3 { font-size: 12.5pt; margin-top: 14pt; color: var(--accent); page-break-after: avoid; }
+    h4 { font-size: 10.5pt; margin-top: 10pt; text-transform: uppercase; letter-spacing: 0.5pt; color: var(--muted); page-break-after: avoid; }
+
+    p { margin: 6pt 0; }
+    ul, ol { margin: 4pt 0 8pt 0; padding-left: 18pt; }
+    li { margin-bottom: 2pt; }
+    li > ul, li > ol { margin: 2pt 0; }
+
+    .cover {
+      page-break-after: always;
+      height: 100%;
+      min-height: 250mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 24mm 0 0 0;
+    }
+    .cover-top { }
+    .cover .eyebrow {
+      font-size: 9pt;
+      letter-spacing: 4pt;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .cover h1 {
+      font-size: 44pt;
+      font-weight: 800;
+      letter-spacing: -1pt;
+      margin-top: 10pt;
+      line-height: 1.05;
+    }
+    .cover .tagline {
+      font-size: 14pt;
+      color: var(--muted);
+      margin-top: 14pt;
+      max-width: 130mm;
+      line-height: 1.35;
+    }
+    .cover .stripes {
+      margin-top: 20mm;
+      display: flex;
+      gap: 4mm;
+    }
+    .cover .stripes .stripe {
+      height: 2mm;
+      flex: 1;
+    }
+    .cover .stripes .stripe:nth-child(1) { background: var(--accent); flex: 3; }
+    .cover .stripes .stripe:nth-child(2) { background: #f59e0b; flex: 1; }
+    .cover .stripes .stripe:nth-child(3) { background: #15803d; flex: 1; }
+    .cover .stripes .stripe:nth-child(4) { background: #1d4ed8; flex: 1; }
+
+    .cover .meta {
+      font-size: 9pt;
+      color: var(--muted);
+      border-top: 0.5pt solid var(--hair);
+      padding-top: 6pt;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .toc {
+      page-break-after: always;
+    }
+    .toc ol {
+      list-style: none;
+      padding-left: 0;
+      counter-reset: item;
+    }
+    .toc ol li {
+      counter-increment: item;
+      padding: 3pt 0;
+      border-bottom: 0.25pt dotted var(--hair);
+      display: flex;
+      justify-content: space-between;
+      font-size: 10.5pt;
+    }
+    .toc ol li::before {
+      content: counter(item) ". ";
+      color: var(--accent);
+      font-weight: 600;
+      margin-right: 8pt;
+    }
+    .toc ol li .num {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+    .toc ol li .title { flex: 1; }
+
+    section { page-break-inside: auto; }
+    section.lead { page-break-before: always; }
+
+    .lead-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 14pt;
+      margin-top: 10pt;
+    }
+
+    .callout {
+      background: var(--accent-soft);
+      border-left: 3pt solid var(--accent);
+      padding: 8pt 12pt;
+      margin: 10pt 0;
+      font-size: 10pt;
+    }
+    .callout strong { color: var(--accent); }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10pt; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8pt; }
+
+    .card {
+      border: 0.5pt solid var(--hair-strong);
+      border-radius: 4pt;
+      padding: 8pt 10pt;
+      page-break-inside: avoid;
+      background: white;
+    }
+    .card h4 {
+      margin-top: 0;
+      color: var(--accent);
+      text-transform: none;
+      letter-spacing: 0;
+      font-size: 10.5pt;
+    }
+    .card p { margin: 3pt 0 0 0; font-size: 9.5pt; color: var(--muted); }
+
+    .feature {
+      border: 0.5pt solid var(--hair);
+      border-left: 2.5pt solid var(--accent);
+      padding: 8pt 12pt;
+      margin: 6pt 0;
+      page-break-inside: avoid;
+      background: white;
+    }
+    .feature .row {
+      display: flex;
+      align-items: baseline;
+      gap: 10pt;
+      margin-bottom: 4pt;
+    }
+    .feature .num {
+      font-weight: 700;
+      color: var(--accent);
+      font-size: 11pt;
+      flex: 0 0 auto;
+    }
+    .feature .name {
+      font-weight: 600;
+      flex: 1;
+      font-size: 11pt;
+    }
+    .feature .status {
+      font-size: 8pt;
+      padding: 1.5pt 6pt;
+      border-radius: 99pt;
+      letter-spacing: 0.5pt;
+      font-weight: 600;
+      flex: 0 0 auto;
+    }
+    .status.shipped { background: #ecfdf5; color: var(--good); border: 0.5pt solid var(--good); }
+    .status.adapter  { background: #fff7ed; color: var(--warn); border: 0.5pt solid var(--warn); }
+
+    .feature p { margin: 4pt 0 0 0; font-size: 9.5pt; }
+    .feature .files {
+      font-family: 'Consolas', ui-monospace, Menlo, monospace;
+      font-size: 8.5pt;
+      color: var(--muted);
+      margin-top: 4pt;
+      word-break: break-all;
+    }
+    .feature .why {
+      font-size: 9pt;
+      color: var(--muted);
+      margin-top: 4pt;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin: 8pt 0; }
+    th, td { border: 0.5pt solid var(--hair); padding: 4pt 6pt; text-align: left; vertical-align: top; }
+    th { background: var(--section-bg); font-weight: 600; }
+    code, pre { font-family: 'Consolas', ui-monospace, Menlo, monospace; }
+    code { background: var(--code-bg); padding: 0.5pt 3pt; border-radius: 2pt; font-size: 9pt; }
+    pre {
+      background: var(--code-bg);
+      padding: 8pt 10pt;
+      border-radius: 3pt;
+      font-size: 8.5pt;
+      line-height: 1.4;
+      overflow-x: hidden;
+      white-space: pre-wrap;
+      word-break: break-all;
+      page-break-inside: avoid;
+    }
+
+    .ascii {
+      font-family: 'Consolas', ui-monospace, Menlo, monospace;
+      font-size: 8pt;
+      white-space: pre;
+      background: var(--section-bg);
+      padding: 8pt;
+      border-radius: 3pt;
+      overflow-x: hidden;
+      page-break-inside: avoid;
+    }
+
+    .phase-header {
+      background: var(--accent);
+      color: white;
+      padding: 6pt 12pt;
+      border-radius: 3pt;
+      margin: 16pt 0 10pt 0;
+      page-break-after: avoid;
+      page-break-inside: avoid;
+    }
+    .phase-header h3 { color: white; margin: 0; font-size: 12pt; }
+    .phase-header .sub { font-size: 9pt; opacity: 0.9; margin-top: 2pt; }
+
+    .footer {
+      font-size: 8.5pt;
+      color: var(--muted);
+      border-top: 0.5pt solid var(--hair);
+      padding-top: 6pt;
+      margin-top: 16pt;
+      text-align: center;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 1pt 6pt;
+      border-radius: 99pt;
+      font-size: 8pt;
+      letter-spacing: 0.4pt;
+      background: var(--section-bg);
+      border: 0.5pt solid var(--hair-strong);
+      color: var(--muted);
+    }
+
+    .kvp { display: grid; grid-template-columns: 28% 72%; gap: 4pt 10pt; font-size: 9.5pt; margin: 6pt 0; }
+    .kvp dt { font-weight: 600; color: var(--muted); }
+    .kvp dd { margin: 0; }
+  </style>
+</head>
+<body>
+
+<!-- =========================== -->
+<!--           COVER             -->
+<!-- =========================== -->
+<section class="cover">
+  <div class="cover-top">
+    <div class="eyebrow">PERSONAL-SAFETY PLATFORM · COMPLETE APP GUIDE</div>
+    <h1>HearMe.</h1>
+    <p class="tagline">A personal-safety mobile app paired with the NeuroBand wearable — designed to detect distress, capture evidence, and reach trusted contacts when seconds matter.</p>
+    <div class="stripes">
+      <div class="stripe"></div>
+      <div class="stripe"></div>
+      <div class="stripe"></div>
+      <div class="stripe"></div>
+    </div>
+  </div>
+  <div>
+    <div class="meta">
+      <span>Author · Debjyoti Sarkar</span>
+      <span>Version 1.0</span>
+      <span>Platform · iOS &amp; Android (Expo SDK 54)</span>
+    </div>
+  </div>
+</section>
+
+<!-- =========================== -->
+<!--          TABLE OF CONTENTS  -->
+<!-- =========================== -->
+<section class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><span class="title">What HearMe is</span><span class="num">3</span></li>
+    <li><span class="title">High-level architecture</span><span class="num">4</span></li>
+    <li><span class="title">Technology stack</span><span class="num">5</span></li>
+    <li><span class="title">Baseline features — emergency response</span><span class="num">6</span></li>
+    <li><span class="title">Baseline features — evidence &amp; monitoring</span><span class="num">8</span></li>
+    <li><span class="title">Baseline features — privacy, accessibility, identity</span><span class="num">10</span></li>
+    <li><span class="title">NeuroBand wearable integration</span><span class="num">11</span></li>
+    <li><span class="title">Advanced features — Phase A · evidence foundation</span><span class="num">13</span></li>
+    <li><span class="title">Advanced features — Phase B · trusted network</span><span class="num">15</span></li>
+    <li><span class="title">Advanced features — Phase C · detection &amp; sensing</span><span class="num">17</span></li>
+    <li><span class="title">Advanced features — Phase D · resilience</span><span class="num">19</span></li>
+    <li><span class="title">Advanced features — Phase E · on-device intelligence</span><span class="num">21</span></li>
+    <li><span class="title">Advanced features — Phase F · NeuroBand expansion</span><span class="num">23</span></li>
+    <li><span class="title">Advanced features — Phase G · platform integrations</span><span class="num">25</span></li>
+    <li><span class="title">Advanced features — Phase H · operational</span><span class="num">27</span></li>
+    <li><span class="title">Permissions matrix</span><span class="num">29</span></li>
+    <li><span class="title">Privacy &amp; security model</span><span class="num">30</span></li>
+    <li><span class="title">Setup &amp; deployment</span><span class="num">31</span></li>
+    <li><span class="title">Adapter pattern (production-grade strategy)</span><span class="num">32</span></li>
+    <li><span class="title">File index — every module shipped</span><span class="num">33</span></li>
+  </ol>
+</section>
+
+<!-- =========================== -->
+<!--   1. WHAT HEARME IS         -->
+<!-- =========================== -->
+<section class="lead">
+  <h2>1 · What HearMe is</h2>
+  <p>HearMe is an integrated personal-safety toolkit. The phone app is the user-facing surface; the optional <strong>NeuroBand</strong> wristband adds physiological detection of duress that doesn't depend on the user being able to reach for a phone. Supabase provides authenticated, row-level-secured cloud sync for evidence, and an opt-in dashboard surface lets vetted partner organisations help dispatch responders.</p>
+
+  <h3>The three things HearMe is built to do</h3>
+  <div class="grid-3">
+    <div class="card">
+      <h4>Detect</h4>
+      <p>Detect distress automatically — voice triggers, biosignal fusion, behavioural anomalies, fall and crash detection, acoustic events, BLE stalker scanning, and isolation scoring.</p>
+    </div>
+    <div class="card">
+      <h4>Capture</h4>
+      <p>Capture evidence the moment it matters — pre-roll audio, photos, location pings, biosensor frames — all chained, signed, and time-stamped on-chain.</p>
+    </div>
+    <div class="card">
+      <h4>Reach</h4>
+      <p>Reach trusted people fast — SMS to all contacts, ack-aware tier escalation, encrypted live-share, witness mode, community SOS mesh, and PSAP hand-off where regulations allow.</p>
+    </div>
+  </div>
+
+  <h3>Design principles</h3>
+  <ul>
+    <li><strong>Phone is the source of truth.</strong> The phone runs detection, the band augments. If the band is down or absent, the app degrades gracefully.</li>
+    <li><strong>Cloud is the destination, not the operator.</strong> Evidence is encrypted on the device, hashed locally, then pushed. Supabase never sees plaintext audio.</li>
+    <li><strong>Court-grade chain of custody.</strong> Every captured artefact is hashed, chained, signed with a device-bound Ed25519 key, and anchored to the Bitcoin blockchain via OpenTimestamps.</li>
+    <li><strong>Hostile-environment design.</strong> Disguise mode, decoy lock, force-unlock detection, anti-uninstall, airplane-mode counter — every adversarial path is closed.</li>
+    <li><strong>Honest where adapters are needed.</strong> When a feature genuinely needs a native module / vendor SDK / hardware (PSAP API, satellite SDK, ML Kit), the JS layer reports "not available in this build" — never returns silent success it didn't earn.</li>
+  </ul>
+
+  <div class="callout">
+    <strong>The shape of this guide.</strong> Sections 4–7 cover the baseline app shipped at version 1.0. Sections 8–15 cover the 35 advanced modules added in the subsequent rev. Each advanced module includes its purpose, why it exists, and the file path of the implementation.
+  </div>
+</section>
+
+<!-- =========================== -->
+<!--   2. ARCHITECTURE           -->
+<!-- =========================== -->
+<section class="lead">
+  <h2>2 · High-level architecture</h2>
+  <p>Three actors: the band, the phone, and the cloud. Detection happens on the phone, augmented by the band. Cloud sync happens only when an event fires.</p>
+
+  <div class="ascii">┌──────────────────────┐        BLE (GATT)         ┌──────────────────────┐
+│   NeuroBand (nRF52)  │ ───────────────────────► │  HearMe app (Expo)   │
+│   Zephyr firmware    │   1 Hz BioFrame + tamper │  React Native + TS   │
+└──────────────────────┘                          └──────────┬───────────┘
+                                                             │
+                                              Supabase JS    │   Native APIs
+                                                             ▼
+                              ┌────────────────────────────────────────────┐
+                              │ Supabase: Auth · Postgres · Storage · RLS  │
+                              │ Evidence files · Profiles · Alert history  │
+                              └────────────────────────────────────────────┘</div>
+
+  <h3>Layer map</h3>
+  <table>
+    <thead>
+      <tr><th>Layer</th><th>Lives in</th><th>Responsibilities</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>UI / routes</td><td><code>app/</code> (expo-router)</td><td>File-based navigation; one file per screen.</td></tr>
+      <tr><td>Reusable widgets</td><td><code>components/</code></td><td>SOSButton, GlassCard, themed primitives.</td></tr>
+      <tr><td>Cross-tree state</td><td><code>providers/</code></td><td>Auth · Theme · Language · Voice · Accessibility.</td></tr>
+      <tr><td>Domain logic</td><td><code>lib/</code></td><td>All non-UI code: BLE, fusion, evidence, relays, adapters.</td></tr>
+      <tr><td>Schema &amp; RLS</td><td><code>supabase/</code></td><td>SQL migrations; tables, policies, RPCs.</td></tr>
+      <tr><td>Firmware</td><td><code>firmware/neuroband/</code></td><td>Zephyr app for the nRF52840-DK.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Data residency</h3>
+  <ul>
+    <li><strong>On-device only:</strong> raw audio, draft evidence sessions, voiceprint, signing keys, duress PIN, cycle-log, voice-trigger challenges.</li>
+    <li><strong>On-device, then encrypted to cloud:</strong> finished evidence sessions (file content + chain hash + signature + OTS receipt).</li>
+    <li><strong>Cloud-only ephemeral:</strong> live-share ciphertexts (E2E AES-GCM), guardian-relay ack messages, community-mesh beacons (auto-prune on TTL).</li>
+    <li><strong>Public RPCs:</strong> incident heatmap (k-anonymous aggregate, never per-user), evidence_attestation lookup (chain hash + signature + OTS receipt only).</li>
+  </ul>
+</section>
+
+<!-- =========================== -->
+<!--   3. TECH STACK             -->
+<!-- =========================== -->
+<section class="lead">
+  <h2>3 · Technology stack</h2>
+  <table>
+    <thead><tr><th>Layer</th><th>Choice</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>App runtime</td><td>Expo SDK 54, React Native 0.81, React 19</td><td>One codebase, two stores, fast iteration, native modules when needed.</td></tr>
+      <tr><td>Routing</td><td><code>expo-router</code></td><td>File-based — every screen is a file under <code>app/</code>.</td></tr>
+      <tr><td>Language</td><td>TypeScript 5.9</td><td>Compile-time guarantees on every boundary.</td></tr>
+      <tr><td>State</td><td>React Context</td><td>Auth, Theme, Language, Voice, Accessibility — no global store needed.</td></tr>
+      <tr><td>Backend</td><td>Supabase (Postgres + Auth + Storage + RLS)</td><td>Per-row security; phone OTP; private buckets with signed URLs.</td></tr>
+      <tr><td>BLE</td><td><code>react-native-ble-plx</code></td><td>Background-enabled; mature; supports peripheral writes for haptic codes.</td></tr>
+      <tr><td>Sensors</td><td><code>expo-sensors</code>, <code>expo-location</code>, <code>expo-camera</code></td><td>Accel · Gyro · LightSensor · GPS · camera in one toolkit.</td></tr>
+      <tr><td>Crypto</td><td><code>expo-crypto</code> · <code>@noble/ed25519</code> · <code>@noble/ciphers</code></td><td>Hashing + RNG via Expo; pure-JS audited Ed25519 + AES-GCM.</td></tr>
+      <tr><td>Auth</td><td>Supabase OTP, biometrics, Aadhaar, demo PIN</td><td>Multiple paths; works without phone signal.</td></tr>
+      <tr><td>i18n</td><td><code>i18next</code> + <code>react-i18next</code></td><td>Multi-language support including spoken navigation.</td></tr>
+      <tr><td>Firmware</td><td>Zephyr / nRF Connect SDK on nRF52840</td><td>BLE-first low-power MCU; standardised GATT.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- =========================== -->
+<!--   4. EMERGENCY RESPONSE     -->
+<!-- =========================== -->
+<section class="lead">
+  <h2>4 · Baseline features — emergency response</h2>
+
+  <div class="feature"><div class="row"><span class="num">①</span><span class="name">SOS Button</span><span class="status shipped">SHIPPED</span></div>
+  <p>One-tap silent alarm that fires SMS with live location to all trusted contacts. Optional auto-dial of the configured emergency number after the SMS pipeline completes.</p>
+  <div class="files">app/(main)/(tabs)/index.tsx · lib/emergency-sms.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">②</span><span class="name">Voice Trigger</span><span class="status shipped">SHIPPED</span></div>
+  <p>Listens for distress phrases or sustained loud audio and auto-fires SOS. Honest about what it can do without a native KWS module: amplitude-VAD detection of screams / shouted safe words. The native module slot lets a Whisper / Vosk / Porcupine backend drop in.</p>
+  <div class="files">lib/voice-trigger.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">③</span><span class="name">Triple-tap &amp; Duress PIN</span><span class="status shipped">SHIPPED</span></div>
+  <p>Discreet activation paths when the screen can't be seen. The duress PIN is the user's normal PIN reversed — typing it unlocks normally to an attacker but silently fires SOS. An explicit duress PIN is also supported for users whose normal PIN is a palindrome.</p>
+  <div class="files">lib/duress.ts · app/lock.tsx</div></div>
+
+  <div class="feature"><div class="row"><span class="num">④</span><span class="name">Fake Call</span><span class="status shipped">SHIPPED</span></div>
+  <p>Simulates an incoming call to defuse a hostile situation. Configurable delay; UI matches platform-native call screen.</p>
+  <div class="files">app/(main)/fake-call.tsx</div></div>
+
+  <div class="feature"><div class="row"><span class="num">⑤</span><span class="name">Siren</span><span class="status shipped">SHIPPED</span></div>
+  <p>Loud alarm to deter attackers and attract attention. Plays through the phone's speaker and (if registered) the smart-home siren module fans the alarm out to Hue lights and Google/Alexa speakers.</p>
+  <div class="files">lib/siren.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">⑥</span><span class="name">Helplines</span><span class="status shipped">SHIPPED</span></div>
+  <p>Quick-dial directory: local emergency services and women's helplines. Country-aware where possible.</p>
+  <div class="files">app/(main)/helplines.tsx</div></div>
+</section>
+
+<!-- =========================== -->
+<!--   5. EVIDENCE & MONITORING  -->
+<!-- =========================== -->
+<section class="lead">
+  <h2>5 · Baseline features — evidence &amp; monitoring</h2>
+
+  <div class="feature"><div class="row"><span class="num">⑦</span><span class="name">Audio Recorder</span><span class="status shipped">SHIPPED</span></div>
+  <p>Encrypted recording uploaded to the evidence locker. Metering enabled so callers can also extract envelope data. Recordings persist on device until uploaded; on-device list, playback, and delete.</p>
+  <div class="files">lib/audio-recorder.ts · app/(main)/audio-recorder.tsx</div></div>
+
+  <div class="feature"><div class="row"><span class="num">⑧</span><span class="name">Evidence Locker</span><span class="status shipped">SHIPPED</span></div>
+  <p>Supabase-backed cloud storage for audio, photos, and incident logs. Each item carries a content-hash; items are linked into a chain (chain[i] = SHA256(chain[i-1] || content[i])) so any tampering invalidates every later hash. The locker is private — files are accessible only via signed URLs scoped to the owning user.</p>
+  <div class="files">lib/evidence-locker.ts · lib/evidence-cloud.ts · supabase/evidence.sql</div></div>
+
+  <div class="feature"><div class="row"><span class="num">⑨</span><span class="name">Hidden-camera Detector</span><span class="status shipped">SHIPPED</span></div>
+  <p>Uses the phone's camera to spot infrared LED reflections — common in covert surveillance cameras. Live-view scan with grid overlay so the user can sweep a room.</p>
+  <div class="files">app/(main)/camera-detector.tsx</div></div>
+
+  <div class="feature"><div class="row"><span class="num">⑩</span><span class="name">Journey Monitor</span><span class="status shipped">SHIPPED</span></div>
+  <p>Tracks a route to a destination and alerts contacts on deviation, no-show, or check-in failure. Background-aware where the platform allows. Driver/passenger classification (advanced module #12) softens false alarms for passengers.</p>
+  <div class="files">lib/journey-monitor.ts · app/(main)/journey-monitor.tsx</div></div>
+
+  <div class="feature"><div class="row"><span class="num">⑪</span><span class="name">Check-in Timer</span><span class="status shipped">SHIPPED</span></div>
+  <p>Auto-alerts contacts if you don't confirm safety in time. Inspired by the original Kitestring concept — single active check-in stored in settings, expiry epoch, dismiss button.</p>
+  <div class="files">lib/timer-checkin.ts · app/(main)/check-in.tsx</div></div>
+
+  <div class="feature"><div class="row"><span class="num">⑫</span><span class="name">Behaviour Monitor (BBA)</span><span class="status shipped">SHIPPED</span></div>
+  <p>Behavioural Biometric Authentication. Continuously scores the active session using the on-device fraud model and prompts for PIN / biometric re-verification when interaction patterns look unusual. Originally derived from the SudoCode BBA model.</p>
+  <div class="files">lib/bba-model.ts · lib/behavior-tracker.ts · lib/behavior-detector.ts · app/(main)/behavior-monitor.tsx</div></div>
+
+  <div class="feature"><div class="row"><span class="num">⑬</span><span class="name">Alert History</span><span class="status shipped">SHIPPED</span></div>
+  <p>Chronological log of every triggered event — manual SOS, fusion fire, journey deviation, check-in lapse, self-test pass / fail. Filterable; supports full export.</p>
+  <div class="files">lib/alert-history.ts · app/(main)/alert-history.tsx</div></div>
+</section>
+
+<!-- =========================== -->
+<!--   6. PRIVACY & ACCESSIBILITY-->
+<!-- =========================== -->
+<section class="lead">
+  <h2>6 · Baseline features — privacy, accessibility, identity</h2>
+
+  <div class="feature"><div class="row"><span class="num">⑭</span><span class="name">PIN, Biometric, Aadhaar</span><span class="status shipped">SHIPPED</span></div>
+  <p>Multi-path identity. Demo PIN works without backend; biometric uses platform Face ID / fingerprint; Aadhaar OTP-based path supports India e-KYC. Each path is independent — losing one does not lock the user out.</p>
+  <div class="files">lib/aadhaar.ts · lib/otp.ts · lib/demo-auth.ts · app/aadhaar.tsx · app/login.tsx · app/verify-otp.tsx</div></div>
+
+  <div class="feature"><div class="row"><span class="num">⑮</span><span class="name">Disguise Mode</span><span class="status shipped">SHIPPED</span></div>
+  <p>The app masquerades as a calculator on the home screen. Hidden swipe / tap pattern reveals the real UI. Distinct from the decoy-lock module (advanced #15) which fakes a lock screen <em>after</em> the app is open.</p>
+  <div class="files">app/disguise.tsx</div></div>
+
+  <div class="feature"><div class="row"><span class="num">⑯</span><span class="name">App Lock</span><span class="status shipped">SHIPPED</span></div>
+  <p>Re-auth gates on sensitive screens (evidence locker, contacts, settings). Force-unlock detection (advanced #16) layers struggle-aware bio guard on top.</p>
+  <div class="files">app/lock.tsx</div></div>
+
+  <div class="feature"><div class="row"><span class="num">⑰</span><span class="name">Voice Guide</span><span class="status shipped">SHIPPED</span></div>
+  <p>Fully spoken navigation for visually-impaired users. Built on i18next (translations) + expo-speech (TTS).</p>
+  <div class="files">lib/voice-guide.ts · lib/nav-guide.ts · lib/nav-guide-ref.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">⑱</span><span class="name">Multi-language</span><span class="status shipped">SHIPPED</span></div>
+  <p>i18next + react-i18next. Adding a new locale = adding a JSON file under <code>lib/i18n/</code>.</p>
+  <div class="files">lib/i18n.ts · app/language.tsx</div></div>
+
+  <div class="feature"><div class="row"><span class="num">⑲</span><span class="name">Themeable UI</span><span class="status shipped">SHIPPED</span></div>
+  <p>Light, dark, and high-contrast variants. Theme provider exposes tokens; every screen is theme-aware out of the box.</p>
+  <div class="files">providers/* · constants/*</div></div>
+
+  <div class="feature"><div class="row"><span class="num">⑳</span><span class="name">Onboarding</span><span class="status shipped">SHIPPED</span></div>
+  <p>Guided setup that walks a new user through identity, contacts, permissions, and PIN/biometric enrolment. The onboardingComplete flag in settings gates the main app routes until done.</p>
+  <div class="files">app/onboarding.tsx · app/setup-pin.tsx</div></div>
+</section>
+
+<!-- =========================== -->
+<!--   7. NEUROBAND              -->
+<!-- =========================== -->
+<section class="lead">
+  <h2>7 · NeuroBand wearable integration</h2>
+  <p>The NeuroBand is an optional Bluetooth wristband running Zephyr firmware on an nRF52840. It exposes a single GATT service over which it streams a 20-byte BioFrame at 1 Hz and emits sparse silent-trigger / tamper events. The phone-side fusion engine combines those signals with phone sensors to detect duress with high specificity.</p>
+
+  <h3>BioFrame contents</h3>
+  <table>
+    <thead><tr><th>Field</th><th>Type</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>seq</code></td><td>uint16</td><td>Per-connection rolling counter for ordering.</td></tr>
+      <tr><td><code>hr</code></td><td>uint8</td><td>Heart rate (BPM).</td></tr>
+      <tr><td><code>hrvRmssd</code></td><td>uint8</td><td>Heart-rate variability proxy.</td></tr>
+      <tr><td><code>spo2</code></td><td>uint8</td><td>Blood-oxygen %.</td></tr>
+      <tr><td><code>gsrUs</code></td><td>uint16</td><td>Skin conductance in µS.</td></tr>
+      <tr><td><code>skinTempC</code></td><td>int8</td><td>Skin temperature, fixed-point °C.</td></tr>
+      <tr><td><code>motion</code></td><td>uint8</td><td>still / walk / run / fall / unknown.</td></tr>
+      <tr><td><code>semg</code></td><td>uint8</td><td>Surface-EMG envelope (clench detection).</td></tr>
+      <tr><td><code>battery</code></td><td>uint8</td><td>Band battery %.</td></tr>
+      <tr><td><code>flags</code></td><td>bits</td><td>charging · tamper · low-battery.</td></tr>
+      <tr><td><code>counter</code></td><td>uint32</td><td>Replay-protection monotonic counter.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Fusion engine</h3>
+  <p>The §8 Volume-III duress signature: any two-of-five physiological signals firing together — while motion is still or walk — fires a verdict. Each marker has a <em>sustained</em> requirement (e.g. HR must be elevated for ≥4 s) so single-frame sensor noise can't trigger SOS. Sensitivity is adjustable; workout-mode lockout suppresses fires while exercising.</p>
+  <div class="ascii">five markers ─►  per-marker fired? (instantMarkers)
+                 │
+                 ▼
+         sustained-window memory  (SUSTAIN_REQUIRED per marker)
+                 │
+                 ▼
+       fire = sustainedCount ≥ requiredCount (sensitivity-tuned)</div>
+
+  <h3>Mock mode</h3>
+  <p>A synthetic BioFrame stream lets the entire UI + fusion engine run without paired hardware. Three modes — calm, active, duress — exercise the rule transitions.</p>
+
+  <div class="files">lib/neuroband-ble.ts · lib/neuroband-fusion.ts · lib/neuroband-pairing.ts · lib/neuroband-storage.ts · firmware/neuroband/</div>
+</section>
+
+<!-- =========================== -->
+<!--  ADVANCED · PHASE A         -->
+<!-- =========================== -->
+<section class="lead">
+  <h2>8 · Advanced features — Phase A · evidence foundation</h2>
+  <div class="phase-header">
+    <h3>Phase A — Evidence foundation</h3>
+    <div class="sub">Make every captured byte court-defensible and recoverable.</div>
+  </div>
+
+  <div class="feature"><div class="row"><span class="num">1</span><span class="name">Continuous pre-roll buffer</span><span class="status shipped">SHIPPED</span></div>
+  <p>Always keeps the last 30 seconds of audio on disk. When SOS fires, the buffer is attached to the evidence session retroactively — we capture what happened <em>before</em> the trigger, not just after. Implementation rotates 10-second WAV chunks; a native circular buffer can drop in via the backend slot.</p>
+  <div class="files">lib/preroll-buffer.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">2</span><span class="name">Cryptographic chain-of-custody</span><span class="status shipped">SHIPPED</span></div>
+  <p>Every uploaded evidence session is signed with a per-device Ed25519 key (private key in SecureStore, public key uploaded to Supabase) and the chain hash is anchored to the public OpenTimestamps Bitcoin calendar. Verifiers can prove "this evidence existed by block N" without trusting HearMe.</p>
+  <div class="files">lib/evidence-signing.ts · supabase/evidence-signatures.sql</div></div>
+
+  <div class="feature"><div class="row"><span class="num">3</span><span class="name">Dead-man's switch upload</span><span class="status shipped">SHIPPED</span></div>
+  <p>Persistent retry queue with reachability probing. If primary upload fails, registered relay backends (BLE-paired peers, alternate transports) get a chance. After three failed attempts contacts are SMS-notified that evidence is pending so the device can be physically recovered.</p>
+  <div class="files">lib/evidence-deadman.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">4</span><span class="name">Lawyer / NGO export package</span><span class="status shipped">SHIPPED</span></div>
+  <p>One-tap signed bundle: <code>manifest.json</code> with chain hash, signature, public key, OTS receipt, and signed Supabase URLs for every media item; plus a standalone <code>summary.html</code> a legal reader can open offline. The recipient's verification recipe is included inline.</p>
+  <div class="files">lib/evidence-export.ts</div></div>
+</section>
+
+<!-- =========================== -->
+<!--  ADVANCED · PHASE B         -->
+<!-- =========================== -->
+<section class="lead">
+  <h2>9 · Advanced features — Phase B · trusted network</h2>
+  <div class="phase-header">
+    <h3>Phase B — Trusted network</h3>
+    <div class="sub">Reach the right person, fast — with proof of receipt.</div>
+  </div>
+
+  <div class="feature"><div class="row"><span class="num">5</span><span class="name">Encrypted live-share session</span><span class="status shipped">SHIPPED</span></div>
+  <p>End-to-end AES-GCM stream of location (and optional audio chunks) over Supabase Realtime. The AES key lives only in the URL fragment after the <code>#</code> — Supabase only ever sees ciphertext + the channel id. Recipients send back ack receipts so the user knows who actually opened the link.</p>
+  <div class="files">lib/live-share.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">6</span><span class="name">Guardian relay (ack-aware fan-out)</span><span class="status shipped">SHIPPED</span></div>
+  <p>Contacts have priority tiers. Tier 1 is messaged immediately; if no ack within T seconds, Tier 2 is messaged next, then Tier 3 — and the configured emergency number (e.g. 112) is dialled as the last-resort step. Acks come over a per-alert Realtime channel.</p>
+  <div class="files">lib/guardian-relay.ts · lib/types.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">7</span><span class="name">Two-way duress</span><span class="status shipped">SHIPPED</span></div>
+  <p>A trusted contact can send "are you safe?" — the user's band buzzes a covert 3-pulse pattern. The user replies via band triple-tap (safe) or button (unsafe), or silence for 60 s auto-escalates to SOS via the relay.</p>
+  <div class="files">lib/two-way-duress.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">8</span><span class="name">Witness mode</span><span class="status shipped">SHIPPED</span></div>
+  <p>The user shows a one-time QR; whoever scans joins an E2E-encrypted session and their phone records audio + location chunks straight into the user's evidence locker — anonymously to the user, signed by the witness's device.</p>
+  <div class="files">lib/witness-mode.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">9</span><span class="name">Community SOS mesh</span><span class="status shipped">SHIPPED</span></div>
+  <p>Opt-in: when SOS fires, a short-lived geo-anonymous beacon is published. Other HearMe users within R metres get a non-blocking "someone nearby just sent SOS" banner; they can offer "on the way" with their location. Beacon ids rotate; recipients are anonymous unless they explicitly identify.</p>
+  <div class="files">lib/community-mesh.ts · supabase/community-mesh.sql</div></div>
+</section>
+
+<!-- =========================== -->
+<!--  ADVANCED · PHASE C         -->
+<!-- =========================== -->
+<section class="lead">
+  <h2>10 · Advanced features — Phase C · detection &amp; sensing</h2>
+  <div class="phase-header">
+    <h3>Phase C — Detection &amp; sensing</h3>
+    <div class="sub">Notice the threat before the user has to.</div>
+  </div>
+
+  <div class="feature"><div class="row"><span class="num">10</span><span class="name">BLE stalker scan</span><span class="status shipped">SHIPPED</span></div>
+  <p>Detects covert personal trackers (AirTag, Samsung SmartTag, Tile, Google Find-My) that have followed the user across distinct locations for ≥30 minutes. Manufacturer-data parsing handles MAC rotation; persistent sighting log reaches across app sessions.</p>
+  <div class="files">lib/stalker-scan.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">11</span><span class="name">Isolation score</span><span class="status shipped">SHIPPED</span></div>
+  <p>Combines BLE neighbour count, ambient dBFS, lux (Android), speed, hour-of-day, and safe-zone membership into a 0–100 score. High score auto-raises fusion sensitivity and prompts the user to start journey monitoring.</p>
+  <div class="files">lib/isolation-score.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">12</span><span class="name">Driver / passenger classifier</span><span class="status shipped">SHIPPED</span></div>
+  <p>Heuristic on speed + accelerometer / gyroscope variance + touch rate, classifying the user as <em>driver, passenger, on-foot, idle</em>. The journey monitor uses this to soften false alarms when the user is clearly a passenger.</p>
+  <div class="files">lib/drive-passenger.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">13</span><span class="name">Phone-tamper detection</span><span class="status shipped">SHIPPED</span></div>
+  <p>Triple-coincidence detector: screen-off without a recent touch + accelerometer shock + simultaneous network loss within 6 s ⇒ silent SOS. Two-of-three only ⇒ heightened-alert banner.</p>
+  <div class="files">lib/phone-tamper.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">14</span><span class="name">Off-grid mode</span><span class="status adapter">ADAPTER + DEFAULT</span></div>
+  <p>Network watchdog raises a banner on sustained connectivity loss. Pluggable transport adapters (Meshtastic LoRa, Garmin inReach, sat-phone bridges) drop in via the backend interface; iOS satellite-SOS is surfaced as a help-text prompt because Apple gates the trigger to the side button.</p>
+  <div class="files">lib/offgrid.ts</div></div>
+</section>
+
+<!-- =========================== -->
+<!--  ADVANCED · PHASE D         -->
+<!-- =========================== -->
+<section class="lead">
+  <h2>11 · Advanced features — Phase D · resilience</h2>
+  <div class="phase-header">
+    <h3>Phase D — Resilience &amp; adversarial robustness</h3>
+    <div class="sub">Stay useful when the attacker has the phone.</div>
+  </div>
+
+  <div class="feature"><div class="row"><span class="num">15</span><span class="name">Decoy lock screen</span><span class="status shipped">SHIPPED</span></div>
+  <p>Different from disguise mode (calculator) and duress PIN (reversed). The decoy lock is a fake lock screen the user can flip on at any moment: it shows "No Service", a draining fake battery, and rejects every input as "incorrect" — while silently firing SOS in the background.</p>
+  <div class="files">lib/decoy-lock.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">16</span><span class="name">Force-unlock detection</span><span class="status shipped">SHIPPED</span></div>
+  <p>Wraps <code>expo-local-authentication</code> with motion-aware verification. Samples accelerometer for 2 s before the bio prompt; if motion variance is high <em>and</em> failed bio attempts within window ≥ 2, the unlock is flagged as forced and silent SOS fires.</p>
+  <div class="files">lib/force-unlock.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">17</span><span class="name">Anti-uninstall guard</span><span class="status adapter">ADAPTER + RECIPE</span></div>
+  <p>JS adapter + a complete Android Device Admin recipe (Manifest + receiver + DPM calls). The duress PIN is the gate to disable. iOS path leans on Screen Time restrictions because Apple does not let third-party apps prevent uninstall.</p>
+  <div class="files">lib/anti-uninstall.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">18</span><span class="name">Airplane-mode counter</span><span class="status shipped">SHIPPED</span></div>
+  <p>Detects simultaneous loss of cellular AND Wi-Fi within seconds of an accelerometer shock — the signature of someone toggling airplane mode after grabbing the phone. Escalates via a registered alt-modem backend (e.g. NeuroBand LTE-M, sat dongle) or the standard relay.</p>
+  <div class="files">lib/airplane-counter.ts</div></div>
+</section>
+
+<!-- =========================== -->
+<!--  ADVANCED · PHASE E         -->
+<!-- =========================== -->
+<section class="lead">
+  <h2>12 · Advanced features — Phase E · on-device intelligence</h2>
+  <div class="phase-header">
+    <h3>Phase E — AI / on-device intelligence</h3>
+    <div class="sub">Smarter detection without sending data to a server.</div>
+  </div>
+
+  <div class="feature"><div class="row"><span class="num">19</span><span class="name">Threat-context classifier</span><span class="status shipped">SHIPPED</span></div>
+  <p>Multi-modal score combining transcript, fusion verdict, isolation, drive context, acoustic events, time of day, and safe-zone membership. The default is a transparent rule-based heuristic; an on-device LLM (Gemma 2B / Phi-3-mini via mlc-llm) can drop in via the backend interface.</p>
+  <div class="files">lib/threat-classifier.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">20</span><span class="name">Acoustic event detection</span><span class="status shipped">SHIPPED</span></div>
+  <p>Default envelope detector identifies scream, shout, thud, silence from the meter signal. A YAMNet TFLite backend slot accepts the same event shape; the recipe (audio windowing, ontology mapping, native dep list) is bundled in the source.</p>
+  <div class="files">lib/acoustic-events.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">21</span><span class="name">Speaker diarization</span><span class="status shipped">SHIPPED</span></div>
+  <p>Splits an evidence audio clip into "user vs other" segments. Default uses RMS + zero-crossing-rate + spectral centroid against an enrolled voiceprint stored in SecureStore. Adapter slot accepts pyannote / TitaNet / ECAPA-TDNN backends.</p>
+  <div class="files">lib/diarization.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">22</span><span class="name">Auto-redaction</span><span class="status adapter">ADAPTER + RECIPE</span></div>
+  <p>Face / plate / PII blur on captured photos. Refuses to silently return originals — the no-op default reports <code>{ ok: false, reason: "noBackend" }</code>. ML Kit (Android) and Vision (iOS) recipes are inline; manual-region blur is supported the same way.</p>
+  <div class="files">lib/auto-redaction.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">23</span><span class="name">Deepfake voice-trigger guard</span><span class="status shipped">SHIPPED</span></div>
+  <p>Wraps voice-trigger with a voiceprint-match step (re-using the diarization enrolment) and an optional per-session challenge word. A failed challenge demotes the response from "act-loud" to "prompt-user" — never silently rejects, because false negatives in safety code are worse than false positives.</p>
+  <div class="files">lib/voice-trigger-guard.ts</div></div>
+</section>
+
+<!-- =========================== -->
+<!--  ADVANCED · PHASE F         -->
+<!-- =========================== -->
+<section class="lead">
+  <h2>13 · Advanced features — Phase F · NeuroBand expansion</h2>
+  <div class="phase-header">
+    <h3>Phase F — NeuroBand expansion</h3>
+    <div class="sub">Make the wearable smarter and more personal.</div>
+  </div>
+
+  <div class="feature"><div class="row"><span class="num">24</span><span class="name">HRV-based stress baseline</span><span class="status shipped">SHIPPED</span></div>
+  <p>24 circadian-hour buckets, each tracking RMSSD mean/variance via Welford's online algorithm. The current frame's z-score against the right hour bucket gives a 0–100 stress index that fusion uses to dynamically adapt sensitivity.</p>
+  <div class="files">lib/hrv-baseline.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">25</span><span class="name">Cycle-aware sensitivity</span><span class="status shipped">SHIPPED</span></div>
+  <p>The luteal phase shifts resting HR up ~5 BPM and HRV down ~15%, which produces chronic false-positive runs in fixed-threshold fusion. The module ships a privacy-preserving manual log + a HealthKit / Health Connect adapter slot, then emits an adjustment {phase, hrThresholdOffsetBpm, hrvBaselineMultiplier}.</p>
+  <div class="files">lib/cycle-aware.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">26</span><span class="name">Band-side LED / haptic codes</span><span class="status shipped">SHIPPED</span></div>
+  <p>Extended single-byte command protocol: 0x10–0x1F acks, 0x20–0x2F warnings, 0x30–0x3F silent statuses. Each code maps to a distinct vibration pattern + LED colour/pulse so the user feels-through-the-wrist what's happening (SMS sent, contact opened, helper on the way…) without looking at the phone.</p>
+  <div class="files">lib/band-feedback.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">27</span><span class="name">Group band roaming</span><span class="status shipped">SHIPPED</span></div>
+  <p>One account, multiple bands — kid + parent + grandparent. Per-member geofence, group realtime channel for fusion fires from any band, role labels (self / kid / parent / partner / sibling / friend / grandparent).</p>
+  <div class="files">lib/band-roaming.ts</div></div>
+</section>
+
+<!-- =========================== -->
+<!--  ADVANCED · PHASE G         -->
+<!-- =========================== -->
+<section class="lead">
+  <h2>14 · Advanced features — Phase G · platform integrations</h2>
+  <div class="phase-header">
+    <h3>Phase G — Platform integrations</h3>
+    <div class="sub">Make HearMe reachable from every surface the user uses.</div>
+  </div>
+
+  <div class="feature"><div class="row"><span class="num">28</span><span class="name">Wear OS / watchOS companion</span><span class="status adapter">ADAPTER + RECIPE</span></div>
+  <p>Long-press a complication to fire SOS, double-tap for live-share, stream HR samples from the watch's PPG. The JS adapter accepts WatchPing events; the WatchConnectivity (iOS) and WearOS MessageClient (Android) recipes are bundled in the source.</p>
+  <div class="files">lib/wearable-companion.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">29</span><span class="name">OS quick-action surface</span><span class="status shipped">SHIPPED</span></div>
+  <p>A deep-link entrypoint (<code>hearme://sos</code>) that any OS surface can trigger: Android Quick Settings tile, iOS 17+ Action Button, iOS 18 Control Center widget, Siri shortcut donation. Adapter contract + native recipes bundled.</p>
+  <div class="files">lib/os-quicktile.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">30</span><span class="name">CarPlay / Android Auto</span><span class="status adapter">ADAPTER + RECIPE</span></div>
+  <p>Lifecycle hooks (<code>notifyCarConnected</code> / <code>notifyCarDisconnected</code>) so JS code re-tunes voice trigger and journey monitor for in-car use. Big-button crash prompt template + post-fire confirmation banner. Swift CarPlay scene + Kotlin CarAppService recipes bundled.</p>
+  <div class="files">lib/auto-mode.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">31</span><span class="name">Smart-home siren</span><span class="status shipped">SHIPPED</span></div>
+  <p>SOS fan-out to Hue (red flash via local bridge), Google Home / Nest (TTS via Home Assistant), Alexa Routine (webhook), and generic IFTTT / webhook receivers. All endpoint secrets live in SecureStore, not AsyncStorage.</p>
+  <div class="files">lib/smart-home.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">32</span><span class="name">PSAP / RapidSOS adapter</span><span class="status adapter">ADAPTER + RECIPE</span></div>
+  <p>Forward an incident directly to the dispatch centre's API where regulation allows. RapidSOS sketch (OAuth + REST), EU 112 AML notes, and a tel:-fallback default. Real credentials are injected at registration time so they never enter the open-source build.</p>
+  <div class="files">lib/psap.ts</div></div>
+</section>
+
+<!-- =========================== -->
+<!--  ADVANCED · PHASE H         -->
+<!-- =========================== -->
+<section class="lead">
+  <h2>15 · Advanced features — Phase H · operational</h2>
+  <div class="phase-header">
+    <h3>Phase H — Operational</h3>
+    <div class="sub">Keep the system honest, observable, and self-healing.</div>
+  </div>
+
+  <div class="feature"><div class="row"><span class="num">33</span><span class="name">Anonymous incident heatmap</span><span class="status shipped">SHIPPED</span></div>
+  <p>Each fired SOS appends a 3-decimal-place bucketed ping (~110 m grid). The public RPC <code>heatmap_at(lat, lon, radius)</code> aggregates per cell with a k-anonymity floor — cells with fewer than K hits collapse into a "rare" bucket. Users can erase their own contributions.</p>
+  <div class="files">lib/incident-heatmap.ts · supabase/heatmap.sql</div></div>
+
+  <div class="feature"><div class="row"><span class="num">34</span><span class="name">Self-test scheduler</span><span class="status shipped">SHIPPED</span></div>
+  <p>Nine non-destructive probes — SMS path, contacts validity, GPS accuracy, mic, biometric enrolment, NeuroBand link recency, Android battery optimisation hint, Supabase auth, device battery level. Runs weekly and on demand; surfaces broken pipes BEFORE an emergency.</p>
+  <div class="files">lib/self-test.ts</div></div>
+
+  <div class="feature"><div class="row"><span class="num">35</span><span class="name">Responder dashboard</span><span class="status adapter">SQL + ARCHITECTURE</span></div>
+  <p>Schema for partner organisations (NGOs, campus security): organisations, members, user-org links with explicit per-scope consent, and an immutable audit table. Two security-definer RPCs (<code>responder_active_alerts</code>, <code>responder_user_evidence</code>) enforce membership + consent + audit-on-read. Architecture spec lives at <code>docs/responder-dashboard.md</code>; the dashboard itself is a separate Next.js project.</p>
+  <div class="files">supabase/responder.sql · docs/responder-dashboard.md</div></div>
+</section>
+
+<!-- =========================== -->
+<!--  16. PERMISSIONS            -->
+<!-- =========================== -->
+<section class="lead">
+  <h2>16 · Permissions matrix</h2>
+  <table>
+    <thead><tr><th>Permission</th><th>iOS</th><th>Android</th><th>Why HearMe needs it</th></tr></thead>
+    <tbody>
+      <tr><td>Location (always &amp; in-use)</td><td>✅ NSLocationAlways*</td><td>✅ ACCESS_FINE_LOCATION + COARSE</td><td>SOS coordinates, journey monitoring, off-grid watchdog, isolation score.</td></tr>
+      <tr><td>Camera</td><td>✅ NSCameraUsage</td><td>✅ CAMERA</td><td>Hidden-camera detector; evidence photos; QR scanning for witness mode.</td></tr>
+      <tr><td>Microphone</td><td>✅ NSMicrophoneUsage</td><td>✅ RECORD_AUDIO</td><td>Voice trigger, pre-roll buffer, evidence audio, acoustic events.</td></tr>
+      <tr><td>Contacts</td><td>✅ NSContactsUsage</td><td>✅ READ_CONTACTS</td><td>Pull trusted contacts during onboarding; never uploaded.</td></tr>
+      <tr><td>Face / Touch ID</td><td>✅ NSFaceIDUsage</td><td>✅ USE_BIOMETRIC + USE_FINGERPRINT</td><td>App lock, force-unlock detection, sensitive-screen gate.</td></tr>
+      <tr><td>Photo library</td><td>✅ NSPhoto*</td><td>✅ READ/WRITE_MEDIA</td><td>Save evidence photos; pick avatar.</td></tr>
+      <tr><td>Bluetooth (always &amp; peripheral)</td><td>✅ NSBluetoothAlways*</td><td>✅ BLUETOOTH/SCAN/CONNECT</td><td>NeuroBand pairing, stalker scan, isolation neighbour count, community mesh.</td></tr>
+      <tr><td>SMS</td><td>composer-only</td><td>✅ SEND_SMS</td><td>Fire SOS to trusted contacts.</td></tr>
+      <tr><td>Phone</td><td>tel: scheme</td><td>✅ CALL_PHONE</td><td>Auto-dial emergency number; helplines.</td></tr>
+      <tr><td>Foreground service</td><td>—</td><td>✅ FOREGROUND_SERVICE + CONNECTED_DEVICE</td><td>Background BLE link to NeuroBand; journey-monitor location updates.</td></tr>
+      <tr><td>Vibrate</td><td>—</td><td>✅ VIBRATE</td><td>Band-feedback fallback patterns.</td></tr>
+      <tr><td>Background modes</td><td>✅ bluetooth-central</td><td>—</td><td>BLE central role active in background.</td></tr>
+    </tbody>
+  </table>
+  <p>Each permission is requested with a clear rationale at the moment it's first needed. Permissions are minimised: e.g. journey monitoring is the only feature that asks for "always" location, and it asks only when the user starts a journey.</p>
+</section>
+
+<!-- =========================== -->
+<!--  17. PRIVACY & SECURITY     -->
+<!-- =========================== -->
+<section class="lead">
+  <h2>17 · Privacy &amp; security model</h2>
+
+  <h3>Identity</h3>
+  <ul>
+    <li>Multi-path auth (PIN, biometric, Aadhaar OTP, demo PIN). Losing one path doesn't lock the user out.</li>
+    <li>Per-device Ed25519 signing key generated on first use, persisted in SecureStore (Keychain on iOS, EncryptedSharedPreferences on Android). Never leaves the device.</li>
+  </ul>
+
+  <h3>Data at rest</h3>
+  <ul>
+    <li><strong>SecureStore:</strong> duress PIN, signing private key, voiceprint enrolment, smart-home endpoint secrets, voice-trigger challenge, NeuroBand session key + PSK.</li>
+    <li><strong>AsyncStorage:</strong> contacts, settings, evidence sessions, alert history, NeuroBand baselines / event log, cycle log, dead-man queue, stalker sightings.</li>
+    <li><strong>Supabase Storage (private bucket):</strong> uploaded evidence files. Access only via signed URLs scoped to the owning user.</li>
+  </ul>
+
+  <h3>Data in transit</h3>
+  <ul>
+    <li><strong>Live-share &amp; witness mode:</strong> AES-256-GCM with per-session keys. The key lives in the URL fragment (after <code>#</code>) — it never reaches a server.</li>
+    <li><strong>Two-way duress &amp; guardian relay acks:</strong> Supabase realtime broadcasts. Payloads are E2E-encrypted where they carry sensitive data; ack signals carry only contact id + name.</li>
+    <li><strong>Community mesh:</strong> opt-in beacons carry only lat/lon/severity + a rotating opaque id. No user identity or device id.</li>
+  </ul>
+
+  <h3>Tamper evidence</h3>
+  <ul>
+    <li>Every evidence item carries a SHA-256 content hash.</li>
+    <li>Items are linked: chain[i] = SHA256(chain[i-1] || contentHash[i]). Any edit invalidates every later hash.</li>
+    <li>The final chain hash is signed with the device Ed25519 key and submitted to a public OpenTimestamps Bitcoin calendar. Within ~6 hours the OTS receipt upgrades to a Bitcoin block attestation that anyone can verify offline.</li>
+  </ul>
+
+  <h3>Row-level security (Supabase)</h3>
+  <ul>
+    <li>Every table that holds user data has RLS enabled. Policies restrict select / insert / update to <code>auth.uid() = user_id</code>.</li>
+    <li>Storage policies are file-path-aware: a user can only write to <code>&lt;their-uid&gt;/...</code> paths in the evidence bucket.</li>
+    <li>Public RPCs (<code>heatmap_at</code>, <code>evidence_attestation</code>, <code>responder_*</code>) are <code>security definer</code> and enforce explicit consent / k-anonymity / role gating before returning rows.</li>
+  </ul>
+
+  <h3>Adversarial robustness</h3>
+  <ul>
+    <li>Disguise mode (calculator) hides the app from a casual snoop.</li>
+    <li>Decoy lock screen + duress PIN deflect an active attacker.</li>
+    <li>Force-unlock detection escalates if struggle motion is detected during a bio prompt.</li>
+    <li>Anti-uninstall guard (Android Device Admin) requires the duress PIN to remove the app.</li>
+    <li>Phone-tamper + airplane-mode counters detect attempts to silence the phone.</li>
+    <li>Deepfake voice-trigger guard requires a voiceprint match, demotes (never silently rejects) on failure.</li>
+  </ul>
+</section>
+
+<!-- =========================== -->
+<!--  18. SETUP                  -->
+<!-- =========================== -->
+<section class="lead">
+  <h2>18 · Setup &amp; deployment</h2>
+
+  <h3>Prerequisites</h3>
+  <ul>
+    <li>Node.js ≥ 20 and npm</li>
+    <li>Expo CLI (use <code>npx expo</code>)</li>
+    <li>Android Studio (emulator or device) and/or Xcode (macOS)</li>
+    <li>A Supabase project (free tier is fine)</li>
+    <li>(Optional) nRF Connect SDK for NeuroBand firmware</li>
+  </ul>
+
+  <h3>Install</h3>
+  <pre>git clone https://github.com/Debjyoti-sarkar/HearMe.git
+cd HearMe
+npm install</pre>
+
+  <h3>Configure environment</h3>
+  <p>Create a <code>.env.local</code> file at the project root:</p>
+  <pre>EXPO_PUBLIC_SUPABASE_URL=https://&lt;project&gt;.supabase.co
+EXPO_PUBLIC_SUPABASE_KEY=&lt;anon-key&gt;</pre>
+  <p>Use the anon key, not the service-role key. RLS gates every table.</p>
+
+  <h3>Provision Supabase</h3>
+  <p>Run the SQL files in order in the Supabase SQL editor:</p>
+  <ol>
+    <li><code>supabase/setup.sql</code> — base tables &amp; profile RLS</li>
+    <li><code>supabase/rls.sql</code> — additional policies</li>
+    <li><code>supabase/evidence.sql</code> — evidence locker tables &amp; bucket</li>
+    <li><code>supabase/evidence-signatures.sql</code> — Ed25519 + OTS attestations</li>
+    <li><code>supabase/community-mesh.sql</code> — community SOS beacons</li>
+    <li><code>supabase/heatmap.sql</code> — k-anonymous incident heatmap</li>
+    <li><code>supabase/responder.sql</code> — responder dashboard schema</li>
+  </ol>
+  <p>Then enable Phone OTP under Auth → Providers.</p>
+
+  <h3>Run on device</h3>
+  <p>Several features (BLE, foreground services, biometrics) require a custom dev client — Expo Go isn't enough.</p>
+  <pre>npx expo run:android       # adb-connected device
+npx expo run:ios           # macOS + Xcode
+# Distributables:
+npx eas build --profile preview --platform android
+npx eas build --profile production --platform ios</pre>
+
+  <h3>Flash NeuroBand firmware</h3>
+  <pre>cd firmware/neuroband
+west build -b nrf52840dk/nrf52840 .
+west flash</pre>
+</section>
+
+<!-- =========================== -->
+<!--  19. ADAPTER PATTERN        -->
+<!-- =========================== -->
+<section class="lead">
+  <h2>19 · Adapter pattern (production-grade strategy)</h2>
+  <p>Several advanced features genuinely need code that is not in the JS / Expo surface — PSAP REST clients, Wear OS bridges, Android Device Admin, ML Kit face detection, on-device LLMs, satellite SDKs, Meshtastic protobufs. Rather than ship fake "production" code, each of those modules implements the <strong>adapter pattern</strong>:</p>
+
+  <div class="ascii">lib/&lt;feature&gt;.ts  ──────────────────►  ┌────────────────────┐
+   │  exposes interface                │  Default backend:  │
+   │  + JS-side glue                   │  heuristic / mock  │
+   │  + Supabase / Expo plumbing       │  / Supabase        │
+   │                                   └────────────────────┘
+   └──► register({ backend })  ───────►  drop-in real impl
+                                          (TFLite / native /
+                                           vendor SDK)</div>
+
+  <p>The app calls <code>lib/&lt;feature&gt;</code> in one place. The default backend is a working, useful approximation — or, where there is no useful default (e.g. face detection), an honest no-op that <em>refuses to claim success it didn't earn</em>. Replacing it with the real thing is a single <code>register({ backend: realImpl })</code> call from a custom dev client.</p>
+
+  <h3>Where the adapter pattern shows up</h3>
+  <table>
+    <thead><tr><th>Module</th><th>Default backend</th><th>What plugs in</th></tr></thead>
+    <tbody>
+      <tr><td>Pre-roll buffer</td><td>Chunk-rotating expo-av</td><td>AVAudioEngine / AudioRecord native circular buffer</td></tr>
+      <tr><td>Off-grid mode</td><td>Watchdog only — banners on loss</td><td>Meshtastic, Garmin inReach, sat-phone bridges</td></tr>
+      <tr><td>Anti-uninstall</td><td>No-op (reports unsupported)</td><td>Android Device Admin / iOS Screen Time</td></tr>
+      <tr><td>Threat classifier</td><td>Rule-based heuristic</td><td>On-device LLM (Gemma 2B / Phi-3-mini)</td></tr>
+      <tr><td>Acoustic events</td><td>Envelope detector</td><td>YAMNet TFLite</td></tr>
+      <tr><td>Diarization</td><td>RMS+ZCR+centroid voiceprint</td><td>pyannote / TitaNet / ECAPA-TDNN</td></tr>
+      <tr><td>Auto-redaction</td><td>Honest no-op (reports unsupported)</td><td>ML Kit (Android) / Vision (iOS)</td></tr>
+      <tr><td>Wearable companion</td><td>No-op</td><td>WatchConnectivity (iOS) / WearOS MessageClient</td></tr>
+      <tr><td>OS quick-tile</td><td>Deep-link only</td><td>TileService / Action Button bridge</td></tr>
+      <tr><td>CarPlay / Auto</td><td>Lifecycle no-op</td><td>CarPlay Scene / CarAppService</td></tr>
+      <tr><td>PSAP</td><td>tel: fallback</td><td>RapidSOS REST client / EU 112 AML</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- =========================== -->
+<!--  20. FILE INDEX             -->
+<!-- =========================== -->
+<section class="lead">
+  <h2>20 · File index — every module shipped</h2>
+
+  <h3>Domain logic — <code>lib/</code></h3>
+  <table>
+    <thead><tr><th>File</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>lib/aadhaar.ts</code></td><td>Aadhaar e-KYC integration helpers.</td></tr>
+      <tr><td><code>lib/acoustic-events.ts</code></td><td>Acoustic event detection (envelope + YAMNet adapter).</td></tr>
+      <tr><td><code>lib/airplane-counter.ts</code></td><td>Airplane-mode toggle counter + alt-modem escalation.</td></tr>
+      <tr><td><code>lib/alert-history.ts</code></td><td>Chronological event log.</td></tr>
+      <tr><td><code>lib/anti-uninstall.ts</code></td><td>Anti-uninstall guard adapter (Android Device Admin recipe).</td></tr>
+      <tr><td><code>lib/app-data.ts</code></td><td>Contacts / settings AsyncStorage layer.</td></tr>
+      <tr><td><code>lib/audio-recorder.ts</code></td><td>Manual evidence recording flow.</td></tr>
+      <tr><td><code>lib/auto-mode.ts</code></td><td>CarPlay / Android Auto adapter.</td></tr>
+      <tr><td><code>lib/auto-redaction.ts</code></td><td>Face / plate / PII redaction adapter.</td></tr>
+      <tr><td><code>lib/band-feedback.ts</code></td><td>Extended band-side LED + haptic codes.</td></tr>
+      <tr><td><code>lib/band-roaming.ts</code></td><td>Group band roaming (multi-band per account).</td></tr>
+      <tr><td><code>lib/bba-model.ts</code></td><td>Behavioural Biometric Authentication model.</td></tr>
+      <tr><td><code>lib/behavior-detector.ts · behavior-tracker.ts</code></td><td>Behaviour anomaly detection engine.</td></tr>
+      <tr><td><code>lib/community-mesh.ts</code></td><td>Geo-anonymous community SOS mesh.</td></tr>
+      <tr><td><code>lib/cycle-aware.ts</code></td><td>Cycle-aware sensitivity (manual log + Health adapter).</td></tr>
+      <tr><td><code>lib/decoy-lock.ts</code></td><td>Fake lock screen with silent SOS on engage.</td></tr>
+      <tr><td><code>lib/demo-auth.ts</code></td><td>Offline demo PIN auth path.</td></tr>
+      <tr><td><code>lib/diarization.ts</code></td><td>Speaker diarization (voiceprint + adapter).</td></tr>
+      <tr><td><code>lib/drive-passenger.ts</code></td><td>Driver vs passenger classifier.</td></tr>
+      <tr><td><code>lib/duress.ts</code></td><td>Reversed / explicit duress PIN classification.</td></tr>
+      <tr><td><code>lib/emergency-sms.ts</code></td><td>SOS SMS pipeline + tel: dial.</td></tr>
+      <tr><td><code>lib/evidence-cloud.ts</code></td><td>Sync evidence sessions to Supabase.</td></tr>
+      <tr><td><code>lib/evidence-deadman.ts</code></td><td>Dead-man's switch retry queue.</td></tr>
+      <tr><td><code>lib/evidence-export.ts</code></td><td>Lawyer / NGO bundle (manifest + summary).</td></tr>
+      <tr><td><code>lib/evidence-locker.ts</code></td><td>Evidence-session data model + chain hashing.</td></tr>
+      <tr><td><code>lib/evidence-signing.ts</code></td><td>Ed25519 signing + OpenTimestamps anchor.</td></tr>
+      <tr><td><code>lib/force-unlock.ts</code></td><td>Struggle-aware bio guard.</td></tr>
+      <tr><td><code>lib/guardian-relay.ts</code></td><td>Tier-staggered ack-aware fan-out.</td></tr>
+      <tr><td><code>lib/hrv-baseline.ts</code></td><td>Circadian HRV baselines + stress index.</td></tr>
+      <tr><td><code>lib/i18n.ts</code></td><td>i18next configuration.</td></tr>
+      <tr><td><code>lib/incident-heatmap.ts</code></td><td>K-anonymous heatmap reader / writer.</td></tr>
+      <tr><td><code>lib/isolation-score.ts</code></td><td>BLE + audio + light + speed isolation score.</td></tr>
+      <tr><td><code>lib/journey-monitor.ts</code></td><td>Route + deviation watcher.</td></tr>
+      <tr><td><code>lib/live-share.ts</code></td><td>E2E AES-GCM live-share over realtime.</td></tr>
+      <tr><td><code>lib/nav-guide.ts · nav-guide-ref.ts</code></td><td>Voice-guided navigation refs.</td></tr>
+      <tr><td><code>lib/neuroband-ble.ts</code></td><td>BLE bridge (real + mock).</td></tr>
+      <tr><td><code>lib/neuroband-fusion.ts</code></td><td>2-of-5 marker fusion engine (pure).</td></tr>
+      <tr><td><code>lib/neuroband-pairing.ts</code></td><td>Pairing flow with passkey + bonding.</td></tr>
+      <tr><td><code>lib/neuroband-storage.ts</code></td><td>Baselines + pair record + secure storage.</td></tr>
+      <tr><td><code>lib/noble.d.ts</code></td><td>Type shims for @noble crypto packages.</td></tr>
+      <tr><td><code>lib/offgrid.ts</code></td><td>Off-grid watchdog + transport adapter.</td></tr>
+      <tr><td><code>lib/os-quicktile.ts</code></td><td>OS quick-action surface adapter.</td></tr>
+      <tr><td><code>lib/otp.ts</code></td><td>OTP helpers.</td></tr>
+      <tr><td><code>lib/phone.ts</code></td><td>Phone-number normalisation.</td></tr>
+      <tr><td><code>lib/phone-tamper.ts</code></td><td>Phone-tamper triple-coincidence detector.</td></tr>
+      <tr><td><code>lib/preroll-buffer.ts</code></td><td>Continuous 30-second pre-roll audio buffer.</td></tr>
+      <tr><td><code>lib/psap.ts</code></td><td>PSAP / 112 / RapidSOS adapter.</td></tr>
+      <tr><td><code>lib/rideshare.ts</code></td><td>Rideshare-aware trip helpers.</td></tr>
+      <tr><td><code>lib/safe-zones.ts</code></td><td>Safe-zone geofences.</td></tr>
+      <tr><td><code>lib/safety-score.ts</code></td><td>Aggregate safety dashboard score.</td></tr>
+      <tr><td><code>lib/self-test.ts</code></td><td>Nine-probe weekly self-test.</td></tr>
+      <tr><td><code>lib/session.ts</code></td><td>Session lifecycle helpers.</td></tr>
+      <tr><td><code>lib/siren.ts</code></td><td>Loud-alarm playback.</td></tr>
+      <tr><td><code>lib/smart-home.ts</code></td><td>Hue / Google / Alexa / IFTTT fan-out.</td></tr>
+      <tr><td><code>lib/stalker-scan.ts</code></td><td>BLE stalker detector with persistent log.</td></tr>
+      <tr><td><code>lib/supabase.js · supabase.d.ts</code></td><td>Supabase client.</td></tr>
+      <tr><td><code>lib/threat-classifier.ts</code></td><td>Multi-modal threat score.</td></tr>
+      <tr><td><code>lib/timer-checkin.ts</code></td><td>Check-in timer logic.</td></tr>
+      <tr><td><code>lib/trust-engine.ts</code></td><td>Trust-engine scoring.</td></tr>
+      <tr><td><code>lib/two-way-duress.ts</code></td><td>Contact challenge → band haptic.</td></tr>
+      <tr><td><code>lib/types.ts</code></td><td>Shared types (EmergencyContact, Settings, …).</td></tr>
+      <tr><td><code>lib/voice-guide.ts</code></td><td>Spoken navigation engine.</td></tr>
+      <tr><td><code>lib/voice-trigger.ts</code></td><td>Voice trigger amplitude listener.</td></tr>
+      <tr><td><code>lib/voice-trigger-guard.ts</code></td><td>Deepfake voice-trigger verification.</td></tr>
+      <tr><td><code>lib/wearable-companion.ts</code></td><td>Wear OS / watchOS adapter.</td></tr>
+      <tr><td><code>lib/witness-mode.ts</code></td><td>QR-driven anonymous corroborating recorder.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Database — <code>supabase/</code></h3>
+  <table>
+    <thead><tr><th>File</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>supabase/setup.sql</code></td><td>Profiles + emergency_logs + base RLS.</td></tr>
+      <tr><td><code>supabase/rls.sql</code></td><td>Additional row-level policies.</td></tr>
+      <tr><td><code>supabase/evidence.sql</code></td><td>Evidence locker tables + private bucket.</td></tr>
+      <tr><td><code>supabase/evidence-signatures.sql</code></td><td>Ed25519 + OTS attestations + public RPC.</td></tr>
+      <tr><td><code>supabase/community-mesh.sql</code></td><td>Mesh beacon + helper reply tables.</td></tr>
+      <tr><td><code>supabase/heatmap.sql</code></td><td>K-anonymous incident heatmap RPC.</td></tr>
+      <tr><td><code>supabase/responder.sql</code></td><td>Partner organisations + audit log + RPCs.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Documentation — <code>docs/</code></h3>
+  <table>
+    <thead><tr><th>File</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>docs/ADVANCED_FEATURES.md</code></td><td>Master tracking doc for all 35 advanced modules.</td></tr>
+      <tr><td><code>docs/responder-dashboard.md</code></td><td>Responder dashboard architecture spec.</td></tr>
+      <tr><td><code>docs/HearMe_Complete_Guide.html</code></td><td>This guide — comprehensive overview.</td></tr>
+      <tr><td><code>docs/HearMe_Competitive_Analysis.*</code></td><td>Landscape of personal-safety apps.</td></tr>
+      <tr><td><code>docs/HearMe_Hardware_IoT_Strategy.*</code></td><td>Wearable roadmap, sensor stack.</td></tr>
+      <tr><td><code>docs/HearMe_NeuroBand_Integration.*</code></td><td>BLE protocol, fusion logic, security envelope.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="footer">HearMe · Complete App Guide · Built by Debjyoti Sarkar · "If HearMe helps someone feel safer, that's the whole point."</div>
+</section>
+
+</body>
+</html>

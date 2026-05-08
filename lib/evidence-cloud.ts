@@ -17,6 +17,7 @@ import {
   type EvidenceItem,
   type EvidenceSession,
 } from './evidence-locker';
+import { attestSession } from './evidence-signing';
 
 const BUCKET = 'hearme-evidence';
 
@@ -258,6 +259,17 @@ export async function syncSessionAsync(
       const failed = markSession(chained, 'failed', itemsErr.message);
       await saveEvidenceSession(failed);
       return { ok: false, reason: itemsErr.message, session: failed };
+    }
+  }
+
+  // Chain-of-custody attestation: sign the final chainHash with the device
+  // Ed25519 key and submit the digest to a public OpenTimestamps calendar.
+  // Best-effort — signature is local + cheap; the OTS POST may fail offline.
+  if (chained.chainHash) {
+    try {
+      await attestSession(chained.id, chained.chainHash);
+    } catch {
+      // Don't fail the whole sync if the public anchor is unreachable.
     }
   }
 
